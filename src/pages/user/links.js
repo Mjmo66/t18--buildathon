@@ -1,7 +1,7 @@
-// Navigation links for the volunteer space. tab: false = sidebar only; hint: optional desktop tooltip;
-// account: true = shown as the account button at the foot of the sidebar, not in the list.
+// Tab bar links for the volunteer space (Messages is a header button for volunteers, not a tab).
 export const userLinks = [
-  { to: '/user', label: 'Find shifts', icon: 'search' },
-  { to: '/user/shifts', label: 'My shifts', icon: 'shifts' },
-  { to: '/user/profile', label: 'Account', icon: 'settings', account: true },
+  { to: '/user', label: 'Board', icon: 'board' },
+  { to: '/user/shifts', label: 'My commitments', icon: 'shifts' },
+  { to: '/user/thanks', label: 'Thank you', icon: 'thanks' },
+  { to: '/user/profile', label: 'Profile', icon: 'profile' },
 ];
