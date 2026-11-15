@@ -153,9 +153,9 @@ export function ScanCheckin({ onCheckedIn, onDone }) {
           e.preventDefault();
           checkIn((uid) => resolveManual(manualText, uid));
         }}>
-          <label className="att-label" htmlFor={inputId}>The code under the picture</label>
-          <input id={inputId} className="att-input" value={manualText} autoComplete="off"
-                 autoCapitalize="characters" spellCheck={false} maxLength={12} placeholder="3F9A1C"
+          <label className="att-label" htmlFor={inputId}>Code</label>
+          <input id={inputId} className="att-input" value={manualText} autoComplete="off" autoCorrect="off"
+                 autoCapitalize="characters" spellCheck={false} maxLength={12} placeholder="3F9 A1C"
                  onChange={(e) => setManualText(e.target.value)} />
           <Button type="submit" size="lg" block loading={phase === 'working'}
                   disabled={!manualText.trim()} hint={!manualText.trim() ? 'Type the code first.' : undefined}>

@@ -36,7 +36,7 @@ export function CheckinQR({ request }) {
       </div>
       <div className="ch-att-qr-code">
         <span className="ch-att-qr-code-label">Or type this code</span>
-        <span className="ch-att-qr-digits" aria-label={`Code ${code.split('').join(' ')}`}>{code}</span>
+        <span className="ch-att-qr-digits" aria-label={`Code ${code.split('').join(' ')}`}>{code.length > 4 ? `${code.slice(0, 3)} ${code.slice(3)}` : code}</span>
       </div>
       <div className="ch-att-qr-meta">
         <strong>{request.title}</strong>

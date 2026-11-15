@@ -137,7 +137,6 @@ export function AttendancePanel({ request, onChange, onMessage, messagingId = nu
 
   if (!requestId) return null;
 
-  const taken = signups.filter((s) => ['accepted', 'attended'].includes(s.status)).length;
   const recurring = request.schedule_type === 'recurring';
   const confirming = signups.find((s) => s.id === confirmId);
 
@@ -145,7 +144,6 @@ export function AttendancePanel({ request, onChange, onMessage, messagingId = nu
     <section className="ch-att" aria-labelledby={`att-h-${requestId}`}>
       <div className="ch-att-head">
         <h2 id={`att-h-${requestId}`}>Volunteers</h2>
-        <span className="ch-att-places">{taken} of {request.slots ?? '–'} places filled</span>
       </div>
 
       {error && <p className="ch-error" role="alert">{error}</p>}
@@ -240,7 +238,7 @@ export function AttendancePanel({ request, onChange, onMessage, messagingId = nu
       <ConfirmDialog
         open={Boolean(confirming)}
         title={`Mark ${nameOf(confirming)} as did not come?`}
-        confirmLabel="Yes, mark as did not come"
+        confirmLabel="Yes, did not come"
         cancelLabel="No, go back"
         tone="danger"
         busy={busy === confirmId}

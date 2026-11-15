@@ -18,7 +18,9 @@ const shortPlace = (address) => address?.split(',')[0]?.trim() || null;
 
 function ShiftCard({ s, children }) {
   const r = s.requests;
-  const st = SIGNUP_STATUS[s.status] ?? { label: s.status, tone: 'neutral' };
+  const charityCancelled = r?.status === 'closed' && ['applied', 'accepted'].includes(s.status);
+  const st = charityCancelled ? { label: 'Cancelled by charity', tone: 'danger' }
+    : SIGNUP_STATUS[s.status] ?? { label: s.status, tone: 'neutral' };
   const line = [
     formatShiftRange(s.shift_at, s.hours_credited ?? r?.duration_hours).replace(', ', ' · '),
     shortPlace(r?.address),
@@ -30,7 +32,7 @@ function ShiftCard({ s, children }) {
         <Link to={`/user/requests/${s.request_id}`} className="v-title-link">{r?.title ?? 'Shift'}</Link>
       </h3>
       <p className="v-request-line">{line}</p>
-      {children}
+      {!charityCancelled && children}
     </article>
   );
 }

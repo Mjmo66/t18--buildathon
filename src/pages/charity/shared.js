@@ -115,7 +115,7 @@ export function scheduleSummary(r) {
   return r.ends_on ? `${rec} until ${fmtDate(new Date(`${r.ends_on}T00:00:00`))}` : rec;
 }
 
-/** "2 hours · 2 of 12 places filled". */
+/** "2 hrs · 2 of 12 places filled". */
 export function requestFacts(r, confirmed) {
   return `${formatDuration(r.duration_hours)} · ${confirmed} of ${r.slots} places filled`;
 }

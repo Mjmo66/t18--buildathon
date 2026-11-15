@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { isToday, startOfDay } from 'date-fns';
-import { ArrowLeft, CalendarDays, Dumbbell, GraduationCap, MapPin, QrCode, Repeat, Users } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Dumbbell, MapPin, QrCode, Repeat, Users } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { getOrCreateConversation } from '../../lib/chat';
@@ -10,7 +10,7 @@ import { Button, ConfirmDialog, useToast } from '../../components/ui/index.js';
 import { formatShiftRange } from '../../components/format.js';
 import { CharityGate, Empty, ErrorNote, Loading, StatusPill } from './components.jsx';
 import {
-  EXPERIENCE_LEVELS, PHYSICAL_LEVELS, labelOf, nextShifts, requestFacts, scheduleSummary,
+  EXPERIENCE_LEVELS, PHYSICAL_LEVELS, labelOf, nextShifts, requestFacts, scheduleSummary, volunteers,
 } from './shared.js';
 
 const ICON = { size: 22, strokeWidth: 1.75, 'aria-hidden': true };
@@ -79,6 +79,7 @@ function Detail() {
   if (request.charity_id !== user.id) return <Empty><p>This request belongs to another charity.</p></Empty>;
 
   const confirmed = signups.filter((s) => ['accepted', 'attended'].includes(s.status)).length;
+  const coming = signups.filter((s) => s.status === 'accepted').length;
   const upcoming = nextShifts(request, 3);
   // Shift day: a shift of this request starts today (also once it has started).
   const todayShift = nextShifts(request, 1, startOfDay(new Date()))[0];
@@ -94,7 +95,7 @@ function Detail() {
       </Link>
       <header className="ch-title">
         <h1>{request.title}</h1>
-        <div className="ch-row"><StatusPill status={request.status} /></div>
+        {request.status !== 'open' && <div className="ch-row"><StatusPill status={request.status} /></div>}
       </header>
 
       <ErrorNote error={error} />
@@ -126,16 +127,7 @@ function Detail() {
             <span>
               {upcoming.length === 0 && 'No shifts coming up'}
               {upcoming.length > 0 && !recurring && formatShiftRange(upcoming[0], request.duration_hours)}
-              {upcoming.length > 0 && recurring && (
-                <>
-                  Next: {formatShiftRange(upcoming[0], request.duration_hours)}
-                  {upcoming.length > 1 && (
-                    <span className="ch-fact-sub">
-                      Then {upcoming.slice(1).map((d) => formatShiftRange(d, request.duration_hours)).join('; ')}
-                    </span>
-                  )}
-                </>
-              )}
+              {upcoming.length > 0 && recurring && `Next: ${formatShiftRange(upcoming[0], request.duration_hours)}`}
             </span>
           </li>
           {recurring && <li><Repeat {...ICON} /><span>{scheduleSummary(request)}</span></li>}
@@ -143,13 +135,10 @@ function Detail() {
           <li><Users {...ICON} /><span>{requestFacts(request, confirmed)}</span></li>
           <li>
             <Dumbbell {...ICON} />
-            <span>{physical ? `${physical.label}: ${physical.detail.toLowerCase()}` : labelOf(PHYSICAL_LEVELS, request.physical_level)}</span>
-          </li>
-          <li>
-            <GraduationCap {...ICON} />
             <span>
+              {physical?.label ?? labelOf(PHYSICAL_LEVELS, request.physical_level)}
+              {' · '}
               {experience?.label ?? labelOf(EXPERIENCE_LEVELS, request.experience)}
-              {request.experience_notes && `: ${request.experience_notes}`}
             </span>
           </li>
         </ul>
@@ -172,7 +161,7 @@ function Detail() {
               We have enough volunteers
             </Button>
             <Button
-              variant="danger"
+              variant="danger-outline"
               block
               disabled={busy}
               hint="Take this request down. Volunteers can no longer sign up."
@@ -197,14 +186,16 @@ function Detail() {
       <ConfirmDialog
         open={askCancel}
         title="Cancel this request?"
-        confirmLabel="Yes, cancel this request"
+        confirmLabel="Yes, cancel it"
         cancelLabel="No, keep it"
         tone="danger"
         busy={busy}
         onConfirm={() => setStatus('closed', 'This request is cancelled.')}
         onCancel={closeAsk}
       >
-        {request.title}. Volunteers can no longer sign up.
+        {coming > 0
+          ? `${volunteers(coming)} will see it's cancelled in My shifts.`
+          : 'No one can sign up any more.'}
       </ConfirmDialog>
     </section>
   );

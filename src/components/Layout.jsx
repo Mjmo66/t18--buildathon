@@ -20,7 +20,7 @@ export default function Layout() {
   const links = linksFor(profile?.role);
   return (
     <div className="layout layout-app">
-      <Header links={links} />
+      <Header />
       <div className="layout-body">
         <Sidebar links={links} />
         <main className="content">
