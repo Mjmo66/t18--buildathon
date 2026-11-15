@@ -14,7 +14,6 @@ const db = createClient(url, serviceKey, { auth: { persistSession: false, autoRe
 const PASSWORD = 'demo-pass-2026';
 const DOMAIN = 'demo.kindred.uk';
 
-// Same coordinates as src/components/places.js (kept inline so this runs under plain Node).
 const P = {
   market: { name: 'Market Street', lat: 56.3402, lng: -2.7955 },
   north: { name: 'North Street', lat: 56.3411, lng: -2.7942 },

@@ -39,32 +39,6 @@ export const REQUEST_STATUSES = [
 
 export const labelOf = (list, value) => list.find((o) => o.value === value)?.label ?? value ?? '—';
 
-// St Andrews places. The shell may add `src/components/places.js` at merge; if it exists we use
-// its list (export `places`, `PLACES` or default; items {name, lat, lng}), else this fallback.
-const FALLBACK_PLACES = [
-  { name: 'East Sands', lat: 56.3378, lng: -2.7826 },
-  { name: 'West Sands', lat: 56.3497, lng: -2.8105 },
-  { name: 'St Andrews Cathedral', lat: 56.3398, lng: -2.7868 },
-  { name: 'Market Street', lat: 56.3402, lng: -2.7955 },
-  { name: 'Students’ Association, North Street', lat: 56.3415, lng: -2.7958 },
-  { name: 'Kinburn Park', lat: 56.3383, lng: -2.8034 },
-  { name: 'Botanic Garden', lat: 56.3365, lng: -2.8058 },
-  { name: 'Craigtoun Park', lat: 56.3163, lng: -2.8366 },
-  { name: 'Lade Braes', lat: 56.3363, lng: -2.8031 },
-  { name: 'St Andrews Harbour', lat: 56.3392, lng: -2.7836 },
-];
-
-const placeModules = import.meta.glob('../../components/places.js', { eager: true });
-function loadPlaces() {
-  const mod = Object.values(placeModules)[0];
-  const list = mod && (mod.places || mod.PLACES || mod.default);
-  if (Array.isArray(list) && list.length && list.every((p) => p && p.name && typeof p.lat === 'number')) {
-    return list;
-  }
-  return FALLBACK_PLACES;
-}
-export const PLACES = loadPlaces();
-
 // Charity numbers: OSCR SC+6 digits, CCEW 6–7 digits, CCNI NIC+6 digits.
 export function normaliseCharityNumber(raw) {
   return (raw || '').toUpperCase().replace(/\s+/g, '');

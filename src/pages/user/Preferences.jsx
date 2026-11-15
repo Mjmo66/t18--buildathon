@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import {
   CATEGORIES, EXPERIENCE_LEVELS, PHYSICAL_LEVELS, TIME_GROUPS, TRANSPORTS, TRANSPORT_DEFAULT_KM,
-  availabilityFromGroups, groupsFromAvailability, haversineKm,
+  availabilityFromGroups, groupsFromAvailability,
 } from '../../features/matching/index.js';
-import { PLACES } from '../../features/matching/places.js';
-import { Alert, Button, Chip, Field, useToast } from '../../components/ui/index.js';
+import { Alert, Button, Chip, useToast } from '../../components/ui/index.js';
+import AddressField from '../../components/AddressField.jsx';
+import { reverseGeocode } from '../../lib/address.js';
 import { usePrefs, setSkippedPrefs } from './data.js';
-import { Bike, Bus, Car, Check, ChevronDown, CircleCheck, Footprints, LocateFixed } from 'lucide-react';
+import { Bike, Bus, Car, Check, ChevronDown, Footprints } from 'lucide-react';
 import { LABELS, Loading, capital } from './ui.jsx';
 
 const TIME_LABELS = {
@@ -22,16 +23,6 @@ const DEFAULT_FORM = {
   lat: null, lng: null, transport: 'walk', max_km: TRANSPORT_DEFAULT_KM.walk,
   availability: {}, physical_max: 'moderate', experience: 'none', interests: [],
 };
-
-function nearestPlace(lat, lng) {
-  if (lat == null || lng == null) return null;
-  let best = null;
-  for (const p of PLACES) {
-    const d = haversineKm({ lat, lng }, p);
-    if (!best || d < best.d) best = { name: p.name, d };
-  }
-  return best;
-}
 
 /** A row of big toggle buttons with text; the chosen one is filled and ticked. */
 function Options({ value, options, labels, icons, onChange, stack = false, label }) {
@@ -88,8 +79,7 @@ export default function Preferences() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [locating, setLocating] = useState(false);
-  const [locSource, setLocSource] = useState(null); // 'gps' | place name
+  const [address, setAddress] = useState(''); // shown only; volunteer_prefs keeps the point
   const [groups, setGroups] = useState([]); // TIME_GROUPS keys that are on; [] = any time
   const [more, setMore] = useState(false);
 
@@ -104,33 +94,20 @@ export default function Preferences() {
     }
   }, [prefs]);
 
+  // A saved point has no stored address: show the nearest one.
+  useEffect(() => {
+    if (prefs?.lat == null || prefs?.lng == null) return undefined;
+    const ctrl = new AbortController();
+    reverseGeocode({ lat: prefs.lat, lng: prefs.lng }, { signal: ctrl.signal })
+      .then((place) => { if (place?.address) setAddress((a) => a || place.address); })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [prefs?.lat, prefs?.lng]);
+
   const update = (patch) => setForm((f) => ({ ...f, ...patch }));
-  const near = useMemo(() => nearestPlace(form.lat, form.lng), [form.lat, form.lng]);
-  const placeValue = near && near.d < 0.05 && locSource !== 'gps' ? near.name : '';
-
-  const useMyLocation = () => {
-    if (!navigator.geolocation) { setError("Your browser can't share your location. Choose your area instead."); return; }
-    setLocating(true);
-    setError(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocating(false);
-        setLocSource('gps');
-        update({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      },
-      (err) => {
-        setLocating(false);
-        setError(err.code === 1 ? 'Kindred was not allowed to see your location. Choose your area instead.' : 'Could not find your location. Choose your area instead.');
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-    );
-  };
-
-  const pickPlace = (name) => {
-    const p = PLACES.find((x) => x.name === name);
-    if (!p) return;
-    setLocSource(name);
-    update({ lat: p.lat, lng: p.lng });
+  const setLocation = (v) => {
+    setAddress(v.address);
+    if (v.lat !== form.lat || v.lng !== form.lng) update({ lat: v.lat, lng: v.lng });
   };
 
   const save = async (e) => {
@@ -152,29 +129,12 @@ export default function Preferences() {
   if (authLoading || loading) return <div className="v-page"><Loading /></div>;
   if (!user) return <div className="v-page"><p className="v-muted">Sign in to choose what you're shown.</p></div>;
 
-  let locLabel = null;
-  if (form.lat != null) {
-    locLabel = locSource === 'gps' ? 'Your current location'
-      : near && near.d < 0.05 ? near.name
-      : near ? `Near ${near.name}` : 'Your chosen place';
-  }
-
   return (
     <form className="v-page" onSubmit={save}>
       <h1>{welcome ? 'Find shifts that suit you' : 'Shifts I’m shown'}</h1>
 
       <Section id="v-where" title="Where are you?">
-        {locLabel && (
-          <p className="v-status"><CircleCheck size={22} strokeWidth={2} aria-hidden="true" />{locLabel}</p>
-        )}
-        <Button variant="secondary" block onClick={useMyLocation} loading={locating}
-          icon={<LocateFixed size={20} aria-hidden="true" />} hint="Let Kindred find shifts near where you are now.">
-          {locating ? 'Finding you…' : 'Use my location'}
-        </Button>
-        <Field as="select" label="Or choose your area" value={placeValue} onChange={(e) => pickPlace(e.target.value)}>
-          <option value="">Choose an area</option>
-          {PLACES.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
-        </Field>
+        <AddressField label="Address or postcode" value={{ address, lat: form.lat, lng: form.lng }} onChange={setLocation} />
       </Section>
 
       <Section id="v-travel" title="How will you get there?">
