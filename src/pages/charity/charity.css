@@ -292,7 +292,8 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
 .ch-place { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
 
 /* Radio cards: every choice visible, with words */
-.ch-radio-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.333rem, 1fr)); gap: 10px; }
+/* One column on phones (two narrow cards broke words like "Experienced" out of the card). */
+.ch-radio-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 10px; }
 .ch-radio-card {
   display: flex;
   align-items: flex-start;
@@ -314,7 +315,7 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
   margin: 2px 0 0;
   accent-color: var(--accent);
 }
-.ch-radio-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ch-radio-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; overflow-wrap: break-word; }
 .ch-radio-text strong { font-weight: 650; }
 .ch-radio-text span { color: var(--muted); }
 
