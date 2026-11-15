@@ -1,8 +1,3 @@
-export default function Campaigns() {
-  return (
-    <section>
-      <h1>Campaigns</h1>
-      <p>Create and manage fundraising campaigns here.</p>
-    </section>
-  );
-}
+// Compatibility shim: App.jsx (shell) still imports this file. Delete it once App.jsx mounts
+// `charityRoutes` from ./routes.jsx.
+export { default } from './RequestsList.jsx';
