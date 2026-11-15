@@ -1,8 +1,2 @@
-export default function FindCharities() {
-  return (
-    <section>
-      <h1>Find Charities</h1>
-      <p>Browse and search charities here.</p>
-    </section>
-  );
-}
+// Placeholder kept only because App.jsx imports it; delete once App.jsx mounts userRoutes from routes.jsx.
+export { default } from './Discover.jsx';

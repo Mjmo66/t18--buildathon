@@ -1,8 +1,2 @@
-export default function UserProfile() {
-  return (
-    <section>
-      <h1>My Profile</h1>
-      <p>User profile details go here.</p>
-    </section>
-  );
-}
+// Placeholder kept only because App.jsx imports it; delete once App.jsx mounts userRoutes from routes.jsx.
+export { default } from './Profile.jsx';

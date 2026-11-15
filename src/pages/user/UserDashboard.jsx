@@ -1,12 +1,2 @@
-export default function UserDashboard() {
-  return (
-    <section>
-      <h1>User Dashboard</h1>
-      <div className="card-grid">
-        <div className="card">My donations</div>
-        <div className="card">Charities I follow</div>
-        <div className="card">Recent activity</div>
-      </div>
-    </section>
-  );
-}
+// Placeholder kept only because App.jsx imports it; delete once App.jsx mounts userRoutes from routes.jsx.
+export { default } from './Discover.jsx';
