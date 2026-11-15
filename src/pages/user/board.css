@@ -1,0 +1,35 @@
+/* Volunteer Board (Find shifts) in the Lovable look. Overrides for lovable.css live here. */
+.lv .board-switch {
+  position: relative; flex-shrink: 0; width: 52px; height: 30px; padding: 0; border: 0; border-radius: 999px;
+  background: var(--lv-border); cursor: pointer; transition: background-color .2s;
+}
+.lv .board-switch > span {
+  position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / .2); transition: translate .2s;
+}
+.lv .board-switch[aria-checked="true"] { background: var(--lv-success); }
+.lv .board-switch[aria-checked="true"] > span { translate: 22px 0; }
+
+.lv .board-off { gap: 10px; }
+.lv .board-off svg { color: var(--lv-primary); }
+.lv .board-off h3 { font-size: 15px; max-width: 240px; line-height: 1.4; }
+
+.lv .board-prefs { margin-bottom: 22px; }
+.lv .board-map { margin-bottom: 22px; border-radius: 7px; overflow: hidden; }
+
+.lv .board-card { margin-bottom: 12px; }
+.lv .board-card .opportunity { margin-bottom: 0; }
+.lv .board-card.is-selected .opportunity {
+  border-color: var(--lv-primary); box-shadow: 0 0 0 2px color-mix(in oklch, var(--lv-primary) 25%, transparent);
+}
+.lv .task-tag-environment, .lv .task-tag-animals { background: var(--lv-success-soft); color: var(--lv-success); }
+.lv .task-tag-kids { background: var(--lv-raspberry-soft); color: var(--lv-raspberry); }
+.lv .board-where { grid-column: 1 / -1; }
+.lv .board-why { margin-top: 12px; font-size: 11px; font-weight: 600; color: var(--lv-raspberry); }
+
+.lv .board-more {
+  display: block; width: 100%; margin: 4px 0 12px; padding: 12px; border: 1px solid var(--lv-border); border-radius: 7px;
+  background: var(--lv-card); color: var(--lv-primary); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.lv .board-more:hover { background: var(--lv-accent); }
+.lv .board-other-heading { margin-top: 22px; }
