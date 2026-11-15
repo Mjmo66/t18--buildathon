@@ -6,6 +6,8 @@ import { getOrCreateConversation } from '../../lib/chat';
 import { matchRequest, nextShifts } from '../../features/matching/index.js';
 import { Alert, Badge, Button, ConfirmDialog, useToast } from '../../components/ui/index.js';
 import { formatDayTime, formatShiftRange } from '../../components/format.js';
+import { directionLinks } from '../../lib/maps/index.js';
+import StAndrewsMap from '../../components/map/StAndrewsMap.jsx';
 import { REQUEST_SELECT, usePrefs } from './data.js';
 import {
   ArrowLeft, CalendarDays, CalendarCheck, Check, CircleCheck, Dumbbell, ExternalLink, GraduationCap, MapPin, MessageCircle, Navigation, Repeat,
@@ -26,9 +28,13 @@ function Fact({ icon: I, children }) {
   );
 }
 
-function mapsUrl(request) {
-  const q = request.lat != null && request.lng != null ? `${request.lat},${request.lng}` : request.address;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+/** Directions in the phone's own maps app when the place has coordinates, else a Google search. */
+function mapsUrl(request, transport) {
+  if (request.lat != null && request.lng != null) {
+    const [first] = directionLinks({ lat: request.lat, lng: request.lng, label: request.address ?? request.title }, transport ?? 'walk');
+    if (first) return first.url;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(request.address)}`;
 }
 
 export default function RequestDetail() {
@@ -194,7 +200,7 @@ export default function RequestDetail() {
           {request.address && (
             <Fact icon={MapPin}>
               <span>{request.address}</span>
-              <Button href={mapsUrl(request)} target="_blank" rel="noopener noreferrer" variant="secondary"
+              <Button href={mapsUrl(request, prefs?.transport)} target="_blank" rel="noopener noreferrer" variant="secondary"
                 icon={<Navigation size={20} aria-hidden="true" />} hint="Open the address in your maps app.">
                 Open in Maps
               </Button>
@@ -205,6 +211,18 @@ export default function RequestDetail() {
             <Fact icon={GraduationCap}><span>{LABELS.experience[request.experience]}</span></Fact>
           )}
         </ul>
+        {request.lat != null && request.lng != null && (
+          <div className="v-map">
+            <StAndrewsMap
+              pins={[{ id: request.id, lat: request.lat, lng: request.lng, title: request.title, label: '', tone: 'match' }]}
+              me={prefs?.lat != null && prefs?.lng != null ? { lat: prefs.lat, lng: prefs.lng } : null}
+              selectedId={request.id}
+              height={180}
+              interactive
+              ariaLabel={`Map: ${request.address ?? request.title}`}
+            />
+          </div>
+        )}
       </section>
 
       {!justSignedUp && freeShifts.length > 1 && !blockReason && (

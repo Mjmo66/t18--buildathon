@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { format, isToday, isTomorrow } from 'date-fns';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
@@ -8,6 +9,7 @@ import { formatDayTime, formatDistance, formatDuration } from '../../components/
 import { REQUEST_SELECT, skippedPrefs, usePrefs } from './data.js';
 import { CalendarClock, ChevronRight, Clock, MapPin, SearchX } from 'lucide-react';
 import { Loading } from './ui.jsx';
+import StAndrewsMap from '../../components/map/StAndrewsMap.jsx';
 
 /** Why a shift is outside the volunteer's choices, in plain words (one line). */
 function plainBlocker(blockers) {
@@ -20,7 +22,15 @@ function plainBlocker(blockers) {
   return b;
 }
 
-export function RequestCard({ request, match, transport, other = false }) {
+/** Short pin text: "Sat 10am", "Today 2pm". */
+function pinLabel(shiftAt) {
+  if (!shiftAt) return 'Open';
+  const d = new Date(shiftAt);
+  const day = isToday(d) ? 'Today' : isTomorrow(d) ? 'Tomorrow' : format(d, 'EEE');
+  return `${day} ${format(d, d.getMinutes() ? 'h:mmaaa' : 'haaa')}`;
+}
+
+export function RequestCard({ request, match, transport, other = false, selected = false }) {
   const where = match.distanceKm != null ? formatDistance(match.distanceKm, transport) : request.address;
   const line = [
     match.shiftAt ? formatDayTime(match.shiftAt).replace(', ', ' ') : 'No dates yet',
@@ -28,7 +38,8 @@ export function RequestCard({ request, match, transport, other = false }) {
     where,
   ].filter(Boolean).join(' · ');
   return (
-    <Link to={`/user/requests/${request.id}`} className="v-card v-request v-card-link">
+    <Link to={`/user/requests/${request.id}`} id={`request-${request.id}`}
+      className={`v-card v-request v-card-link${selected ? ' v-card-selected' : ''}`}>
       <div className="v-request-head">
         <h2 className="v-request-title">{request.title}</h2>
         <p className="v-request-org">{request.charities?.org_name ?? 'Charity'}</p>
@@ -62,6 +73,18 @@ export default function Discover() {
   const matching = ranked.filter((x) => x.match.eligible);
   const other = ranked.filter((x) => !x.match.eligible && x.match.shiftAt);
   const transport = prefs?.transport;
+  const [selectedId, setSelectedId] = useState(null);
+  const pins = useMemo(() => ranked.filter(({ match }) => match.eligible || (showAll && match.shiftAt))
+    .filter(({ request }) => request.lat != null && request.lng != null)
+    .map(({ request, match }) => ({
+      id: request.id, lat: request.lat, lng: request.lng,
+      label: pinLabel(match.shiftAt), title: request.title, tone: match.eligible ? 'match' : 'other',
+    })), [ranked, showAll]);
+  const me = prefs?.lat != null && prefs?.lng != null ? { lat: prefs.lat, lng: prefs.lng } : null;
+  const selectPin = (id) => {
+    setSelectedId(id);
+    document.getElementById(`request-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
 
   if (authLoading || prefsLoading) return <div className="v-page"><Loading /></div>;
   if (user && !prefs && !skippedPrefs()) return <Navigate to="/user/preferences?welcome=1" replace />;
@@ -91,10 +114,23 @@ export default function Discover() {
       )}
       {error && <Alert tone="danger" title="Could not load shifts">{error}</Alert>}
 
+      {requests != null && (pins.length > 0 || me) && (
+        <StAndrewsMap
+          pins={pins}
+          me={me}
+          radiusKm={me ? Number(prefs.max_km) || undefined : undefined}
+          selectedId={selectedId}
+          onSelect={selectPin}
+          height={260}
+          interactive
+          ariaLabel="Map of St Andrews with your shifts"
+        />
+      )}
+
       {requests == null ? <Loading /> : (
         <div className="v-list">
           {matching.map(({ request, match }) => (
-            <RequestCard key={request.id} request={request} match={match} transport={transport} />
+            <RequestCard key={request.id} request={request} match={match} transport={transport} selected={request.id === selectedId} />
           ))}
 
           {matching.length === 0 && !showAll && (
@@ -120,7 +156,7 @@ export default function Discover() {
             <>
               <h2 className="v-section-title">Other shifts</h2>
               {other.map(({ request, match }) => (
-                <RequestCard key={request.id} request={request} match={match} transport={transport} other />
+                <RequestCard key={request.id} request={request} match={match} transport={transport} other selected={request.id === selectedId} />
               ))}
             </>
           )}

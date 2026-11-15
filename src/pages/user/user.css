@@ -154,3 +154,8 @@
   .v-sheet-backdrop { align-items: center; }
   .v-sheet { border-radius: var(--radius-lg); }
 }
+
+/* Card whose pin is selected on the Find shifts map. */
+a.v-card { scroll-margin: 12px; }
+.v-card.v-card-selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.v-map { margin-top: 14px; }

@@ -1,0 +1,14 @@
+[out:json][timeout:60];
+(
+  way["natural"="coastline"](56.31,-2.87,56.38,-2.73);
+  way["highway"~"^(primary|secondary|tertiary|unclassified|residential|pedestrian|living_street|service)$"](56.326,-2.845,56.366,-2.755);
+  way["highway"~"^(footway|path|cycleway)$"]["name"](56.326,-2.845,56.366,-2.755);
+  way["waterway"~"^(stream|river|canal)$"](56.326,-2.845,56.366,-2.755);
+  way["leisure"~"^(golf_course|park|garden|pitch|recreation_ground|nature_reserve)$"](56.326,-2.845,56.366,-2.755);
+  relation["leisure"~"^(golf_course|park|garden)$"](56.326,-2.845,56.366,-2.755);
+  way["landuse"~"^(residential|grass|recreation_ground|cemetery|meadow|farmland|forest)$"](56.326,-2.845,56.366,-2.755);
+  way["natural"~"^(beach|sand|wood|scrub)$"](56.326,-2.845,56.366,-2.755);
+  way["man_made"~"^(pier|breakwater|groyne)$"](56.326,-2.845,56.366,-2.755);
+  way["building"]["amenity"="place_of_worship"](56.335,-2.80,56.345,-2.78);
+);
+out geom;

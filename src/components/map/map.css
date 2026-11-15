@@ -1,0 +1,121 @@
+/* St Andrews map. Colours come from the app tokens in src/index.css, so light/dark and any
+   palette change follow automatically. */
+.sam-root {
+  --map-sea: var(--info-soft);
+  --map-land: var(--bg);
+  --map-fields: color-mix(in srgb, var(--success) 5%, var(--bg));
+  --map-town: var(--surface-2);
+  --map-park: color-mix(in srgb, var(--success) 13%, var(--bg));
+  --map-golf: color-mix(in srgb, var(--success) 20%, var(--bg));
+  --map-beach: color-mix(in srgb, var(--warning) 28%, var(--bg));
+  --map-coast: color-mix(in srgb, var(--info) 30%, var(--bg));
+  --map-water: color-mix(in srgb, var(--info) 30%, var(--bg));
+  --map-street: var(--surface);
+  --map-casing: var(--border);
+  --map-path: color-mix(in srgb, var(--warning) 55%, var(--bg));
+  --map-label: var(--muted);
+  --map-label-water: color-mix(in srgb, var(--info) 75%, var(--bg));
+  --map-halo: color-mix(in srgb, var(--bg) 85%, transparent);
+
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--map-sea);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  isolation: isolate;
+}
+.sam-root[data-interactive='true'] { touch-action: none; cursor: grab; }
+.sam-root[data-dragging='true'] { cursor: grabbing; }
+
+.sam-svg, .sam-overlay { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.sam-overlay { pointer-events: none; overflow: visible; }
+
+.sam-sea { fill: var(--map-sea); }
+.sam-land { fill: var(--map-land); }
+.sam-fields { fill: var(--map-fields); }
+.sam-town { fill: var(--map-town); }
+.sam-park { fill: var(--map-park); }
+.sam-golf { fill: var(--map-golf); }
+.sam-beach { fill: var(--map-beach); }
+.sam-coast { fill: none; stroke: var(--map-coast); stroke-width: 1.25px; vector-effect: non-scaling-stroke; }
+.sam-water { fill: none; stroke: var(--map-water); stroke-width: calc(2px * var(--sam-z, 1)); stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.sam-path { fill: none; stroke: var(--map-path); stroke-width: 1.6px; stroke-dasharray: 1 4; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.sam-casing, .sam-street { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.sam-casing { stroke: var(--map-casing); }
+.sam-street { stroke: var(--map-street); }
+.sam-casing.sam-major { stroke-width: calc(5.5px * var(--sam-z, 1)); }
+.sam-street.sam-major { stroke-width: calc(3.5px * var(--sam-z, 1)); }
+.sam-casing.sam-minor { stroke-width: calc(3.2px * var(--sam-z, 1)); }
+.sam-street.sam-minor { stroke-width: calc(1.8px * var(--sam-z, 1)); }
+.sam-pier { fill: none; stroke: var(--muted); stroke-width: 2.5px; stroke-linecap: round; opacity: 0.6; vector-effect: non-scaling-stroke; }
+.sam-radius { fill: var(--info); fill-opacity: 0.04; stroke: var(--info); stroke-opacity: 0.5; stroke-width: 1.5px; stroke-dasharray: 6 6; vector-effect: non-scaling-stroke; }
+
+.sam-glyph { fill: none; stroke: var(--muted); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.sam-glyph-fill { fill: var(--map-land); }
+
+.sam-label {
+  font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+  font-size: 11px;
+  fill: var(--map-label);
+  paint-order: stroke;
+  stroke: var(--map-halo);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  letter-spacing: 0.02em;
+}
+.sam-label-water { font-style: italic; fill: var(--map-label-water); stroke: none; letter-spacing: 0.1em; }
+.sam-label-sea { font-size: 12px; letter-spacing: 0.35em; }
+
+.sam-me-dot { fill: var(--info); stroke: var(--surface); stroke-width: 2.5; }
+.sam-me-pulse { fill: var(--info); opacity: 0.3; transform-box: fill-box; transform-origin: center; animation: sam-pulse 2.2s ease-out infinite; }
+@keyframes sam-pulse { from { transform: scale(0.6); opacity: 0.45; } to { transform: scale(2.6); opacity: 0; } }
+
+.sam-pin { pointer-events: auto; cursor: pointer; outline: none; }
+.sam-pin-hit { fill: transparent; }
+.sam-pill, .sam-pointer { fill: var(--surface); stroke: var(--border); stroke-width: 1; }
+.sam-pill-text { font-family: inherit; font-size: 12px; font-weight: 500; fill: var(--text); }
+.sam-pill-strong { font-weight: 700; }
+.sam-anchor { fill: var(--muted); stroke: var(--surface); stroke-width: 1.5; }
+.sam-stem { stroke: var(--muted); stroke-width: 1; opacity: 0.6; }
+.sam-out-arrow { fill: var(--muted); }
+.sam-pin[data-tone='match'] .sam-pill,
+.sam-pin[data-tone='match'] .sam-pointer { fill: var(--accent-soft); stroke: color-mix(in srgb, var(--accent) 35%, transparent); }
+.sam-pin[data-tone='match'] .sam-pill-text { fill: var(--accent-hover); }
+.sam-pin[data-tone='match'] .sam-anchor,
+.sam-pin[data-tone='match'] .sam-out-arrow { fill: var(--accent); }
+.sam-pin[data-tone='match'] .sam-stem { stroke: var(--accent); }
+.sam-pin[data-selected='true'] .sam-pill,
+.sam-pin[data-selected='true'] .sam-pointer { fill: var(--accent); stroke: var(--accent); }
+.sam-pin[data-selected='true'] .sam-pill-text { fill: var(--on-accent); }
+.sam-pin[data-selected='true'] .sam-anchor { fill: var(--accent); }
+.sam-pin:focus-visible .sam-pill { stroke: var(--focus); stroke-width: 2.5; }
+.sam-glow { flood-color: var(--accent); }
+
+.sam-scale-line { stroke: var(--text); stroke-width: 1.5; fill: none; opacity: 0.7; }
+.sam-scale-text { font-size: 10px; font-weight: 600; fill: var(--text); opacity: 0.75; paint-order: stroke; stroke: var(--map-halo); stroke-width: 3px; }
+
+.sam-credit {
+  position: absolute; left: 8px; bottom: 4px;
+  font-size: 10px; line-height: 1.4; color: var(--muted); text-decoration: none;
+  padding: 0 4px; border-radius: 4px; background: var(--map-halo);
+}
+.sam-credit:focus-visible { outline: 2px solid var(--focus); }
+
+.sam-controls {
+  position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column;
+  border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: var(--shadow);
+}
+.sam-btn { width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: transparent; color: var(--text); font: 600 20px/1 system-ui, sans-serif; cursor: pointer; }
+.sam-btn + .sam-btn { border-top: 1px solid var(--border); }
+.sam-btn:hover { background: var(--surface-2); }
+.sam-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sam-me-pulse { animation: none; opacity: 0.2; transform: scale(1.8); }
+}
