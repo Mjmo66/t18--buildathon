@@ -821,3 +821,8 @@ button.chip-selected:hover { border-color: var(--accent-hover); }
 @media (max-width: 420px) {
   .text-size-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Landing: one-tap demo sign-in (presentation) */
+.landing-demo { display: flex; flex-direction: column; gap: 10px; padding-top: 18px; border-top: 1px solid var(--border); }
+.landing-demo h2 { margin: 0; font-size: 1rem; font-weight: 650; color: var(--muted); }
+.landing-demo-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
