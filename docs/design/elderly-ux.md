@@ -149,3 +149,65 @@ Remove the `prefers-color-scheme: dark` block and the dark theme. Reason: the da
 ## Owner rules to keep
 - No explanatory sentence under section headings. The visible helper lines above sit under **buttons**, only where a misunderstanding would cost something, and stay one short sentence.
 - Phone first at 360 px; no horizontal scroll at 18px base.
+
+---
+
+# Batch 2: Fable 5.2's independent review, merged
+
+Fable 5.2 (effort medium) reviewed f06c117 from code and the 18 screenshots, without seeing batch 1. It agrees with every P1 item: tiny grey monospace text, dense feed cards, Show all and "Doesn't fit", passkey wording, icon-only controls, the buried sign-up button, the ⌘K palette and collapsibles, light mode, and a shared tooltip that is never the only label. Below is only what it **adds** or where we **settled a difference**. Line numbers refer to 2c48e8b. I checked the ISO date, the duplicated charity lists and the `--border-strong` value myself.
+
+## Additions to P1
+
+- **B2.1 Control outlines are almost invisible.** `--border-strong #cdd4de` is 1.49:1 on white and 1.38:1 on `--bg`; borders of controls need 3:1. Set `--border-strong: #8a93a3` (3.1:1 on white) and give secondary buttons and fields a **2px** border. This is the main reason secondary buttons and inputs don't look like buttons yet. Dark mode (if kept anywhere): `--border-strong: #6f7a8e`.
+- **B2.2 Token values: use Fable's computed set** instead of mine in P1.1: `--muted: #4a5364` (7.7:1 on white, 7.2:1 on `--bg`), `--subtle: #5d6779`. Add `--tap: 48px` (minimum control height) and `--tap-primary: 56px` (the one main action per screen). Inactive tab colour becomes `--muted`. `:focus-visible` outline becomes 3px. Floor: **no text below `0.8rem`** (14.4px at the 18px root). About 15 declarations are below that today: `.nav-section`, `.micro-label`, `.meta`, `.count`, `.kbd`, `.tab`, `.badge`, `.v-chip`, `.v-meta-item`, `.v-fact-label`, `.v-section-label`, `.v-grid-head`, `.chat-header-sub`, `.bubble-time`.
+- **B2.3 One button system.** `user.css`, `charity.css`, `attendance.css` and `chat.css` each define their own buttons (`.v-btn`, `.ch-btn-*`, `.att-btn`, about 40 raw `<button>`s). Point them all at `<Button>` / `.btn`. Then the size change and the `hint` exist in one place. Delete `.btn-sm`, `.v-btn-sm` and the legacy `.button`. **Do this first in P1;** otherwise P1.1 and P1.8 only reach half the app.
+- **B2.4 Tooltip details for P1.8:**
+  - Hover rule inside `@media (hover: hover)`, 0.4 s delay, dismiss with Escape (WCAG 1.4.13), and the tooltip stays open while the pointer is over it.
+  - Remove the existing native `title=` props: `Header.jsx:27,30,36`, `Sidebar.jsx:69,75`, `Discover.jsx:73`, `Conversation.jsx:278`.
+  - New `IconButton` that **requires** a `label` and shows it as visible text by default (`iconOnly` is opt-in and still sets `aria-label`).
+  - **Disabled buttons:** use `aria-disabled` plus a `hint` that says why ("Choose volunteer or charity first", `Signup.jsx:114`). A real `disabled` button gets no hover or focus, so its tooltip never shows.
+  - Phone helper text: a `help` prop on `Button` renders the one visible line under it (`.btn-help`), linked with `aria-describedby`.
+  - Nav: an optional `hint` field in `links.js` entries.
+- **B2.5 Charity request detail** (`pages/charity/RequestDetail.jsx:140,174`) lists the same people twice ("Applicants" with Message, "Signups" with Accept/Decline/Attended/No-show). "Attended / No-show" also show before the shift has happened. Fix:
+  - **One "Volunteers" list.** Each row shows the name, a plain status sentence, and only the actions valid now: "Accept" / "Say no" while waiting, "Message" always, and "Came" / "Didn't come" only from the shift start time.
+  - On the shift day, the single primary button at the top is **"Show check-in code"**.
+  - "We have enough volunteers" (was "Mark filled") and "Cancel this request" (was "Close request") move to the bottom, apart from the rest, with the destructive one last.
+- **B2.6 Bug: raw ISO date.** `pages/user/RequestDetail.jsx:135` prints `until 2027-01-24`. Format it like the other dates ("until 24 January 2027").
+- **B2.7 Sign-in: two equal buttons.** "Sign in with Face ID or fingerprint" (primary) and "Sign in with email and password" (secondary, bordered, same size), both 56px. The password choice is a small text link today. Add a **"Show"** toggle on the password field. There is **no "Forgot password?"** link: add one (Supabase `resetPasswordForEmail`) or say in the demo that it's missing. We keep Face ID as the first button because it is the demo highlight; Fable would default to password, so this is a judgement call for the owner.
+- **B2.8 Landing feature tiles look like buttons but do nothing** (`Home.jsx`). Replace the four tiles with one plain sentence under the headline, "Find local volunteering that fits your week." That replaces my P1.9 rewording of the tiles.
+- **B2.9 Remove "Verify me"** (`user/RequestDetail.jsx:189-193`, `Profile.jsx:57`) and the Verification card from the main path (it's a demo function). Remove verified ticks that have no words: show either "Verified charity" in words or nothing (`Discover.jsx:21`, `Profile.jsx:39`, charity `RequestDetail.jsx:148`).
+
+## Additions to P2
+
+- **Wording table** (adds to P2.2):
+
+  | Now | Use |
+  |---|---|
+  | Accepted | Confirmed |
+  | No-show | Did not come |
+  | Decline | Say no |
+  | Mark filled | We have enough volunteers |
+  | Close request | Cancel this request |
+  | Show check-in QR | Show check-in code |
+  | New request | Ask for volunteers |
+  | Overview | Home |
+  | 2 h · 1 vol · 2/12 | 2 hours · 1 volunteer · 2 of 12 places |
+
+  If "Post a new request" (P1.7) and "Ask for volunteers" clash, use **"Ask for volunteers"** everywhere.
+- **Request detail, volunteer side:** replace the shift `<select>` with big radio rows. "Message charity" becomes **"Ask the charity a question"** with a speech-bubble icon, not a lock (`:186`). The sticky button names the date: "Sign up for Thu 19 Nov, 2:00 pm". After signing up, show a full panel with a **"Go to My shifts"** button, not a small inline line (`:183`).
+- **Feed:** drop the `opacity: .62` dimming on other requests (about 2.6:1 contrast, and it looks disabled). If they stay behind "Show all shifts", give each one a plain amber reason line instead. Preferences are reached from Profile through a labelled button, "Change what I'm shown".
+- **Preferences:** also remove the hidden shortcuts that toggle a whole row or column when you tap a day or column header (`Preferences.jsx:92,117`), the "Weekday evenings" preset and the haptic `tick()`. Make **"Any time" a big toggle that is on by default**; when it's off, show the day rows. Physical level, experience and interests go into an optional last section, "Anything else?". "Skip" → "Skip for now", placed at the bottom. *Settled:* numbered sections on one page for the demo. The one-question-per-screen wizard Fable suggests is P3.
+- **Chat:** the back button reads "‹ Messages" (in words), and Send is a text button (`Conversation.jsx:260,355`). Remove the character counter (`:353`) and the monospace timestamps. Reword "Waiting for their key…" (`:348`) and `NO_PEER_KEY_MESSAGE` to "You can message once they have opened Kindred."
+- **Scanner:** remove the torch button and the extra overlays (`ScanCheckin.jsx:160`). The close button is the word "Close", not an X (`MyShifts.jsx:140`). "Enter code instead" becomes a real secondary button (`ScanCheckin.jsx:186`).
+- **Links that act as buttons:** `.link-button` and `.att-link` become secondary buttons. `.back-link` (14px grey) becomes 17px in `--accent`, 48px tall, worded "Back to all requests".
+- **Charity Requests:** replace the Open / Filled / Closed tabs with the open requests plus one link, "See finished requests".
+- **New request form:** − / + steppers for duration and volunteers. Show "Experience notes" only when "Some experience" is chosen.
+- **Remove** the sidebar role label ("CHARITY" / "VOLUNTEER") and `.space-badge`.
+
+## Differences settled
+- **Distance unit:** I said miles, Fable kept km. **Use miles** ("0.6 miles away", "10 minutes' walk" when walking). Older UK users think in miles. The stored value stays in km; only the label converts.
+- **Time format:** both say 12-hour ("2:00 pm"). Fable flags it as an assumption to confirm with the owner; I think it's right for this audience.
+- **Profile stats:** both drop points and locked badges. Fable would even cut the stat grid down to one line, "3 hours volunteered · 1 shift". Agreed.
+
+## What neither review verified
+Nothing was run in a browser. These screens have no screenshots and were judged from code only: sign-up, charity details, a chat conversation, the key sheet, the QR scanner and the check-in screen, the charity QR card, the lower half of Preferences, and the empty and error states. Also untested: 200% zoom, the OS "larger text" setting and screen readers.
