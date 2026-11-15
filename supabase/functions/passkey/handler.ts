@@ -182,7 +182,7 @@ export function createHandler(store: Store, wa: WebAuthn, cfg: Config) {
       userID: enc.encode(userId),
       attestationType: 'none',
       excludeCredentials: exclude.map((c) => ({ id: c.id, transports: c.transports })),
-      authenticatorSelection: { residentKey: 'required', requireResidentKey: true, userVerification: 'preferred' },
+      authenticatorSelection: { residentKey: 'required', requireResidentKey: true, userVerification: 'required' },
     });
     const challengeId = await store.saveChallenge({
       challenge: options.challenge,
@@ -205,7 +205,7 @@ export function createHandler(store: Store, wa: WebAuthn, cfg: Config) {
         expectedChallenge: ch.challenge,
         expectedOrigin: cfg.origins,
         expectedRPID: cfg.rpIDs,
-        requireUserVerification: false,
+        requireUserVerification: true,
       });
     } catch {
       throw new HttpError(400, 'Passkey could not be verified');
@@ -253,16 +253,12 @@ export function createHandler(store: Store, wa: WebAuthn, cfg: Config) {
   }
 
   async function loginOptions(req: Request, body: Record<string, unknown>) {
-    let allow: CredentialRow[] = [];
-    if (typeof body.email === 'string' && body.email.trim()) {
-      const userId = await store.userIdByEmail(body.email.trim().toLowerCase());
-      if (userId) allow = await store.credentialsOfUser(userId);
-      // Unknown email or no passkeys: fall back to a discoverable login rather than leaking
-      // whether the address has an account.
-    }
+    // Always a discoverable login: returning credential ids would reveal whether an email has an account.
+    void body;
+    const allow: CredentialRow[] = [];
     const options = await wa.generateAuthenticationOptions({
       rpID: rpIdFor(req, cfg),
-      userVerification: 'preferred',
+      userVerification: 'required',
       allowCredentials: allow.map((c) => ({ id: c.id, transports: c.transports })),
     });
     const challengeId = await store.saveChallenge({
@@ -296,7 +292,7 @@ export function createHandler(store: Store, wa: WebAuthn, cfg: Config) {
           counter: Number(cred.counter),
           transports: cred.transports,
         },
-        requireUserVerification: false,
+        requireUserVerification: true,
       });
     } catch {
       throw new HttpError(400, 'Passkey could not be verified');

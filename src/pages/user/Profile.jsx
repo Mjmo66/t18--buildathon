@@ -30,7 +30,7 @@ export default function Profile() {
     <div className="v-page">
       <div className="v-field" style={{ gap: 4 }}>
         <h1>{profile.display_name}</h1>
-        {profile.email && <span className="v-muted v-small">{profile.email}</span>}
+        {user?.email && <span className="v-muted v-small">{user.email}</span>}
       </div>
 
       <WarningsBanner profile={profile} />

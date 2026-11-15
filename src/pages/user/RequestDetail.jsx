@@ -66,7 +66,7 @@ export default function RequestDetail() {
     if (!selected) return;
     setBusy('signup'); setError(null); setNotice(null);
     const { error: err } = await supabase.from('signups').insert({
-      request_id: request.id, volunteer_id: user.id, shift_at: selected, status: 'applied',
+      request_id: request.id, volunteer_id: user.id, shift_at: selected,
     });
     setBusy(null);
     if (err) {
