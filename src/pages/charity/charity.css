@@ -322,7 +322,7 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
 /* − value + stepper */
 .ch-stepper { display: flex; align-items: center; gap: 10px; }
 .ch-stepper .btn.ch-stepper-btn { min-width: var(--tap-primary); min-height: var(--tap-primary); padding: 0 12px; font-size: 1.6rem; line-height: 1; }
-.ch-stepper-value { flex: 1; min-width: 0; text-align: center; font-size: 1.1rem; font-weight: 700; }
+.ch-stepper-value { flex: 1; min-width: 0; text-align: center; font-size: 1.1rem; font-weight: 700; white-space: nowrap; }
 
 /* "Post this request": sticky above the phone tab bar, in the flow on desktop */
 @media (max-width: 899px) {
@@ -341,5 +341,10 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
 }
 
 @media (max-width: 420px) {
+  .ch-grid2 { grid-template-columns: minmax(0, 1fr); }
+}
+/* Same inside the phone frame on a wide screen (iPad): follow the form's width, not the window's. */
+.ch-form { container-type: inline-size; }
+@container (max-width: 30rem) {
   .ch-grid2 { grid-template-columns: minmax(0, 1fr); }
 }
