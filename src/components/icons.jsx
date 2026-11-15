@@ -2,6 +2,7 @@
 import {
   Sparkles, CalendarCheck, User, MessageCircle, LayoutDashboard, ClipboardList, Building2,
   SlidersHorizontal, Plus, House, Search, Calendar, HeartHandshake, QrCode, Star, LogOut, List, Award, Settings,
+  LayoutGrid, Heart, UserRound, ArrowLeft,
 } from 'lucide-react';
 
 const icons = {
@@ -24,6 +25,10 @@ const icons = {
   plus: Plus,
   logout: LogOut,
   settings: Settings,
+  board: LayoutGrid,
+  thanks: Heart,
+  profile: UserRound,
+  back: ArrowLeft,
 };
 
 export function Icon({ name, size = 20, strokeWidth = 1.75 }) {
