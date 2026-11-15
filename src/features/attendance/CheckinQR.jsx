@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
+import { Maximize2 } from 'lucide-react';
 import { formatShift, shortCode } from './shared';
 import './attendance.css';
 
@@ -32,7 +33,7 @@ export function CheckinQR({ request }) {
       </div>
       <div className="att-qr-title">{request.title}</div>
       {shift && <div className="att-muted">{shift}</div>}
-      <div className="att-qr-code" aria-label="Manual check-in code">Code {code}</div>
+      <div className="att-qr-code" aria-label="Manual check-in code"><span className="micro-label">Code</span> {code}</div>
     </>
   );
 
@@ -40,6 +41,7 @@ export function CheckinQR({ request }) {
     <div className="att-card att-qr">
       {body(false)}
       <button type="button" className="att-btn att-btn-primary att-block" onClick={() => setFullScreen(true)}>
+        <Maximize2 size={18} strokeWidth={1.75} aria-hidden="true" />
         Show full screen
       </button>
       {fullScreen && createPortal(

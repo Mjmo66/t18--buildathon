@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { CalendarClock, Plus, Users } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { CharityGate, Empty, ErrorNote, Loading, StatusPill } from './components.jsx';
@@ -30,9 +31,11 @@ function List() {
 
   return (
     <section className="ch-page">
-      <header className="ch-head">
+      <header className="page-head">
         <h1>Requests</h1>
-        <Link className="button" to="/charity/requests/new">+ New request</Link>
+        <Link className="btn btn-primary" to="/charity/requests/new">
+          <Plus size={18} strokeWidth={2} aria-hidden="true" />New request
+        </Link>
       </header>
 
       <div className="ch-tabs" role="tablist" aria-label="Status">
@@ -74,11 +77,15 @@ function List() {
                   <div className="ch-muted ch-small">
                     {labelOf(CATEGORIES, r.category)} · {scheduleSummary(r)}
                   </div>
-                  <div className="ch-row ch-small">
-                    <span>{next ? `Next: ${fmtShift(next)}` : 'No upcoming shifts'}</span>
-                  </div>
-                  <div className="ch-row ch-small">
-                    <span>👥 {accepted}/{r.slots} confirmed</span>
+                  <div className="ch-row ch-meta">
+                    <span className="ch-meta-item">
+                      <CalendarClock size={14} strokeWidth={1.75} aria-hidden="true" />
+                      {next ? fmtShift(next) : 'No upcoming shifts'}
+                    </span>
+                    <span className="ch-meta-item">
+                      <Users size={14} strokeWidth={1.75} aria-hidden="true" />
+                      {accepted}/{r.slots}
+                    </span>
                     {pending > 0 && <span className="ch-badge ch-badge-warn">{pending} pending</span>}
                   </div>
                 </Link>

@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { format, isSameDay } from 'date-fns';
+import { ChevronLeft, Hourglass, Lock, SendHorizontal, TriangleAlert } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import {
@@ -256,7 +257,7 @@ export default function Conversation() {
   return (
     <div className="chat-screen" ref={screenRef}>
       <header className="chat-header">
-        <Link to="/chat" className="chat-back" aria-label="Back to chats">‹</Link>
+        <Link to="/chat" className="chat-back" aria-label="Back to chats"><ChevronLeft size={24} strokeWidth={2} /></Link>
         {conv ? (
           <>
             <Avatar name={conv.peerName} size={38} />
@@ -274,14 +275,10 @@ export default function Conversation() {
           onClick={openSheet}
           disabled={!conv}
           aria-haspopup="dialog"
+          title="End-to-end encrypted: compare keys"
         >
-          <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-            <path
-              fill="currentColor"
-              d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm-3 8V7a3 3 0 1 1 6 0v3H9Z"
-            />
-          </svg>
-          <span>End-to-end encrypted</span>
+          <Lock size={14} strokeWidth={2} aria-hidden="true" />
+          <span>Encrypted</span>
         </button>
       </header>
 
@@ -294,7 +291,7 @@ export default function Conversation() {
         )}
         {!loadError && !messagesLoaded && <p className="chat-muted chat-center">Loading messages…</p>}
         {messagesLoaded && messages.length === 0 && !noPeerKey && (
-          <p className="chat-muted chat-center">No messages yet. Say hello 👋</p>
+          <p className="chat-muted chat-center">No messages yet.</p>
         )}
         {messages.map((m, i) => {
           const date = new Date(m.createdAt);
@@ -306,7 +303,7 @@ export default function Conversation() {
               <div className={`bubble-row ${m.mine ? 'mine' : 'theirs'}`}>
                 <div className={`bubble ${m.undecryptable ? 'bubble-broken' : ''}`}>
                   {m.undecryptable ? (
-                    <span className="bubble-text">⚠︎ {UNDECRYPTABLE_TEXT}</span>
+                    <span className="bubble-text"><TriangleAlert size={14} strokeWidth={2} aria-hidden="true" className="bubble-warn" /> {UNDECRYPTABLE_TEXT}</span>
                   ) : (
                     <span className="bubble-text">{m.text}</span>
                   )}
@@ -320,7 +317,7 @@ export default function Conversation() {
 
       {noPeerKey && (
         <div className="chat-notice" role="status">
-          <span aria-hidden="true">⏳</span>
+          <Hourglass size={18} strokeWidth={1.75} aria-hidden="true" />
           <span>{NO_PEER_KEY_MESSAGE}</span>
         </div>
       )}
@@ -356,9 +353,7 @@ export default function Conversation() {
           {remaining < 500 && <span className="chat-counter">{remaining}</span>}
         </div>
         <button type="submit" className="chat-send" disabled={!canSend} aria-label="Send">
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <path fill="currentColor" d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z" />
-          </svg>
+          <SendHorizontal size={20} strokeWidth={2} aria-hidden="true" />
         </button>
       </form>
 

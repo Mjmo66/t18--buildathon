@@ -1,15 +1,17 @@
 import { addMinutes, format } from 'date-fns';
+import { Award, Clock, Medal, Repeat, Sprout } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
+/** Badge catalogue; `icon` is a lucide-react component. */
 export const BADGES = [
-  { code: 'first_shift', label: 'First shift', icon: '🌱', progress: (p) => [p.shifts, 1, 'shift'] },
-  { code: 'five_hours', label: '5 hours', icon: '⏱️', progress: (p) => [p.hours, 5, 'h'] },
-  { code: 'twenty_hours', label: '20 hours', icon: '🏅', progress: (p) => [p.hours, 20, 'h'] },
-  { code: 'regular', label: 'Regular: 5 shifts', icon: '🔁', progress: (p) => [p.shifts, 5, 'shifts'] },
+  { code: 'first_shift', label: 'First shift', icon: Sprout, progress: (p) => [p.shifts, 1, 'shift'] },
+  { code: 'five_hours', label: '5 hours', icon: Clock, progress: (p) => [p.hours, 5, 'h'] },
+  { code: 'twenty_hours', label: '20 hours', icon: Medal, progress: (p) => [p.hours, 20, 'h'] },
+  { code: 'regular', label: 'Regular: 5 shifts', icon: Repeat, progress: (p) => [p.shifts, 5, 'shifts'] },
 ];
 
 export const badgeByCode = (code) =>
-  BADGES.find((b) => b.code === code) ?? { code, label: code, icon: '⭐' };
+  BADGES.find((b) => b.code === code) ?? { code, label: code, icon: Award };
 
 export const POINTS_PER_HOUR = 10;
 export const MAX_WARNINGS = 3;

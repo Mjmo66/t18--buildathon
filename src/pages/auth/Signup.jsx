@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Building2, HandHeart } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { signUpWithPasskey } from '../../lib/auth/passkey';
@@ -93,8 +94,8 @@ export default function Signup() {
       <Card>
         <form className="stack" onSubmit={showPassword ? handlePassword : handlePasskey}>
           <div className="role-picker" role="group" aria-label="I am">
-            <Chip selected={role === 'volunteer'} onClick={() => pickRole('volunteer')}>🙋 Volunteer</Chip>
-            <Chip selected={role === 'charity'} onClick={() => pickRole('charity')}>🏛️ Charity</Chip>
+            <Chip selected={role === 'volunteer'} onClick={() => pickRole('volunteer')}><HandHeart size={18} strokeWidth={1.75} aria-hidden="true" /> Volunteer</Chip>
+            <Chip selected={role === 'charity'} onClick={() => pickRole('charity')}><Building2 size={18} strokeWidth={1.75} aria-hidden="true" /> Charity</Chip>
           </div>
           {error && <Alert tone="danger">{error}</Alert>}
           <Field

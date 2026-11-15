@@ -1,3 +1,4 @@
+import { LocateFixed } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
@@ -125,7 +126,7 @@ export default function CharityDetails() {
             <span className="field-label">Location</span>
             <div className="row-wrap">
               <Button variant="secondary" size="sm" loading={locating} onClick={useMyLocation}>
-                📍 Use my location
+                <LocateFixed size={16} strokeWidth={1.75} aria-hidden="true" /> Use my location
               </Button>
               {coords && !placeId && <Badge tone="success">Location set</Badge>}
             </div>

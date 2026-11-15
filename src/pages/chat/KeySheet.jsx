@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Lock } from 'lucide-react';
 import { publicKeyFingerprint } from '../../lib/chat';
 import Avatar from './Avatar.jsx';
 
@@ -53,13 +54,13 @@ export default function KeySheet({ open, onClose, myName, myKey, peerName, peerK
       >
         <div className="sheet-grabber" aria-hidden="true" />
         <div className="sheet-head">
-          <span className="sheet-lock" aria-hidden="true">🔒</span>
+          <span className="sheet-lock" aria-hidden="true"><Lock size={20} strokeWidth={2} /></span>
           <h2 id="key-sheet-title">End-to-end encrypted</h2>
         </div>
         <p className="sheet-lede">Check in person that both phones show the same codes.</p>
         <Fingerprint label="You" name={myName} publicKey={myKey} />
         <Fingerprint label={peerName} name={peerName} publicKey={peerKey} />
-        <button ref={closeRef} type="button" className="button sheet-close" onClick={onClose}>Done</button>
+        <button ref={closeRef} type="button" className="btn btn-primary btn-block sheet-close" onClick={onClose}>Done</button>
       </div>
     </div>
   );

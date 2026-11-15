@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { MessagesSquare } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { listConversations } from '../../lib/chat';
 import Avatar from './Avatar.jsx';
@@ -46,8 +47,7 @@ export default function ConversationList() {
     return (
       <div className="chat-page">
         <h1 className="chat-title">Chats</h1>
-        <p className="chat-muted">Sign in to see your chats.</p>
-        <Link className="button" to="/">Sign in</Link>
+                <Link className="button" to="/">Sign in</Link>
       </div>
     );
   }
@@ -66,10 +66,10 @@ export default function ConversationList() {
       {!conversations && !error && <p className="chat-muted">Loading…</p>}
 
       {conversations && conversations.length === 0 && (
-        <div className="chat-empty">
-          <span className="chat-empty-icon" aria-hidden="true">💬</span>
-          <p className="chat-empty-title">No chats yet</p>
-          <p className="chat-muted">Chats start when you sign up for a request or a volunteer contacts you.</p>
+        <div className="empty-state">
+          <div className="empty-icon" aria-hidden="true"><MessagesSquare size={22} strokeWidth={1.75} /></div>
+          <p className="empty-title">No chats yet</p>
+          <div className="empty-body">Chats start when you sign up for a request or a volunteer contacts you.</div>
         </div>
       )}
 

@@ -1,9 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { BadgeCheck, LogOut } from 'lucide-react';
 import { useAuth } from '../lib/auth/AuthContext.jsx';
 import { homePathFor } from './RequireAuth.jsx';
-import { Icon } from './icons.jsx';
-import { Badge } from './ui/index.js';
+import Logo from './brand/Logo.jsx';
 
+// Top bar: phones in the app, every size on public pages (desktop app pages use the sidebar).
 export default function Header({ space }) {
   const { user, profile, charity, signOut } = useAuth();
   const navigate = useNavigate();
@@ -15,9 +16,8 @@ export default function Header({ space }) {
 
   return (
     <header className="header">
-      <Link to={user && profile ? homePathFor(profile, charity) : '/'} className="logo">
-        <span className="logo-mark" aria-hidden="true">K</span>
-        Kindred
+      <Link to={user && profile ? homePathFor(profile, charity) : '/'} className="logo" aria-label="Kindred home">
+        <Logo size={28} />
       </Link>
       {space && <span className="space-badge">{space}</span>}
       <div className="header-actions">
@@ -25,16 +25,16 @@ export default function Header({ space }) {
           <>
             {profile && (
               <span className="header-user" title={profile.display_name}>
-                {profile.display_name}
+                <span className="header-user-name">{profile.display_name}</span>
                 {profile.verified && (
-                  <Badge tone="success" className="header-verified" title="Verified">
-                    ✓
-                  </Badge>
+                  <span className="header-verified" title="Verified">
+                    <BadgeCheck size={16} strokeWidth={2} aria-label="Verified" />
+                  </span>
                 )}
               </span>
             )}
             <button type="button" className="icon-button" onClick={handleSignOut} aria-label="Sign out" title="Sign out">
-              <Icon name="logout" size={20} />
+              <LogOut size={18} strokeWidth={1.75} />
             </button>
           </>
         ) : (
