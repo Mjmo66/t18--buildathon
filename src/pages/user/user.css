@@ -28,7 +28,12 @@
 .v-list { display: flex; flex-direction: column; gap: 14px; }
 .v-loading { display: flex; justify-content: center; padding: 40px 0; }
 
-/* Feed and shift cards */
+/* Feed and shift cards. A feed card is one link: the whole card opens the shift; the chevron is the cue. */
+.v-card-link { flex-direction: row; align-items: center; gap: 12px; color: var(--text); text-decoration: none; transition: border-color 0.15s; }
+.v-card-link:hover { border-color: var(--accent); }
+.v-card-link:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.v-card-link .v-request-head { flex: 1; gap: 4px; }
+.v-chevron { flex-shrink: 0; color: var(--muted); }
 .v-request-head { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .v-page .v-request-title { margin: 0; font-size: 1.25rem; line-height: 1.3; font-weight: 700; overflow-wrap: anywhere; }
 .v-request-org { margin: 0; color: var(--muted); font-size: 1rem; }

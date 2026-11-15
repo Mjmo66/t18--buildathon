@@ -8,7 +8,7 @@ export function Loading() {
 }
 
 export const LABELS = {
-  physical: { light: 'Light work: mostly sitting or standing', moderate: 'Some walking and bending', heavy: 'Heavy work: lots of lifting' },
+  physical: { light: 'Light work', moderate: 'Some bending', heavy: 'Heavy lifting' },
   physicalShort: { light: 'Light work', moderate: 'Some walking and lifting', heavy: 'Heavy work too' },
   experience: { none: 'No experience needed', some: 'Some experience helps', experienced: 'For experienced volunteers' },
   experienceMine: { none: "I'm new to this", some: 'I have some experience', experienced: "I'm experienced" },
@@ -22,10 +22,10 @@ export const LABELS = {
 
 /** Status of a signup in plain words, with a badge tone. */
 export const SIGNUP_STATUS = {
-  applied: { label: 'Waiting for the charity', tone: 'warning' },
-  accepted: { label: 'Confirmed: see you there', tone: 'success' },
-  attended: { label: 'You came: thank you', tone: 'success' },
-  no_show: { label: 'Did not come', tone: 'danger' },
+  applied: { label: 'Waiting for reply', tone: 'warning' },
+  accepted: { label: 'Confirmed', tone: 'success' },
+  attended: { label: 'Done', tone: 'success' },
+  no_show: { label: 'Missed', tone: 'danger' },
   declined: { label: 'The charity said no', tone: 'neutral' },
   cancelled: { label: 'Cancelled', tone: 'neutral' },
 };

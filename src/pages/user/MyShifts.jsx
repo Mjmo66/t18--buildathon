@@ -7,28 +7,29 @@ import { ScanCheckin } from '../../features/attendance/index.jsx';
 import { Alert, Badge, Button, ConfirmDialog, EmptyState, useToast } from '../../components/ui/index.js';
 import { formatDayTime, formatShiftRange } from '../../components/format.js';
 import { SIGNUP_SELECT } from './data.js';
-import { CalendarX2, MapPin, ScanLine, Search } from 'lucide-react';
+import { CalendarX2, ScanLine, Search } from 'lucide-react';
 import { Loading, SIGNUP_STATUS } from './ui.jsx';
 
-const CHECK_IN_HELP = 'Scan the code the organiser shows you when you get there.';
+const CHECK_IN_HELP = "Scan the organiser's code when you arrive.";
 const CANCEL_HINT = "Let the charity know you can't come. You can sign up again later.";
+
+/** "East Sands" from "East Sands, St Andrews KY16 8LJ". */
+const shortPlace = (address) => address?.split(',')[0]?.trim() || null;
 
 function ShiftCard({ s, children }) {
   const r = s.requests;
   const st = SIGNUP_STATUS[s.status] ?? { label: s.status, tone: 'neutral' };
+  const line = [
+    formatShiftRange(s.shift_at, s.hours_credited ?? r?.duration_hours).replace(', ', ' · '),
+    shortPlace(r?.address),
+  ].filter(Boolean).join(' · ');
   return (
     <article className="v-card v-shift">
       <Badge tone={st.tone}>{st.label}</Badge>
-      <div className="v-request-head">
-        <h3 className="v-request-title">
-          <Link to={`/user/requests/${s.request_id}`} className="v-title-link">{r?.title ?? 'Shift'}</Link>
-        </h3>
-        {r?.charities?.org_name && <p className="v-request-org">{r.charities.org_name}</p>}
-      </div>
-      <p className="v-request-line">{formatShiftRange(s.shift_at, s.hours_credited ?? r?.duration_hours)}</p>
-      {r?.address && (
-        <p className="v-request-line v-with-icon"><MapPin size={20} aria-hidden="true" />{r.address}</p>
-      )}
+      <h3 className="v-request-title">
+        <Link to={`/user/requests/${s.request_id}`} className="v-title-link">{r?.title ?? 'Shift'}</Link>
+      </h3>
+      <p className="v-request-line">{line}</p>
       {children}
     </article>
   );
@@ -89,7 +90,7 @@ export default function MyShifts() {
 
   const checkInButton = (
     <Button size="lg" block icon={<ScanLine size={22} aria-hidden="true" />} help={CHECK_IN_HELP} onClick={() => setScanning(true)}>
-      I've arrived: check in
+      Check in
     </Button>
   );
 
@@ -125,7 +126,7 @@ export default function MyShifts() {
       </section>
 
       <section className="v-list" aria-labelledby="v-done">
-        <h2 id="v-done" className="v-section-title">Done</h2>
+        <h2 id="v-done" className="v-section-title">Past</h2>
         {past.length === 0 && <p className="v-muted">No finished shifts yet.</p>}
         {past.map((s) => <ShiftCard key={s.id} s={s} />)}
       </section>

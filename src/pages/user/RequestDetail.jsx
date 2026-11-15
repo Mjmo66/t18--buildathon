@@ -5,10 +5,10 @@ import { supabase } from '../../lib/supabase';
 import { getOrCreateConversation } from '../../lib/chat';
 import { matchRequest, nextShifts } from '../../features/matching/index.js';
 import { Alert, Badge, Button, ConfirmDialog, useToast } from '../../components/ui/index.js';
-import { formatDayTime, formatDistance, formatLongDate, formatShiftRange } from '../../components/format.js';
+import { formatDayTime, formatLongDate, formatShiftRange } from '../../components/format.js';
 import { REQUEST_SELECT, usePrefs } from './data.js';
 import {
-  ArrowLeft, CalendarDays, CalendarCheck, Check, CircleCheck, Dumbbell, GraduationCap, MapPin, MessageCircle, Navigation,
+  ArrowLeft, CalendarDays, CalendarCheck, Check, CircleCheck, Dumbbell, GraduationCap, MapPin, MessageCircle, Navigation, Repeat,
 } from 'lucide-react';
 import { LABELS, Loading, SIGNUP_STATUS } from './ui.jsx';
 
@@ -146,10 +146,10 @@ export default function RequestDetail() {
       <header className="v-detail-head">
         <h1>{request.title}</h1>
         <p className="v-detail-org">
-          {request.charities?.org_name ?? 'Charity'}
           {request.charities?.verified_at && (
-            <span className="v-verified"><Check size={18} strokeWidth={2.5} aria-hidden="true" />Checked charity</span>
+            <span className="v-verified"><Check size={18} strokeWidth={2.5} aria-hidden="true" /><span className="sr-only">Verified charity: </span></span>
           )}
+          {request.charities?.org_name ?? 'Charity'}
         </p>
       </header>
 
@@ -167,10 +167,10 @@ export default function RequestDetail() {
       {justSignedUp && (
         <section className="v-success" ref={successRef} role="status">
           <h2><CircleCheck size={26} strokeWidth={2} aria-hidden="true" />You're signed up</h2>
-          <p>{formatShiftRange(justSignedUp, request.duration_hours)}. The charity will confirm by message.</p>
+          <p>{formatShiftRange(justSignedUp, request.duration_hours)}. They'll confirm by message.</p>
           <Button to="/user/shifts" size="lg" block icon={<CalendarCheck size={22} aria-hidden="true" />}>Go to My shifts</Button>
           {justSignup && (
-            <Button variant="secondary" block help={CANCEL_HELP} onClick={() => setCancelling(justSignup)}>
+            <Button variant="secondary" block hint={CANCEL_HELP} onClick={() => setCancelling(justSignup)}>
               Cancel my place
             </Button>
           )}
@@ -181,19 +181,18 @@ export default function RequestDetail() {
         <ul className="v-facts">
           <Fact icon={CalendarDays}>
             <span>{first ? formatShiftRange(first, request.duration_hours) : 'No dates coming up'}</span>
-            {recurring && (
-              <span className="v-fact-sub">
+          </Fact>
+          {recurring && (
+            <Fact icon={Repeat}>
+              <span>
                 {LABELS.recurrence[request.recurrence]}
                 {request.ends_on ? ` until ${formatLongDate(request.ends_on)}` : ''}
               </span>
-            )}
-          </Fact>
+            </Fact>
+          )}
           {request.address && (
             <Fact icon={MapPin}>
-              <span>
-                {request.address}
-                {match?.distanceKm != null && ` (${formatDistance(match.distanceKm, prefs?.transport)})`}
-              </span>
+              <span>{request.address}</span>
               <Button href={mapsUrl(request)} target="_blank" rel="noopener noreferrer" variant="secondary"
                 icon={<Navigation size={20} aria-hidden="true" />} hint="Open the address in your maps app.">
                 Open in Maps
@@ -201,12 +200,9 @@ export default function RequestDetail() {
             </Fact>
           )}
           {request.physical_level && <Fact icon={Dumbbell}><span>{LABELS.physical[request.physical_level]}</span></Fact>}
-          <Fact icon={GraduationCap}>
-            <span>
-              {LABELS.experience[request.experience ?? 'none']}
-              {request.experience_notes ? `: ${request.experience_notes}` : ''}
-            </span>
-          </Fact>
+          {!recurring && request.experience && request.experience !== 'none' && (
+            <Fact icon={GraduationCap}><span>{LABELS.experience[request.experience]}</span></Fact>
+          )}
         </ul>
       </section>
 
@@ -249,7 +245,7 @@ export default function RequestDetail() {
       {user && (
         <Button variant="secondary" block loading={busy === 'chat'} onClick={message}
           icon={<MessageCircle size={20} aria-hidden="true" />} hint="Open a private chat with the charity.">
-          {busy === 'chat' ? 'Opening…' : 'Ask the charity a question'}
+          {busy === 'chat' ? 'Opening…' : 'Ask a question'}
         </Button>
       )}
 
@@ -258,8 +254,8 @@ export default function RequestDetail() {
       {!justSignedUp && (
         <div className="v-action-bar">
           <Button size="lg" block onClick={signUp} loading={busy === 'signup'}
-            disabled={!!blockReason || !selected} hint={blockReason ?? undefined}
-            help={blockReason ?? SIGN_UP_HELP}>
+            disabled={!!blockReason || !selected} hint={blockReason ?? SIGN_UP_HELP}
+            help={blockReason ?? undefined}>
             {busy === 'signup' ? 'Signing you up…' : selected && !blockReason ? `Sign up for ${formatDayTime(selected).replace(/^(Today|Tomorrow)/, (w) => w.toLowerCase())}` : 'Sign up to help'}
           </Button>
         </div>

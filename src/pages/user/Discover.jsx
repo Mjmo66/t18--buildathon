@@ -1,23 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { rankRequests } from '../../features/matching/index.js';
-import { Alert, Badge, Button, EmptyState } from '../../components/ui/index.js';
+import { Alert, Button, EmptyState } from '../../components/ui/index.js';
 import { formatDayTime, formatDistance, formatDuration } from '../../components/format.js';
 import { REQUEST_SELECT, skippedPrefs, usePrefs } from './data.js';
-import { CalendarClock, Clock, MapPin, SearchX } from 'lucide-react';
+import { CalendarClock, ChevronRight, Clock, MapPin, SearchX } from 'lucide-react';
 import { Loading } from './ui.jsx';
-
-/** The one green reason worth showing on a card: the time fit first, then interest, then easy work. */
-function topReason(reasons) {
-  const order = [/^Fits your /, /^You like /, /^No experience needed$/, /^Light work$/];
-  for (const re of order) {
-    const hit = reasons.find((r) => re.test(r));
-    if (hit) return hit;
-  }
-  return null;
-}
 
 /** Why a shift is outside the volunteer's choices, in plain words (one line). */
 function plainBlocker(blockers) {
@@ -31,27 +21,22 @@ function plainBlocker(blockers) {
 }
 
 export function RequestCard({ request, match, transport, other = false }) {
-  const reason = other ? null : topReason(match.reasons);
   const where = match.distanceKm != null ? formatDistance(match.distanceKm, transport) : request.address;
   const line = [
-    match.shiftAt ? formatDayTime(match.shiftAt) : 'No dates yet',
+    match.shiftAt ? formatDayTime(match.shiftAt).replace(', ', ' ') : 'No dates yet',
     request.duration_hours ? formatDuration(request.duration_hours) : null,
     where,
   ].filter(Boolean).join(' · ');
   return (
-    <article className="v-card v-request">
+    <Link to={`/user/requests/${request.id}`} className="v-card v-request v-card-link">
       <div className="v-request-head">
         <h2 className="v-request-title">{request.title}</h2>
         <p className="v-request-org">{request.charities?.org_name ?? 'Charity'}</p>
+        <p className="v-request-line">{line}</p>
+        {other && match.blockers.length > 0 && <p className="v-request-why">{plainBlocker(match.blockers)}</p>}
       </div>
-      <p className="v-request-line">{line}</p>
-      {reason && <Badge tone="success">{reason}</Badge>}
-      {other && match.blockers.length > 0 && <p className="v-request-why">{plainBlocker(match.blockers)}</p>}
-      <Button to={`/user/requests/${request.id}`} variant="secondary" block
-        hint="See the time, the place and what the shift involves.">
-        See details
-      </Button>
-    </article>
+      <ChevronRight className="v-chevron" size={24} aria-hidden="true" />
+    </Link>
   );
 }
 
