@@ -17,17 +17,6 @@ import OpportunitySheet from './OpportunitySheet.jsx';
 import photo from '../../assets/community-volunteers.jpg';
 import './board.css';
 
-/** Why a shift is outside the volunteer's choices, in plain words (one line). */
-function plainBlocker(blockers) {
-  const b = blockers[0] ?? '';
-  if (/km away/.test(b)) return 'Further than you want to travel';
-  if (/^Not free|^Outside/.test(b)) return 'Not in your free times';
-  if (/physical work$/.test(b)) return 'Heavier work than you chose';
-  if (/experience/i.test(b)) return b;
-  if (b === 'Filled') return 'Has enough volunteers';
-  return b;
-}
-
 /** Short pin text: "Sat 10am", "Today 2pm". */
 function pinLabel(shiftAt) {
   if (!shiftAt) return 'Open';
@@ -37,7 +26,7 @@ function pinLabel(shiftAt) {
 }
 
 /** One open request as a Lovable opportunity card: the card links to the request, the button opens the quick look. */
-export function RequestCard({ request, match, transport, other = false, selected = false, onMore }) {
+export function RequestCard({ request, match, transport, selected = false, onMore }) {
   const where = match.distanceKm != null ? formatDistance(match.distanceKm, transport) : request.address;
   const category = LABELS.category[request.category] ?? 'Volunteering';
   return (
@@ -57,7 +46,6 @@ export function RequestCard({ request, match, transport, other = false, selected
           {match.shiftAt && <span><Clock aria-hidden="true" />{formatTime(match.shiftAt)}</span>}
           {where && <span className="board-where"><MapPin aria-hidden="true" />{where}</span>}
         </div>
-        {other && match.blockers.length > 0 && <p className="board-why">{plainBlocker(match.blockers)}</p>}
       </article>
     </Link>
     {onMore && (
@@ -110,7 +98,6 @@ export default function Discover() {
   const [requests, setRequests] = useState(null);
   const [badges, setBadges] = useState(0);
   const [error, setError] = useState(null);
-  const [showAll, setShowAll] = useState(false);
   const [sheetItem, setSheetItem] = useState(null);
   const closeSheet = useCallback(() => setSheetItem(null), []);
 
@@ -135,15 +122,14 @@ export default function Discover() {
 
   const ranked = useMemo(() => (requests ? rankRequests(prefs, requests) : []), [prefs, requests]);
   const matching = ranked.filter((x) => x.match.eligible);
-  const other = ranked.filter((x) => !x.match.eligible && x.match.shiftAt);
   const transport = prefs?.transport;
   const [selectedId, setSelectedId] = useState(null);
-  const pins = useMemo(() => ranked.filter(({ match }) => match.eligible || (showAll && match.shiftAt))
+  const pins = useMemo(() => ranked.filter(({ match }) => match.eligible)
     .filter(({ request }) => request.lat != null && request.lng != null)
     .map(({ request, match }) => ({
       id: request.id, lat: request.lat, lng: request.lng,
       label: pinLabel(match.shiftAt), title: request.title, tone: match.eligible ? 'match' : 'other',
-    })), [ranked, showAll]);
+    })), [ranked]);
   const me = prefs?.lat != null && prefs?.lng != null ? { lat: prefs.lat, lng: prefs.lng } : null;
   const selectPin = (id) => {
     setSelectedId(id);
@@ -155,11 +141,6 @@ export default function Discover() {
 
   const firstName = (profile?.display_name ?? '').replace(/\s*\(demo\)\s*$/i, '').trim().split(/\s+/)[0];
 
-  const showAllButton = (
-    <Button variant="primary" block icon={<SearchX size={20} aria-hidden="true" />} onClick={() => setShowAll(true)}>
-      Show all shifts
-    </Button>
-  );
   const changeTimesButton = (
     <Button to="/user/preferences" variant="secondary" block icon={<CalendarClock size={20} aria-hidden="true" />}>
       Change my times
@@ -188,14 +169,6 @@ export default function Discover() {
           </div>
         ) : (
           <>
-            <div className="community-photo">
-              <img src={photo} alt="Volunteers packing food parcels" width={1536} height={1024} />
-              <div className="community-photo-text">
-                <span>St Andrews, Fife</span>
-                <h3>Small acts. Stronger communities.</h3>
-              </div>
-            </div>
-
             {!prefs && (
               <Link to="/user/preferences" className="points-card board-prefs">
                 <span className="points-card-icon" aria-hidden="true"><MapPin /></span>
@@ -207,6 +180,32 @@ export default function Discover() {
               </Link>
             )}
             {error && <Alert tone="danger" title="Could not load shifts">{error}</Alert>}
+
+            {/* Opportunities that match the volunteer's preferences come first, best fit at the top. */}
+            <div className="section-heading">
+              <h2>Community opportunities</h2>
+              {requests != null && <span>{matching.length} for you</span>}
+            </div>
+
+            {requests == null ? <Loading /> : (
+              <div className="board-list">
+                {matching.map(({ request, match }) => (
+                  <RequestCard key={request.id} request={request} match={match} transport={transport} selected={request.id === selectedId} onMore={setSheetItem} />
+                ))}
+
+                {matching.length === 0 && (
+                  requests.length === 0 ? (
+                    <EmptyState icon={<Clock size={26} aria-hidden="true" />} title="No shifts yet." />
+                  ) : (
+                    <EmptyState
+                      icon={<SearchX size={26} aria-hidden="true" />}
+                      title="No shifts match your choices yet."
+                      action={changeTimesButton}
+                    />
+                  )
+                )}
+              </div>
+            )}
 
             {requests != null && (pins.length > 0 || me) && (
               <div className="board-map">
@@ -223,48 +222,13 @@ export default function Discover() {
               </div>
             )}
 
-            <div className="section-heading">
-              <h2>Community opportunities</h2>
-              {requests != null && <span>{matching.length} open</span>}
-            </div>
-
-            {requests == null ? <Loading /> : (
-              <div className="board-list">
-                {matching.map(({ request, match }) => (
-                  <RequestCard key={request.id} request={request} match={match} transport={transport} selected={request.id === selectedId} onMore={setSheetItem} />
-                ))}
-
-                {matching.length === 0 && !showAll && (
-                  requests.length === 0 ? (
-                    <EmptyState icon={<Clock size={26} aria-hidden="true" />} title="No shifts yet." />
-                  ) : (
-                    <EmptyState
-                      icon={<SearchX size={26} aria-hidden="true" />}
-                      title="No shifts match your times yet."
-                      action={<>{other.length > 0 && showAllButton}{changeTimesButton}</>}
-                    />
-                  )
-                )}
-
-                {matching.length > 0 && !showAll && other.length > 0 && (
-                  <button type="button" className="board-more" onClick={() => setShowAll(true)}>
-                    Show all shifts
-                  </button>
-                )}
-
-                {showAll && other.length > 0 && (
-                  <>
-                    <div className="section-heading board-other-heading">
-                      <h2>Doesn’t fit your choices</h2>
-                      <span>{other.length}</span>
-                    </div>
-                    {other.map(({ request, match }) => (
-                      <RequestCard key={request.id} request={request} match={match} transport={transport} other selected={request.id === selectedId} onMore={setSheetItem} />
-                    ))}
-                  </>
-                )}
+            <div className="community-photo">
+              <img src={photo} alt="Volunteers packing food parcels" width={1536} height={1024} />
+              <div className="community-photo-text">
+                <span>St Andrews, Fife</span>
+                <h3>Small acts. Stronger communities.</h3>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>

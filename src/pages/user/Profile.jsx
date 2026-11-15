@@ -1,6 +1,6 @@
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { RewardsSummary, WarningsBanner } from '../../features/attendance/index.jsx';
-import { groupsFromAvailability } from '../../features/matching/index.js';
+import { SLOTS, WEEKDAYS, WEEKDAY_LABELS, isAvailabilityEmpty } from '../../features/matching/index.js';
 import { Button } from '../../components/ui/index.js';
 import SignOutButton from '../../components/SignOutButton.jsx';
 import TextSizeSetting from '../../components/TextSizeSetting.jsx';
@@ -11,9 +11,20 @@ import { useAvailability } from './availability.js';
 import { LABELS, Loading } from './ui.jsx';
 import './profile.css';
 
-const TIME_LABELS = {
-  weekdayMornings: 'Weekday mornings', weekdayAfternoons: 'Weekday afternoons', evenings: 'Evenings', weekends: 'Weekends',
-};
+const SLOT_TEXT = { morning: 'mornings', afternoon: 'afternoons', evening: 'evenings' };
+
+/** Free times day by day, days with the same times grouped: ["Mon, Wed: mornings, evenings", "Sat: afternoons"]. */
+function freeTimeLines(availability) {
+  if (isAvailabilityEmpty(availability)) return ['Any time'];
+  const groups = new Map();
+  for (const day of WEEKDAYS) {
+    const slots = SLOTS.filter((s) => (availability[day] ?? []).includes(s));
+    if (!slots.length) continue;
+    const key = slots.map((s) => SLOT_TEXT[s]).join(', ');
+    groups.set(key, [...(groups.get(key) ?? []), WEEKDAY_LABELS[day].slice(0, 3)]);
+  }
+  return [...groups].map(([times, days]) => `${days.join(', ')}: ${times}`);
+}
 
 const cleanName = (name) => (name ?? '').replace(/\s*\(demo\)\s*/i, ' ').trim();
 
@@ -63,8 +74,7 @@ export default function Profile() {
   const name = cleanName(profile.display_name);
   const place = prefs?.area || prefs?.address_label || prefs?.address || 'St Andrews';
   const hours = Number(profile.hours_total ?? 0);
-  const groups = prefs ? groupsFromAvailability(prefs.availability ?? {}) : [];
-  const freeTimes = !prefs ? null : groups.length ? groups.map((g) => TIME_LABELS[g]).join(', ') : 'Any time';
+  const freeTimes = prefs ? freeTimeLines(prefs.availability ?? {}) : [];
   const interests = prefs?.interests ?? [];
 
   return (
@@ -106,11 +116,14 @@ export default function Profile() {
               <div className="detail-row">
                 <span>Travel</span>
                 <span>
-                  {LABELS.transport[prefs.transport] ?? prefs.transport}
+                  {prefs.transport === 'car' ? 'Car' : 'No car'}
                   {prefs.max_km != null && `, up to ${miles(prefs.max_km)}`}
                 </span>
               </div>
-              <div className="detail-row"><span>Free times</span><span>{freeTimes}</span></div>
+              <div className="detail-row">
+                <span>Free times</span>
+                <span>{freeTimes.map((line) => <span key={line} className="v-free-line">{line}</span>)}</span>
+              </div>
               <p className="muted text-xs lv-profile-label">Happy to help with</p>
               {interests.length ? (
                 <div className="tag-list">

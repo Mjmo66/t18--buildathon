@@ -162,3 +162,12 @@
 a.v-card { scroll-margin: 12px; }
 .v-card.v-card-selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .v-map { margin-top: 14px; }
+
+/* Preferences: free times as two short questions */
+.v-free { display: flex; flex-direction: column; gap: 10px; }
+.v-free > .chip { justify-content: flex-start; min-height: var(--tap-primary); border-radius: var(--radius-sm); margin-top: 4px; }
+.v-free-days { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.v-free-days .chip { justify-content: center; border-radius: var(--radius-sm); min-height: var(--tap-primary); padding: 6px 4px; font-weight: 650; }
+.v-slot-line { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.v-slot-hours { font-size: 0.9rem; font-weight: 500; opacity: 0.8; }
+.v-free-summary { margin: 2px 0 0; font-size: 0.95rem; color: var(--muted-foreground, #5c6168); }

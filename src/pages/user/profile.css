@@ -31,3 +31,4 @@
 .lv .lv-profile .text-size legend { font-family: var(--lv-font-display); font-size: 19px; font-weight: 550; margin-bottom: 4px; }
 .lv .lv-profile-signout { padding-bottom: 8px; }
 .lv .lv-profile .detail-row > span:first-child { white-space: nowrap; }
+.v-free-line { display: block; }
