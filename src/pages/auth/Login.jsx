@@ -94,7 +94,7 @@ export default function Login() {
               Forgot password?
             </button>
             {passkeys && (
-              <Button variant="secondary" size="lg" block onClick={() => setUsePassword(false)}
+              <Button variant="secondary" size="lg" block loading={busy} onClick={handlePasskey}
                 icon={<Fingerprint size={20} strokeWidth={2} aria-hidden="true" />}>
                 Sign in with Face ID or fingerprint
               </Button>
