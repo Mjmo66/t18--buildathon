@@ -1,7 +1,7 @@
 /* Volunteer space styles. Scoped with the `v-` prefix; colours come only from the tokens in src/index.css.
    Buttons are the shared .btn (<Button>); no text below 0.8rem; no uppercase or monospace labels. */
 .v-page {
-  max-width: 640px;
+  max-width: 35.556rem;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -81,7 +81,7 @@
   font-size: 1.05rem;
   cursor: pointer;
 }
-.v-choice input { width: 24px; height: 24px; margin: 0; flex-shrink: 0; accent-color: var(--accent); }
+.v-choice input { width: max(24px, 1.333rem); height: max(24px, 1.333rem); margin: 0; flex-shrink: 0; accent-color: var(--accent); }
 .v-choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); font-weight: 650; }
 .v-choice:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 
@@ -118,7 +118,7 @@
 /* Profile */
 .v-profile-head { display: flex; align-items: center; gap: 14px; min-width: 0; }
 .v-profile-head h1 { overflow-wrap: anywhere; }
-.v-avatar { width: 56px; height: 56px; font-size: 1.35rem; flex-shrink: 0; }
+.v-avatar { width: max(44px, 3.111rem); height: max(44px, 3.111rem); font-size: 1.35rem; flex-shrink: 0; }
 
 /* Preferences: short sections on one page */
 .v-step { gap: 14px; }
@@ -141,7 +141,7 @@
 }
 .v-sheet {
   background: var(--surface); color: var(--text);
-  width: 100%; max-width: 520px;
+  width: 100%; max-width: 28.889rem;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-lg);

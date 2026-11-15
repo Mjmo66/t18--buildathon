@@ -8,6 +8,13 @@
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <meta name="theme-color" content="#f4f6f9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0c111b" media="(prefers-color-scheme: dark)" />
+    <script>
+      // Saved text size before first paint (see src/lib/textSize.js).
+      try {
+        var s = localStorage.getItem('kindred:text-size');
+        if (s === 'small' || s === 'large' || s === 'xlarge') document.documentElement.dataset.textSize = s;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

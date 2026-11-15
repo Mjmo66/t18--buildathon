@@ -1,7 +1,7 @@
 /* Charity space styles. Scoped with the ch- prefix; colours come only from the tokens in src/index.css.
    Buttons come from the shared <Button> (.btn). No text below 0.8rem, no uppercase or monospace labels. */
-.ch-page { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
-.ch-page-wide { max-width: 1040px; }
+.ch-page { max-width: 42.222rem; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.ch-page-wide { max-width: 57.778rem; }
 .ch-page h1 { margin: 0; line-height: 1.2; overflow-wrap: anywhere; }
 .ch-page h2 { margin: 0; font-size: 1.2rem; }
 
@@ -102,7 +102,7 @@
 .ch-page h2.ch-section-title { margin: 4px 0 10px; font-size: 1.2rem; }
 .ch-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .ch-stat {
-  display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; min-height: 96px;
+  display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; min-height: max(44px, 5.333rem);
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   color: var(--text); text-decoration: none;
 }
@@ -152,7 +152,7 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
 .ch-fact { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .ch-fact-label { font-size: 0.95rem; font-weight: 600; color: var(--muted); }
 .ch-fact-value { font-size: 1.05rem; }
-.ch-meter { display: block; height: 8px; max-width: 240px; margin-top: 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
+.ch-meter { display: block; height: 8px; max-width: 13.333rem; margin-top: 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
 .ch-meter > span { display: block; height: 100%; background: var(--accent); }
 @media (min-width: 900px) {
   .ch-fact-list { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; }
@@ -167,7 +167,7 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
   border-top: 1px solid var(--border);
 }
 @media (min-width: 900px) {
-  .ch-end-actions { max-width: 420px; }
+  .ch-end-actions { max-width: 23.333rem; }
 }
 
 /* Profile */
@@ -208,7 +208,7 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
 .ch-att-qr { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
 .ch-page h2.ch-att-qr-title, .ch-att-qr-title { margin: 0; font-size: 1.35rem; line-height: 1.3; }
 .ch-att-qr-box {
-  width: min(100%, 420px);
+  width: min(100%, 23.333rem);
   background: #fff;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -228,7 +228,7 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
 }
 .ch-att-qr-meta { display: flex; flex-direction: column; gap: 2px; color: var(--muted); }
 .ch-att-qr-meta strong { color: var(--text); }
-.ch-att-qr .btn-block, .ch-att-qr .tooltip-wrap-block { max-width: 420px; }
+.ch-att-qr .btn-block, .ch-att-qr .tooltip-wrap-block { max-width: 23.333rem; }
 .ch-att-qr-full {
   position: fixed;
   inset: 0;
@@ -240,14 +240,14 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
   padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
 }
 .ch-att-qr-full-inner {
-  width: min(100%, 640px);
+  width: min(100%, 35.556rem);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
   text-align: center;
 }
-.ch-att-qr-full-inner .ch-att-qr-box { width: min(100%, 80vh, 640px); }
+.ch-att-qr-full-inner .ch-att-qr-box { width: min(100%, 80vh, 35.556rem); }
 .ch-att-qr-full-inner .ch-att-qr-digits { font-size: 3.4rem; }
 
 /* Forms */
@@ -274,7 +274,7 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
   background: var(--surface);
   color: var(--text);
   width: 100%;
-  min-height: 52px;
+  min-height: max(44px, 2.889rem);
 }
 .ch-field input:focus, .ch-field select:focus, .ch-field textarea:focus {
   outline: none;
@@ -289,7 +289,7 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
 .ch-place { display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
 
 /* Radio cards: every choice visible, with words */
-.ch-radio-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.ch-radio-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.333rem, 1fr)); gap: 10px; }
 .ch-radio-card {
   display: flex;
   align-items: flex-start;
@@ -306,8 +306,8 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
 .ch-radio-card:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
 .ch-radio-card input {
   flex: none;
-  width: 22px;
-  height: 22px;
+  width: max(22px, 1.222rem);
+  height: max(22px, 1.222rem);
   margin: 2px 0 0;
   accent-color: var(--accent);
 }

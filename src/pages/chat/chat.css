@@ -1,7 +1,7 @@
 /* Chat pages. Uses the shared tokens from src/index.css. */
 .chat-page {
   --chat-mine: var(--accent);
-  max-width: 720px;
+  max-width: 40rem;
   margin: 0 auto;
 }
 
@@ -66,7 +66,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  min-height: 76px;
+  min-height: max(44px, 4.222rem);
   color: var(--text);
   text-decoration: none;
 }
@@ -88,8 +88,8 @@
   background: var(--bg);
   overflow: hidden;
   /* Desktop: fill the content area. */
-  height: calc(100dvh - 64px);
-  max-width: 760px;
+  height: calc(100dvh - max(44px, 3.556rem));
+  max-width: 42.222rem;
   margin: 0 auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -178,7 +178,7 @@
 .bubble-row.mine { justify-content: flex-end; }
 
 .bubble {
-  max-width: min(78%, 520px);
+  max-width: min(78%, 28.889rem);
   padding: 10px 12px 8px 14px;
   border-radius: 16px;
   display: flex;
@@ -237,8 +237,8 @@
 .chat-input {
   flex: 1;
   resize: none;
-  min-height: 52px;
-  max-height: 160px;
+  min-height: max(44px, 2.889rem);
+  max-height: 8.889rem;
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   border: 2px solid var(--border-strong);
@@ -253,7 +253,7 @@
 .chat-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .chat-input:disabled { background: var(--surface-2); }
 
-.chat-composer .chat-send { flex-shrink: 0; min-height: 52px; }
+.chat-composer .chat-send { flex-shrink: 0; min-height: max(44px, 2.889rem); }
 
 /* ---------- Key sheet ---------- */
 .sheet-backdrop {
@@ -271,7 +271,7 @@
 
 .sheet {
   width: 100%;
-  max-width: 480px;
+  max-width: 26.667rem;
   max-height: 90dvh;
   overflow-y: auto;
   background: var(--surface);
@@ -287,11 +287,11 @@
   .sheet { border-radius: var(--radius-lg); }
 }
 
-.sheet-grabber { width: 40px; height: 5px; border-radius: 3px; background: var(--border-strong); margin: 4px auto 12px; }
+.sheet-grabber { width: max(40px, 2.222rem); height: 5px; border-radius: 3px; background: var(--border-strong); margin: 4px auto 12px; }
 .sheet-head { display: flex; align-items: center; gap: 10px; }
 .sheet-head h2 { margin: 0; font-size: 1.2rem; }
 .sheet-lock {
-  width: 40px; height: 40px; border-radius: 50%;
+  width: max(40px, 2.222rem); height: max(40px, 2.222rem); border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   background: var(--accent-soft);

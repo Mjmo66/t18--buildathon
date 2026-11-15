@@ -2,6 +2,7 @@ import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { RewardsSummary, WarningsBanner } from '../../features/attendance/index.jsx';
 import { Button } from '../../components/ui/index.js';
 import SignOutButton from '../../components/SignOutButton.jsx';
+import TextSizeSetting from '../../components/TextSizeSetting.jsx';
 import { SlidersHorizontal } from 'lucide-react';
 import { Loading } from './ui.jsx';
 
@@ -31,6 +32,10 @@ export default function Profile() {
         hint="Choose where you are, how you travel and when you're free.">
         Change what I'm shown
       </Button>
+
+      <section className="v-card">
+        <TextSizeSetting />
+      </section>
 
       <SignOutButton />
     </div>

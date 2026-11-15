@@ -3,6 +3,7 @@ import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { Button, useToast } from '../../components/ui/index.js';
 import SignOutButton from '../../components/SignOutButton.jsx';
+import TextSizeSetting from '../../components/TextSizeSetting.jsx';
 import { CharityGate, ErrorNote, PlacePicker, VerifiedBadge, VerifyButton } from './components.jsx';
 import { REGISTER_LABELS } from './shared.js';
 import { ABOUT_MAX, normaliseWebsite } from '../../lib/website.js';
@@ -100,6 +101,10 @@ function Profile() {
           {busy ? 'Saving…' : 'Save changes'}
         </Button>
       </form>
+
+      <div className="ch-card">
+        <TextSizeSetting />
+      </div>
 
       <div className="ch-signout">
         <SignOutButton />
