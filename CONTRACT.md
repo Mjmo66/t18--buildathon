@@ -2,14 +2,22 @@
 
 A 3-hour hackathon build of a volunteering app for St Andrews, Scotland. Charities post volunteer
 requests, students volunteer. The audience is University of St Andrews students; the demo runs on
-their phones through the web build (passkeys with Face ID / fingerprint) and on Expo Go.
+their phones in the browser (passkeys with Face ID / fingerprint).
 
 ## Stack
-- Expo (latest SDK), React Native, TypeScript, Expo Router. Targets: iOS, Android, **web** (web is
-  the main demo target because passkeys work there without a native build).
-- Supabase: Postgres + RLS, Auth, Realtime, Edge Functions (Deno). Project credentials arrive via
-  `.env` (`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`). Never commit keys.
-- Web hosting: Cloudflare Pages (`https://<name>.pages.dev`), also serves `/.well-known/`.
+- **Vite + React (web)**, JavaScript/JSX pages, TypeScript allowed in `src/lib/`. React Router.
+  Mobile-first: the demo runs in phone browsers. (Decision 2026-11-15: web app instead of
+  React Native.)
+- Supabase: Postgres + RLS, Auth, Realtime, Edge Functions (Deno). `.env` holds
+  `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (see `.env.example`). Never commit keys.
+- Hosting: Cloudflare Pages (`https://<name>.pages.dev`); `npm run build`, deploy `dist/`.
+- Ready to use: `src/lib/supabase.ts` (`supabase`), `src/lib/types.ts`,
+  `src/lib/auth/AuthContext.jsx` (`useAuth()` → `{session, user, profile, charity, loading,
+  refreshProfile, signOut}`), `src/lib/auth/passkey` (`isPasskeySupported`, `signUpWithPasskey`,
+  `signInWithPasskey`, `addPasskeyToCurrentUser`, `PasskeyError`), `src/lib/crypto`,
+  `src/lib/chat` (E2E chat API, see its header).
+- Installed: `@supabase/supabase-js`, `tweetnacl`, `tweetnacl-util`, `@simplewebauthn/browser`,
+  `qrcode.react` (show QR), `@yudiel/react-qr-scanner` (scan QR), `date-fns`.
 
 ## Data model
 `supabase/migrations/20261115000000_base.sql` is the source of truth. Do not edit it. If you need a
@@ -19,23 +27,17 @@ Key RPCs: `verify_charity()`, `demo_verify_volunteer()`, `mark_attendance(p_sign
 (`role`, `display_name`).
 
 ## Folder ownership (only write inside your area)
-| Area | Owner | Paths |
-|---|---|---|
-| Foundation | foundation agent | `package.json`, `app.json`, `app/_layout.tsx`, `app/(auth)/`, `components/ui/`, `lib/supabase.ts`, `lib/types.ts`, `lib/auth/context.tsx`, `theme/`, `scripts/seed.mjs`, `supabase/seed.sql` |
-| Passkeys | passkey agent | `supabase/functions/passkey/`, `lib/auth/passkey/`, `public/.well-known/`, `public/_headers`, `docs/passkeys.md`, `supabase/migrations/*_passkeys.sql` |
-| E2E chat | chat agent | `lib/crypto/`, `lib/chat/`, `features/chat/`, `app/chat/` |
-| Charity | charity agent | `app/(charity)/`, `features/charity/` |
-| Volunteer | volunteer agent | `app/(volunteer)/`, `features/volunteer/`, `features/matching/` |
-| Attendance | attendance agent | `features/attendance/`, `supabase/migrations/*_attendance.sql` |
+| Area | Paths |
+|---|---|
+| Shell (auth screens, routing, layout, shared UI) | `src/App.jsx`, `src/main.jsx`, `src/components/`, `src/pages/auth/`, `src/pages/Home.jsx`, `src/index.css` |
+| Charity space | `src/pages/charity/` |
+| Volunteer space | `src/pages/user/`, `src/features/matching/` |
+| Attendance & rewards | `src/features/attendance/`, `supabase/migrations/*_attendance.sql` |
+| E2E chat | `src/lib/crypto/`, `src/lib/chat/`, `src/pages/chat/` |
+| Passkeys | `supabase/functions/passkey/`, `src/lib/auth/passkey/` |
 
-Shared files (`components/ui/`, `lib/types.ts`): add new exports only, never change existing ones.
-Need a dependency that is not installed? Do not edit `package.json`; list it in your final report.
-
-## Pre-installed dependencies (foundation installs these)
-`@supabase/supabase-js`, `@react-native-async-storage/async-storage`, `expo-secure-store`,
-`tweetnacl`, `tweetnacl-util`, `react-native-get-random-values`, `expo-camera`,
-`react-native-qrcode-svg`, `react-native-svg`, `expo-location`, `@simplewebauthn/browser`,
-`react-native-passkey`, `react-native-maps` (optional), `date-fns`.
+Shared files (`src/components/`, `src/lib/types.ts`, `src/index.css`): add, don't rewrite.
+Need a dependency? Ask the coordinator instead of editing `package.json`.
 
 ## Product rules
 - Charity numbers: Scottish charities are registered with OSCR (`SC` + 6 digits, e.g. `SC012345`);

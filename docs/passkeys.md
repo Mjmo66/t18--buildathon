@@ -1,5 +1,7 @@
 # Passkeys
 
+> The app is now a Vite web app: only the web client (`src/lib/auth/passkey/`) and the edge function apply. The native and `.well-known` sections below are kept for reference only.
+
 Passkey (WebAuthn) sign-up and sign-in that ends in a normal Supabase session.
 
 ```

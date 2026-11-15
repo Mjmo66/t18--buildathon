@@ -9,12 +9,20 @@
   },
   "private": true,
   "dependencies": {
+    "@simplewebauthn/browser": "^14.0.0",
+    "@supabase/supabase-js": "^2.119.0",
+    "@yudiel/react-qr-scanner": "^2.6.0",
+    "date-fns": "^4.4.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-router-dom": "^7.18.5"
+    "react-router-dom": "^7.18.5",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.3.0",
+    "typescript": "^5.9.3",
     "vite": "^8.3.8"
   },
   "type": "module"

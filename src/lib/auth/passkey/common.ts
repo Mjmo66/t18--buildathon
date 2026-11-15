@@ -27,8 +27,8 @@ export class PasskeyError extends Error {
   }
 }
 
-const FUNCTION_URL = `${process.env.EXPO_PUBLIC_SUPABASE_URL ?? ''}/functions/v1/passkey`;
-const ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+const FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL ?? ''}/functions/v1/passkey`;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 
 async function call<T>(route: string, body: unknown, accessToken?: string): Promise<T> {
   let res: Response;

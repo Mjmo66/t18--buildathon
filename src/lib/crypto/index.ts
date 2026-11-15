@@ -2,8 +2,8 @@
  * End-to-end encryption for chat: NaCl `box` (X25519 key agreement + XSalsa20-Poly1305).
  *
  * - Each user has one key pair. The public key is published in `profiles.public_key`
- *   (base64); the secret key never leaves the device (SecureStore on native,
- *   localStorage on web). Never upload or log the secret key.
+ *   (base64); the secret key never leaves the device (localStorage
+ *   in the browser). Never upload or log the secret key.
  * - Each message gets a fresh random 24-byte nonce. The server stores only
  *   `ciphertext` + `nonce` (both base64).
  * - `box` is symmetric between the two parties: box(peerPub, mySecret) and
