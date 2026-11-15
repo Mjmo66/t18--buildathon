@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Building2, HandHeart } from 'lucide-react';
+import { Building2, Fingerprint, HandHeart } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { signUpWithPasskey } from '../../lib/auth/passkey';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { Alert, Button, Card, Chip, Field } from '../../components/ui/index.js';
 import { usePasskeySupport, errorMessage } from './usePasskeySupport.js';
+import PasswordField from './PasswordField.jsx';
 
 const ROLES = ['volunteer', 'charity'];
 
@@ -108,16 +109,25 @@ export default function Signup() {
           <Field label="Email" type="email" autoComplete="email" required value={email}
             onChange={(e) => setEmail(e.target.value)} />
           {showPassword && (
-            <Field label="Password" type="password" autoComplete="new-password" required minLength={6}
+            <PasswordField label="Password" autoComplete="new-password" required minLength={6}
               value={password} onChange={(e) => setPassword(e.target.value)} />
           )}
-          <Button type="submit" block loading={busy || (!showPassword && passkeys === null)} disabled={!role}>
-            {showPassword ? 'Create account' : 'Continue with passkey'}
+          <Button
+            type="submit"
+            size="lg"
+            block
+            loading={busy || (!showPassword && passkeys === null)}
+            disabled={!role}
+            hint={!role ? 'Choose volunteer or charity first' : undefined}
+            help={!showPassword ? "Your phone checks it's you. No password to remember." : undefined}
+            icon={!showPassword ? <Fingerprint size={20} strokeWidth={2} aria-hidden="true" /> : undefined}
+          >
+            {showPassword ? 'Create account' : 'Continue with Face ID or fingerprint'}
           </Button>
           {passkeys && (
-            <button type="button" className="link-button" onClick={() => setUsePassword((v) => !v)}>
-              {showPassword ? 'Use a passkey instead' : 'Use a password instead'}
-            </button>
+            <Button variant="secondary" block onClick={() => setUsePassword((v) => !v)}>
+              {showPassword ? 'Use Face ID or fingerprint instead' : 'Use a password instead'}
+            </Button>
           )}
         </form>
       </Card>

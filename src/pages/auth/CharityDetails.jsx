@@ -26,6 +26,14 @@ export default function CharityDetails() {
   const register = registerFor(normalised);
   const numberError = number && !register ? 'Use SC + 6 digits (Scotland), 6–7 digits (England & Wales) or NIC + 6 digits (Northern Ireland).' : '';
 
+  const submitBlocker = !orgName.trim()
+    ? 'Fill in your organisation name first'
+    : !register
+      ? 'Fill in a valid charity number first'
+      : !coords
+        ? 'Choose a location first'
+        : '';
+
   // Already registered (e.g. returning user) and not in the middle of this form → into the space.
   if (charity && !result) return <Navigate to="/charity" replace />;
 
@@ -88,15 +96,15 @@ export default function CharityDetails() {
         <h1>{orgName}</h1>
         <Card className="stack">
           {result === 'verified' ? (
-            <Alert tone="success" title="Verified charity">
+            <Alert tone="success" title="Your charity is checked">
               {normalised} · {REGISTER_NAMES[register ?? 'OSCR']}
             </Alert>
           ) : (
             <Alert tone="warning" title="We couldn't find this number in the register">
-              You can look around, but you can post requests only once your charity is verified.
+              You can look around, but you can ask for volunteers only once we have checked your charity.
             </Alert>
           )}
-          <Button block onClick={() => navigate('/charity', { replace: true })}>Continue</Button>
+          <Button size="lg" block onClick={() => navigate('/charity', { replace: true })}>Continue</Button>
         </Card>
       </div>
     );
@@ -125,8 +133,14 @@ export default function CharityDetails() {
           <div className="field">
             <span className="field-label">Location</span>
             <div className="row-wrap">
-              <Button variant="secondary" size="sm" loading={locating} onClick={useMyLocation}>
-                <LocateFixed size={16} strokeWidth={1.75} aria-hidden="true" /> Use my location
+              <Button
+                variant="secondary"
+                loading={locating}
+                onClick={useMyLocation}
+                hint="Fill in your address from where you are now."
+                icon={<LocateFixed size={20} strokeWidth={1.75} aria-hidden="true" />}
+              >
+                Use my location
               </Button>
               {coords && !placeId && <Badge tone="success">Location set</Badge>}
             </div>
@@ -137,8 +151,15 @@ export default function CharityDetails() {
             </div>
             {locError && <p className="field-error">{locError}</p>}
           </div>
-          <Button type="submit" block loading={busy} disabled={!register || !coords || !orgName.trim()}>
-            Verify and continue
+          <Button
+            type="submit"
+            size="lg"
+            block
+            loading={busy}
+            disabled={!register || !coords || !orgName.trim()}
+            hint={submitBlocker || undefined}
+          >
+            Check and continue
           </Button>
         </form>
       </Card>
