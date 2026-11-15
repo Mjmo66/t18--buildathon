@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/index.js';
 import { formatShiftRange } from '../../components/format.js';
 import { CharityGate, Empty, ErrorNote, Loading, StatusPill } from './components.jsx';
-import { REQUEST_STATUSES, nextShifts, requestFacts, scheduleSummary, volunteers } from './shared.js';
+import { REQUEST_STATUSES, nextShifts } from './shared.js';
 
 const ICON = { size: 20, strokeWidth: 1.75, 'aria-hidden': true };
 
@@ -84,13 +84,12 @@ function List() {
                     <CalendarDays {...ICON} />
                     {next ? formatShiftRange(next, r.duration_hours) : 'No shifts coming up'}
                   </span>
-                  {r.schedule_type === 'recurring' && <span className="ch-muted">{scheduleSummary(r)}</span>}
                   <span className="ch-meta-item">
                     <Users {...ICON} />
-                    {requestFacts(r, accepted)}
+                    {accepted} of {r.slots} filled
                   </span>
                   {pending > 0 && (
-                    <span className="ch-badge ch-badge-warn">{volunteers(pending)} waiting for your reply</span>
+                    <span className="ch-badge ch-badge-warn">{pending} waiting</span>
                   )}
                 </Link>
               </li>

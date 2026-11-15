@@ -179,7 +179,7 @@ function Form() {
     }).select('id').single();
     setBusy(false);
     if (error) { setSubmitError(error); return; }
-    toast('Your request is posted. Volunteers can now sign up.', 'success');
+    toast('Posted.', 'success');
     navigate(`/charity/requests/${data.id}`, { replace: true });
   };
 
@@ -217,7 +217,7 @@ function Form() {
           <legend>2. When?</legend>
           <RadioCards
             name="schedule_type"
-            label="How often"
+            label="Once or repeating"
             value={f.schedule_type}
             onChange={setVal('schedule_type')}
             options={[{ value: 'one_time', label: 'Just once' }, { value: 'recurring', label: 'It repeats' }]}
@@ -308,7 +308,7 @@ function Form() {
         </fieldset>
 
         <ErrorNote error={submitError} />
-        {Object.keys(errors).length > 0 && <p className="ch-error" role="alert">Please fix the answers marked in red above.</p>}
+        {Object.keys(errors).length > 0 && <p className="ch-error" role="alert">Fix the answers in red.</p>}
         <div className="ch-sticky-bar">
           <Button type="submit" size="lg" block loading={busy}>{busy ? 'Posting…' : 'Post this request'}</Button>
         </div>

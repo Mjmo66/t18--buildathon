@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { Button, useToast } from '../../components/ui/index.js';
 import SignOutButton from '../../components/SignOutButton.jsx';
 import { CharityGate, ErrorNote, PlacePicker, VerifiedBadge, VerifyButton } from './components.jsx';
-import { REGISTER_LABELS, fmtDate } from './shared.js';
+import { REGISTER_LABELS } from './shared.js';
 
 function Profile() {
   const { user, charity, refreshProfile } = useAuth();
@@ -45,9 +45,7 @@ function Profile() {
           <dd>
             <div className="ch-row">
               <VerifiedBadge verified={verified} />
-              {verified
-                ? <span className="ch-muted">since {fmtDate(new Date(charity.verified_at))}</span>
-                : <VerifyButton variant="secondary" />}
+              {!verified && <VerifyButton variant="secondary" />}
             </div>
           </dd>
           <dt>Email</dt><dd>{user.email ?? '—'}</dd>

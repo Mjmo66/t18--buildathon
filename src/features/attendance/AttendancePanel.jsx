@@ -201,7 +201,7 @@ export function AttendancePanel({ request, onChange, onMessage, messagingId = nu
                         loading={isBusy}
                         disabled={isBusy}
                         hint={`Record ${name}'s hours for this shift.`}
-                        onClick={() => mark(s, true, `${name} came. Hours recorded.`)}
+                        onClick={() => mark(s, true, `${name} came.`)}
                       >
                         Came
                       </Button>
@@ -242,7 +242,7 @@ export function AttendancePanel({ request, onChange, onMessage, messagingId = nu
         cancelLabel="No, go back"
         tone="danger"
         busy={busy === confirmId}
-        onConfirm={() => confirming && mark(confirming, false, `${nameOf(confirming)} is marked as did not come.`)}
+        onConfirm={() => confirming && mark(confirming, false, 'Marked.')}
         onCancel={closeConfirm}
       >
         This gives {nameOf(confirming)} a warning.

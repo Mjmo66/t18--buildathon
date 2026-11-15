@@ -136,7 +136,7 @@ function Detail() {
           <li>
             <Dumbbell {...ICON} />
             <span>
-              {physical?.label ?? labelOf(PHYSICAL_LEVELS, request.physical_level)}
+              {physical?.detail ?? labelOf(PHYSICAL_LEVELS, request.physical_level)}
               {' · '}
               {experience?.label ?? labelOf(EXPERIENCE_LEVELS, request.experience)}
             </span>
@@ -156,7 +156,7 @@ function Detail() {
               block
               disabled={busy}
               hint="Stop new sign-ups. Volunteers you confirmed still come."
-              onClick={() => setStatus('filled', 'Done. No new volunteers can sign up.')}
+              onClick={() => setStatus('filled', 'Done.')}
             >
               We have enough volunteers
             </Button>
@@ -176,7 +176,7 @@ function Detail() {
             block
             disabled={busy}
             hint="Let volunteers sign up again."
-            onClick={() => setStatus('open', 'This request is open again.')}
+            onClick={() => setStatus('open', 'Open again.')}
           >
             Open this request again
           </Button>
@@ -190,7 +190,7 @@ function Detail() {
         cancelLabel="No, keep it"
         tone="danger"
         busy={busy}
-        onConfirm={() => setStatus('closed', 'This request is cancelled.')}
+        onConfirm={() => setStatus('closed', 'Cancelled.')}
         onCancel={closeAsk}
       >
         {coming > 0

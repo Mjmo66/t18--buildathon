@@ -73,9 +73,7 @@ export default function ConversationList() {
       {!conversations && !error && <p className="chat-muted">Loading…</p>}
 
       {conversations && conversations.length === 0 && (
-        <EmptyState icon={<MessagesSquare size={22} strokeWidth={1.75} />} title="No messages yet">
-          Messages start when you sign up for a shift or a volunteer gets in touch.
-        </EmptyState>
+        <EmptyState icon={<MessagesSquare size={22} strokeWidth={1.75} />} title="No messages yet." />
       )}
 
       {conversations && conversations.length > 0 && (
