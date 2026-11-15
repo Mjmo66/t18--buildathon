@@ -1,9 +1,9 @@
 import { HeartHandshake, Check, Clock3, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
-import type { VerificationStatus, Snapshot, Request } from '@/api/types';
+import type { VerificationStatus, Snapshot, Request, RequestStatus } from '@/api/types';
 export function Brand({ compact = false }: { compact?: boolean }) { return <Link to="/" className={`brand ${compact ? 'brand-compact' : ''}`} aria-label="Kindred home"><span className="brand-mark"><HeartHandshake strokeWidth={1.8} /></span><span>kindred<span className="brand-dot">.</span></span></Link>; }
-export function Status({ status }: { status: VerificationStatus | 'open' | 'completed' | 'closed' }) { return <span className={`status status-${status}`}>{status === 'verified' ? <Check size={12}/> : status === 'pending' ? <Clock3 size={12}/> : null}{status.charAt(0).toUpperCase()+status.slice(1)}</span>; }
+export function Status({ status }: { status: VerificationStatus | RequestStatus }) { return <span className={`status status-${status}`}>{status === 'verified' ? <Check size={12}/> : status === 'pending' ? <Clock3 size={12}/> : null}{status.charAt(0).toUpperCase()+status.slice(1)}</span>; }
 export function DemoLabel() { return <span className="demo-label"><span/> Prototype</span>; }
 export function RouteError() { return <div className="empty-state"><AlertCircle/><h2>This view couldn’t load</h2><Button asChild variant="outline"><Link to="/">Return to role selection</Link></Button></div>; }
 export function Missing() { return <div className="empty-state"><h2>Nothing here yet</h2><Button asChild variant="outline"><Link to="/">Choose a view</Link></Button></div>; }
