@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { signInWithPasskey } from '../../lib/auth/passkey';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
-import { Fingerprint, HandHeart, Mail } from 'lucide-react';
+import { Fingerprint, Mail } from 'lucide-react';
 import { Alert, Button, Card, Field } from '../../components/ui/index.js';
 import { usePasskeySupport, errorMessage } from './usePasskeySupport.js';
 import PasswordField from './PasswordField.jsx';
-import { DEMO_CHARITY } from './demo.js';
+import DemoCharityButton from './DemoCharityButton.jsx';
 
 const FACE_ID_HINT = "Your phone checks it's you. No password to remember.";
 
@@ -52,20 +52,6 @@ export default function Login() {
       await done();
     } catch (e2) {
       setError(errorMessage(e2));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleDemoCharity() {
-    setError('');
-    setBusy(true);
-    try {
-      const { error: err } = await supabase.auth.signInWithPassword(DEMO_CHARITY);
-      if (err) throw err;
-      await done();
-    } catch (e) {
-      setError(errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -130,11 +116,7 @@ export default function Login() {
       </Card>
       <div className="auth-switch">
         <Button to="/signup" variant="secondary" block>Create an account</Button>
-        <Button variant="secondary" block loading={busy} onClick={handleDemoCharity}
-          icon={<HandHeart size={20} strokeWidth={2} aria-hidden="true" />}
-          hint="Sign in as East Neuk Beach Guardians, a verified demo charity.">
-          Try the demo charity
-        </Button>
+        <DemoCharityButton />
       </div>
     </div>
   );
