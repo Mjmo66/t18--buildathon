@@ -26,7 +26,7 @@ const STATUS_CLASS = {
 function CancelNotice({ shiftAt }) {
   const start = new Date(shiftAt).getTime();
   if (start - Date.now() < DAY_MS) return <span className="cancel-chip cancel-chip-late">Starts within 24 hours</span>;
-  return <span className="cancel-chip cancel-chip-free">Free cancellation until {formatDayTime(new Date(start - DAY_MS))}</span>;
+  return <span className="cancel-chip cancel-chip-free">Free cancellation until {formatDayTime(new Date(start - DAY_MS)).replace(/^(Today|Tomorrow)/, (w) => w.toLowerCase())}</span>;
 }
 
 function CommitmentCard({ s, upcoming, children }) {
