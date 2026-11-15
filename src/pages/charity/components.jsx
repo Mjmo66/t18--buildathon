@@ -1,10 +1,11 @@
 // Small building blocks for the charity pages (plain elements; shell UI can replace them at merge).
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, CircleAlert, LocateFixed, MapPin } from 'lucide-react';
+import { BadgeCheck, CircleAlert } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
+import AddressField from '../../components/AddressField.jsx';
 import { supabase } from '../../lib/supabase';
-import { PLACES, REGISTER_LABELS, detectRegister, normaliseCharityNumber } from './shared.js';
+import { REGISTER_LABELS, detectRegister, normaliseCharityNumber } from './shared.js';
 import './charity.css';
 
 export function Loading({ label = 'Loading…' }) {
@@ -57,7 +58,7 @@ export function VerifyButton({ className = 'button' }) {
     setMsg(null);
     const { data, error } = await supabase.rpc('verify_charity');
     if (error) setMsg(error.message);
-    else if (!data) setMsg('Charity number not found in the register.');
+    else if (!data) setMsg('Not verified: the number is not on the register, or the name does not match it.');
     else await refreshProfile();
     setBusy(false);
   };
@@ -71,59 +72,9 @@ export function VerifyButton({ className = 'button' }) {
   );
 }
 
-/** Place select + "Use my location". value: {address, lat, lng}. */
-export function PlacePicker({ value, onChange, idPrefix = 'place' }) {
-  const [geoState, setGeoState] = useState(null);
-  const selected = PLACES.find((p) => p.lat === value.lat && p.lng === value.lng)?.name ?? '';
-
-  const pick = (name) => {
-    const p = PLACES.find((x) => x.name === name);
-    if (p) onChange({ address: p.name, lat: p.lat, lng: p.lng });
-  };
-
-  const useMyLocation = () => {
-    if (!navigator.geolocation) { setGeoState('Location is not available in this browser.'); return; }
-    setGeoState('Locating…');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = +pos.coords.latitude.toFixed(5);
-        const lng = +pos.coords.longitude.toFixed(5);
-        onChange({ address: value.address || `Near ${lat}, ${lng}`, lat, lng });
-        setGeoState(null);
-      },
-      (err) => setGeoState(err.code === 1 ? 'Location permission denied.' : 'Could not get your location.'),
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
-  };
-
-  return (
-    <div className="ch-place">
-      <label className="ch-field">
-        <span>Place</span>
-        <select id={`${idPrefix}-select`} value={selected} onChange={(e) => pick(e.target.value)}>
-          <option value="">Choose a St Andrews place…</option>
-          {PLACES.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
-        </select>
-      </label>
-      <button type="button" className="ch-btn-secondary" onClick={useMyLocation}>
-        <LocateFixed size={16} strokeWidth={1.75} aria-hidden="true" />Use my location
-      </button>
-      {geoState && <span className="ch-muted">{geoState}</span>}
-      <label className="ch-field">
-        <span>Address</span>
-        <input
-          id={`${idPrefix}-address`}
-          value={value.address}
-          onChange={(e) => onChange({ ...value, address: e.target.value })}
-          placeholder="e.g. East Sands, St Andrews KY16"
-          autoComplete="street-address"
-        />
-      </label>
-      {value.lat != null && (
-        <span className="ch-muted ch-coords"><MapPin size={14} strokeWidth={1.75} aria-hidden="true" />{value.lat.toFixed(4)}, {value.lng.toFixed(4)}</span>
-      )}
-    </div>
-  );
+/** Address with UK suggestions and "Use my location". value: {address, lat, lng}. */
+export function PlacePicker({ value, onChange }) {
+  return <AddressField value={value} onChange={onChange} />;
 }
 
 /** First-time setup for a charity account without a charities row. */

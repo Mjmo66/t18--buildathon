@@ -16,7 +16,7 @@ export function usePrefs(userId) {
   return { ...state, reload };
 }
 
-export const REQUEST_SELECT = '*, charities(org_name, verified_at)';
+export const REQUEST_SELECT = '*, charities(org_name, verified_at, description, website)';
 export const SIGNUP_SELECT = '*, requests(id, title, duration_hours, address, charity_id, status, charities(org_name))';
 
 export function skippedPrefs() {

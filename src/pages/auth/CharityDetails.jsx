@@ -1,11 +1,11 @@
-import { LocateFixed } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
-import { Alert, Badge, Button, Card, Chip, Field } from '../../components/ui/index.js';
-import { PLACES, placeAddress, getCurrentPosition } from '../../components/places.js';
-import { normaliseCharityNumber, registerFor, REGISTER_NAMES } from '../../components/charityNumber.js';
+import { Alert, Badge, Button, Card, Field } from '../../components/ui/index.js';
+import AddressField from '../../components/AddressField.jsx';
+import { ABOUT_MAX, normaliseWebsite } from '../../lib/website.js';
+import { matchesRegistry, normaliseCharityNumber, registerFor, REGISTER_NAMES } from '../../components/charityNumber.js';
 import { errorMessage } from './usePasskeySupport.js';
 
 export default function CharityDetails() {
@@ -13,48 +13,49 @@ export default function CharityDetails() {
   const navigate = useNavigate();
   const [orgName, setOrgName] = useState(profile?.display_name ?? '');
   const [number, setNumber] = useState('');
-  const [address, setAddress] = useState('');
-  const [coords, setCoords] = useState(null); // {lat, lng}
-  const [placeId, setPlaceId] = useState('');
-  const [locating, setLocating] = useState(false);
-  const [locError, setLocError] = useState('');
+  const [loc, setLoc] = useState({ address: '', lat: null, lng: null });
+  const [about, setAbout] = useState('');
+  const [website, setWebsite] = useState('');
+  const [websiteError, setWebsiteError] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null); // null | 'verified' | 'unverified'
+  const [lookup, setLookup] = useState({ number: '', entry: undefined }); // entry: undefined = checking, null = not found
 
   const normalised = normaliseCharityNumber(number);
   const register = registerFor(normalised);
   const numberError = number && !register ? 'Use SC + 6 digits (Scotland), 6–7 digits (England & Wales) or NIC + 6 digits (Northern Ireland).' : '';
+  const entry = register === 'OSCR' && lookup.number === normalised ? lookup.entry : undefined;
+  const nameMismatch = entry && orgName.trim() && !matchesRegistry(orgName, entry);
+
+  // Scottish numbers: look the charity up in the register as soon as the number is complete.
+  useEffect(() => {
+    if (register !== 'OSCR') return undefined;
+    let stale = false;
+    const t = setTimeout(async () => {
+      const { data } = await supabase.from('charity_registry')
+        .select('charity_number, org_name, known_as, status, website, activities')
+        .eq('charity_number', normalised).maybeSingle();
+      if (stale) return;
+      setLookup({ number: normalised, entry: data ?? null });
+      if (data) {
+        // Fill in what the register knows; keep anything the charity already typed.
+        setOrgName((cur) => (matchesRegistry(cur, data) ? cur : data.known_as || data.org_name));
+        setWebsite((cur) => cur || data.website || '');
+        setAbout((cur) => cur || data.activities || '');
+      }
+    }, 250);
+    return () => { stale = true; clearTimeout(t); };
+  }, [normalised, register]);
 
   // Already registered (e.g. returning user) and not in the middle of this form → into the space.
   if (charity && !result) return <Navigate to="/charity" replace />;
 
-  async function useMyLocation() {
-    setLocError('');
-    setLocating(true);
-    try {
-      const pos = await getCurrentPosition();
-      setCoords(pos);
-      setPlaceId('');
-      if (!address) setAddress('St Andrews');
-    } catch (e) {
-      setLocError(errorMessage(e));
-    } finally {
-      setLocating(false);
-    }
-  }
-
-  function pickPlace(id) {
-    const place = PLACES.find((p) => p.id === id);
-    setPlaceId(id);
-    if (!place) return;
-    setCoords({ lat: place.lat, lng: place.lng });
-    setAddress(placeAddress(place));
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!register || !coords || !user) return;
+    if (!register || loc.lat == null || !user) return;
+    let site;
+    try { site = normaliseWebsite(website); setWebsiteError(''); } catch (e3) { setWebsiteError(e3.message); return; }
     setError('');
     setBusy(true);
     try {
@@ -63,9 +64,11 @@ export default function CharityDetails() {
         org_name: orgName.trim(),
         charity_number: normalised,
         register,
-        address: address.trim() || null,
-        lat: coords.lat,
-        lng: coords.lng,
+        address: loc.address.trim() || null,
+        lat: loc.lat,
+        lng: loc.lng,
+        description: about.trim() || null,
+        website: site,
       });
       if (insErr) {
         if (insErr.code === '23505') throw new Error('This charity number is already registered with Kindred.');
@@ -92,7 +95,10 @@ export default function CharityDetails() {
               {normalised} · {REGISTER_NAMES[register ?? 'OSCR']}
             </Alert>
           ) : (
-            <Alert tone="warning" title="We couldn't find this number in the register">
+            <Alert tone="warning" title={
+              register !== 'OSCR' ? 'We can check Scottish charities only for now'
+                : entry ? 'The name does not match the register' : 'We couldn\'t find this number in the register'
+            }>
               You can look around, but you can post requests only once your charity is verified.
             </Alert>
           )}
@@ -108,7 +114,6 @@ export default function CharityDetails() {
       <Card>
         <form className="stack" onSubmit={handleSubmit}>
           {error && <Alert tone="danger">{error}</Alert>}
-          <Field label="Organisation name" required value={orgName} onChange={(e) => setOrgName(e.target.value)} />
           <Field
             label="Charity number"
             required
@@ -119,25 +124,48 @@ export default function CharityDetails() {
             onChange={(e) => setNumber(e.target.value)}
             error={numberError}
           />
-          {register && <Badge tone="info">{REGISTER_NAMES[register]}</Badge>}
-          <Field label="Address" autoComplete="street-address" value={address}
-            onChange={(e) => setAddress(e.target.value)} placeholder="Street, St Andrews" />
-          <div className="field">
-            <span className="field-label">Location</span>
+          {register === 'OSCR' && entry && (
+            <Alert tone="success" title="Found on the Scottish Charity Register">{entry.org_name}</Alert>
+          )}
+          {register === 'OSCR' && entry === null && (
+            <Alert tone="warning">{normalised} is not on the Scottish Charity Register.</Alert>
+          )}
+          {register && register !== 'OSCR' && (
+            <Alert tone="info">{REGISTER_NAMES[register]}: we can check Scottish charities only for now.</Alert>
+          )}
+          <Field
+            label="Organisation name"
+            required
+            value={orgName}
+            onChange={(e) => setOrgName(e.target.value)}
+            error={nameMismatch ? `The register lists this charity as “${entry.org_name}”.` : ''}
+          />
+          {nameMismatch && (
             <div className="row-wrap">
-              <Button variant="secondary" size="sm" loading={locating} onClick={useMyLocation}>
-                <LocateFixed size={16} strokeWidth={1.75} aria-hidden="true" /> Use my location
-              </Button>
-              {coords && !placeId && <Badge tone="success">Location set</Badge>}
+              <Button variant="secondary" size="sm" onClick={() => setOrgName(entry.org_name)}>Use the registered name</Button>
             </div>
-            <div className="chip-row">
-              {PLACES.map((p) => (
-                <Chip key={p.id} selected={placeId === p.id} onClick={() => pickPlace(p.id)}>{p.name}</Chip>
-              ))}
-            </div>
-            {locError && <p className="field-error">{locError}</p>}
-          </div>
-          <Button type="submit" block loading={busy} disabled={!register || !coords || !orgName.trim()}>
+          )}
+          <AddressField value={loc} onChange={setLoc} required />
+          <Field
+            as="textarea"
+            label="What your charity does"
+            maxLength={ABOUT_MAX}
+            placeholder="Your purpose, who you help and what volunteers do with you"
+            value={about}
+            onChange={(e) => setAbout(e.target.value)}
+            hint={about.length > ABOUT_MAX - 100 ? `${ABOUT_MAX - about.length} characters left` : undefined}
+          />
+          <Field
+            label="Website"
+            inputMode="url"
+            autoComplete="url"
+            autoCapitalize="none"
+            placeholder="example.org"
+            value={website}
+            onChange={(e) => { setWebsite(e.target.value); setWebsiteError(''); }}
+            error={websiteError}
+          />
+          <Button type="submit" block loading={busy} disabled={!register || loc.lat == null || !orgName.trim()}>
             Verify and continue
           </Button>
         </form>

@@ -6,9 +6,10 @@ import { getOrCreateConversation } from '../../lib/chat';
 import { formatKm, matchRequest, nextShifts } from '../../features/matching/index.js';
 import { REQUEST_SELECT, usePrefs } from './data.js';
 import {
-  ArrowLeft, BadgeCheck, CalendarDays, Dumbbell, GraduationCap, Hourglass, Lock, MapPin, Tag, Users,
+  ArrowLeft, BadgeCheck, CalendarDays, Dumbbell, ExternalLink, GraduationCap, Hourglass, Lock, MapPin, Tag, Users,
 } from 'lucide-react';
 import { Chips, LABELS, Loading, capital, formatHours, formatWhen } from './ui.jsx';
+import { displayWebsite, safeWebsite } from '../../lib/website.js';
 
 function Fact({ icon: I, label, children }) {
   return (
@@ -154,6 +155,24 @@ export default function RequestDetail() {
           </p>
         )}
       </section>
+
+      {(request.charities?.description || safeWebsite(request.charities?.website)) && (
+        <section className="v-card" style={{ gap: 8 }}>
+          <h2>About {request.charities.org_name}</h2>
+          {request.charities.description && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{request.charities.description}</p>}
+          {safeWebsite(request.charities.website) && (
+            <a
+              href={safeWebsite(request.charities.website)}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, overflowWrap: 'anywhere' }}
+            >
+              <ExternalLink size={16} strokeWidth={2} aria-hidden="true" />
+              {displayWebsite(safeWebsite(request.charities.website))}
+            </a>
+          )}
+        </section>
+      )}
 
       {mySignups.length > 0 && (
         <section className="v-card">
