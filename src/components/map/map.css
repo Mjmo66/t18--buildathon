@@ -116,6 +116,19 @@
 .sam-btn:hover { background: var(--surface-2); }
 .sam-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
 
+/* Fullscreen */
+.sam-wrap { position: relative; }
+.sam-expand, .sam-close {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: var(--shadow);
+}
+.sam-full { position: fixed; inset: 0; z-index: 1000; background: var(--bg); }
+.sam-root-full { border: 0; border-radius: 0; }
+.sam-close { top: max(12px, env(safe-area-inset-top)); right: 12px; width: 48px; height: 48px; }
+.sam-root-full .sam-controls { bottom: max(16px, env(safe-area-inset-bottom)); }
+
 @media (prefers-reduced-motion: reduce) {
   .sam-me-pulse { animation: none; opacity: 0.2; transform: scale(1.8); }
 }

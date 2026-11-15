@@ -2,6 +2,8 @@
 // app's own colours. No map service, no key. Directions hand off to Apple / Google Maps
 // (src/lib/maps). Design started from a Lovable prototype, geometry and theming are ours.
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Maximize2, X } from 'lucide-react';
 import { BOUNDS, GEO, WORLD_H, WORLD_W } from './stAndrewsGeo.js';
 import './map.css';
 
@@ -52,7 +54,48 @@ const hasCoords = (p) => p && Number.isFinite(Number(p.lat)) && Number.isFinite(
  * me: {lat, lng} · radiusKm: dashed circle around me · selectedId / onSelect(id)
  * interactive: drag, pinch, wheel and +/- zoom · height in px · fit: 'pins' (default) | 'town'
  */
-export default function StAndrewsMap({
+/** The map plus a fullscreen view (button top right; close with ✕ or Escape). */
+export default function StAndrewsMap(props) {
+  const [full, setFull] = useState(false);
+  const [vh, setVh] = useState(() => (typeof window === 'undefined' ? 600 : window.innerHeight));
+  useEffect(() => {
+    if (!full) return undefined;
+    const onResize = () => setVh(window.visualViewport?.height ?? window.innerHeight);
+    onResize();
+    const onKey = (e) => { if (e.key === 'Escape') setFull(false); };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('resize', onResize);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [full]);
+
+  return (
+    <div className="sam-wrap">
+      <MapView {...props} />
+      <button type="button" className="sam-btn sam-expand" aria-label="Show the map full screen" onClick={() => setFull(true)}>
+        <Maximize2 size={20} aria-hidden="true" />
+      </button>
+      {full && createPortal(
+        <div className="sam-full" role="dialog" aria-modal="true" aria-label="Map, full screen">
+          <MapView {...props} interactive height={Math.round(vh)} className={`${props.className ?? ''} sam-root-full`} />
+          <button type="button" className="sam-btn sam-close" aria-label="Close the map" onClick={() => setFull(false)} autoFocus>
+            <X size={22} aria-hidden="true" />
+          </button>
+        </div>,
+        document.body,
+      )}
+    </div>
+  );
+}
+
+function MapView({
   pins = [], me, radiusKm, selectedId, onSelect, height = 260, interactive = false, fit = 'pins',
   ariaLabel = 'Map of St Andrews', className = '',
 }) {
