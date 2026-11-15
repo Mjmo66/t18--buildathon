@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "seed": "node --env-file=.env.seed scripts/seed.mjs",
     "import:oscr": "node --env-file=.env.seed scripts/import-oscr.mjs",
