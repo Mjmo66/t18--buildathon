@@ -1,38 +1,60 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { isToday } from 'date-fns';
+import { CalendarCheck2, CalendarDays, Clock3, HeartHandshake, MapPin, ScanLine } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { ScanCheckin } from '../../features/attendance/index.jsx';
-import { Alert, Badge, Button, ConfirmDialog, EmptyState, useToast } from '../../components/ui/index.js';
+import { Button, ConfirmDialog, useToast } from '../../components/ui/index.js';
 import { formatDayTime, formatShiftRange } from '../../components/format.js';
 import { SIGNUP_SELECT } from './data.js';
-import { CalendarX2, ScanLine, Search } from 'lucide-react';
-import { Loading, SIGNUP_STATUS } from './ui.jsx';
+import { LABELS, Loading, SIGNUP_STATUS, capital } from './ui.jsx';
+import './commitments.css';
 
 const CHECK_IN_HELP = "Scan the organiser's code when you arrive.";
-const CANCEL_HINT = "Let the charity know you can't come. You can sign up again later.";
+const DAY_MS = 24 * 3600000;
+// SIGNUP_SELECT plus the request's category for the task tag.
+const COMMITMENT_SELECT = SIGNUP_SELECT.replace('requests(id, title,', 'requests(id, title, category,');
 
 /** "East Sands" from "East Sands, St Andrews KY16 8LJ". */
 const shortPlace = (address) => address?.split(',')[0]?.trim() || null;
 
-function ShiftCard({ s, children }) {
+const STATUS_CLASS = {
+  applied: 'status-pending', accepted: 'status-verified', attended: 'status-completed', no_show: 'status-closed',
+};
+
+function CancelNotice({ shiftAt }) {
+  const start = new Date(shiftAt).getTime();
+  if (start - Date.now() < DAY_MS) return <span className="cancel-chip cancel-chip-late">Starts within 24 hours</span>;
+  return <span className="cancel-chip cancel-chip-free">Free cancellation until {formatDayTime(new Date(start - DAY_MS)).replace(/^(Today|Tomorrow)/, (w) => w.toLowerCase())}</span>;
+}
+
+function CommitmentCard({ s, upcoming, children }) {
   const r = s.requests;
   const charityCancelled = r?.status === 'closed' && ['applied', 'accepted'].includes(s.status);
-  const st = charityCancelled ? { label: 'Cancelled by charity', tone: 'danger' }
-    : SIGNUP_STATUS[s.status] ?? { label: s.status, tone: 'neutral' };
-  const line = [
-    formatShiftRange(s.shift_at, s.hours_credited ?? r?.duration_hours).replace(', ', ' · '),
-    shortPlace(r?.address),
-  ].filter(Boolean).join(' · ');
+  const st = charityCancelled ? { label: 'Cancelled by charity', cls: 'status-closed' }
+    : { label: SIGNUP_STATUS[s.status]?.label ?? s.status, cls: STATUS_CLASS[s.status] ?? 'status-draft' };
+  const category = r?.category ? (LABELS.category[r.category] ?? capital(r.category)) : null;
   return (
-    <article className="v-card v-shift">
-      <Badge tone={st.tone}>{st.label}</Badge>
-      <h3 className="v-request-title">
-        <Link to={`/user/requests/${s.request_id}`} className="v-title-link">{r?.title ?? 'Shift'}</Link>
-      </h3>
-      <p className="v-request-line">{line}</p>
-      {!charityCancelled && children}
+    <article className="opportunity commitment-card">
+      <Link to={`/user/requests/${s.request_id}`} className="commitment-link">
+        <div className="opportunity-top">
+          <span className="commitment-tags">
+            {category && <span className={`task-tag task-tag-${r.category}`}>{category}</span>}
+            <span className={`status ${st.cls}`}>{st.label}</span>
+          </span>
+          {upcoming && !charityCancelled && <CancelNotice shiftAt={s.shift_at} />}
+        </div>
+        <h3>{r?.title ?? 'Shift'}</h3>
+        {r?.charities?.org_name && (
+          <p className="charity-line"><HeartHandshake aria-hidden="true" /> {r.charities.org_name}</p>
+        )}
+        <div className="opportunity-details">
+          <span><CalendarDays aria-hidden="true" />{formatShiftRange(s.shift_at, s.hours_credited ?? r?.duration_hours)}</span>
+          {shortPlace(r?.address) && <span><MapPin aria-hidden="true" />{shortPlace(r?.address)}</span>}
+        </div>
+      </Link>
+      {!charityCancelled && children && <div className="commitment-actions">{children}</div>}
     </article>
   );
 }
@@ -48,7 +70,7 @@ export default function MyShifts() {
 
   const reload = useCallback(async () => {
     if (!user) { setSignups([]); return; }
-    const { data, error: err } = await supabase.from('signups').select(SIGNUP_SELECT)
+    const { data, error: err } = await supabase.from('signups').select(COMMITMENT_SELECT)
       .eq('volunteer_id', user.id).order('shift_at', { ascending: true });
     if (err) setError(err.message);
     setSignups(data ?? []);
@@ -83,7 +105,7 @@ export default function MyShifts() {
     refreshProfile();
   };
 
-  if (!signups) return <div className="v-page"><Loading /></div>;
+  if (!signups) return <div className="lv"><div className="phone-padding"><Loading /></div></div>;
 
   const upcoming = signups.filter((s) => ['applied', 'accepted'].includes(s.status));
   const past = signups.filter((s) => ['attended', 'no_show'].includes(s.status)).reverse();
@@ -91,47 +113,66 @@ export default function MyShifts() {
   const acceptedToday = upcoming.some((s) => s.status === 'accepted' && isToday(new Date(s.shift_at)));
 
   const checkInButton = (
-    <Button size="lg" block icon={<ScanLine size={22} aria-hidden="true" />} help={CHECK_IN_HELP} onClick={() => setScanning(true)}>
-      Check in
-    </Button>
+    <>
+      <button type="button" className="commitment-checkin" onClick={() => setScanning(true)}>
+        <ScanLine aria-hidden="true" /> Check in
+      </button>
+      <p className="commitment-help">{CHECK_IN_HELP}</p>
+    </>
   );
 
   return (
-    <div className="v-page">
-      <h1>My shifts</h1>
-      {profile?.suspended && (
-        <Alert tone="warning">You can't sign up for new shifts after 3 missed shifts.</Alert>
-      )}
-      {error && <Alert tone="danger">{error}</Alert>}
+    <div className="lv">
+      <div className="phone-padding">
+        <div className="phone-intro">
+          <div>
+            <span className="eyebrow">Time well given</span>
+            <h2>You’re making a difference.</h2>
+            <p>{upcoming.length} upcoming {upcoming.length === 1 ? 'commitment' : 'commitments'}</p>
+          </div>
+        </div>
 
-      {/* Check-in for an accepted shift on another day (the card shows it on the shift day). */}
-      {hasAccepted && !acceptedToday && checkInButton}
-
-      <section className="v-list" aria-labelledby="v-coming-up">
-        <h2 id="v-coming-up" className="v-section-title">Coming up</h2>
-        {upcoming.length === 0 && (
-          <EmptyState
-            icon={<CalendarX2 size={26} aria-hidden="true" />}
-            title="No shifts coming up."
-            action={<Button to="/user" block icon={<Search size={20} aria-hidden="true" />}>Find shifts</Button>}
-          />
+        {profile?.suspended && (
+          <p className="commitment-alert" role="status">You can't sign up for new shifts after 3 missed shifts.</p>
         )}
-        {upcoming.map((s) => (
-          <ShiftCard key={s.id} s={s}>
-            {s.status === 'accepted' && isToday(new Date(s.shift_at)) ? checkInButton : (
-              <Button variant="secondary" block hint={CANCEL_HINT} loading={busyId === s.id} onClick={() => setCancelling(s)}>
-                Cancel my place
-              </Button>
-            )}
-          </ShiftCard>
-        ))}
-      </section>
+        {error && <p className="commitment-alert is-danger" role="alert">{error}</p>}
 
-      <section className="v-list" aria-labelledby="v-done">
-        <h2 id="v-done" className="v-section-title">Past</h2>
-        {past.length === 0 && <p className="v-muted">No finished shifts yet.</p>}
-        {past.map((s) => <ShiftCard key={s.id} s={s} />)}
-      </section>
+        {/* Check-in for an accepted shift on another day (the card shows it on the shift day). */}
+        {hasAccepted && !acceptedToday && <div className="commitment-checkin-top">{checkInButton}</div>}
+
+        <section aria-labelledby="v-coming-up">
+          {upcoming.length === 0 ? (
+            <div className="empty-state">
+              <CalendarCheck2 aria-hidden="true" style={{ color: 'var(--lv-primary)' }} />
+              <h3 id="v-coming-up">Nothing booked yet</h3>
+              <p>Shifts you sign up for on the Board will appear here.</p>
+              <Link to="/user" className="commitment-find">Go to the Board</Link>
+            </div>
+          ) : (
+            <>
+              <h2 id="v-coming-up" className="commitment-date">COMING UP</h2>
+              {upcoming.map((s) => (
+                <CommitmentCard key={s.id} s={s} upcoming>
+                  {s.status === 'accepted' && isToday(new Date(s.shift_at)) ? checkInButton : (
+                    <button type="button" className="commitment-cancel" disabled={busyId === s.id} onClick={() => setCancelling(s)}>
+                      Cancel my place
+                    </button>
+                  )}
+                </CommitmentCard>
+              ))}
+              <p className="readonly-note commitment-note">
+                <Clock3 aria-hidden="true" /> Cancel for free up to 24 hours before. Tap a commitment to manage it.
+              </p>
+            </>
+          )}
+        </section>
+
+        <section className="commitment-past" aria-labelledby="v-done">
+          <h2 id="v-done" className="commitment-date">PAST</h2>
+          {past.length === 0 && <p className="commitment-none">No finished shifts yet.</p>}
+          {past.map((s) => <CommitmentCard key={s.id} s={s} />)}
+        </section>
+      </div>
 
       <ConfirmDialog
         open={!!cancelling}
