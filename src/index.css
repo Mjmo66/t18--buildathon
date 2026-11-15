@@ -64,7 +64,7 @@
 }
 /* Text size, chosen in Account (src/lib/textSize.js). Percent of the browser's own default, so a
    browser or system text setting still applies on top. Layout sizes are in rem and follow it. */
-html { font-size: 100%; }
+html { font-size: 100%; overflow-x: clip; } /* clip: hidden tooltips must not widen the page */
 html[data-text-size='small'] { font-size: 87.5%; }
 html[data-text-size='large'] { font-size: 112.5%; }
 html[data-text-size='xlarge'] { font-size: 125%; }
@@ -826,3 +826,5 @@ button.chip-selected:hover { border-color: var(--accent-hover); }
 .landing-demo { display: flex; flex-direction: column; gap: 10px; padding-top: 18px; border-top: 1px solid var(--border); }
 .landing-demo h2 { margin: 0; font-size: 1rem; font-weight: 650; color: var(--muted); }
 .landing-demo-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.demo-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 340px) { .demo-buttons { grid-template-columns: 1fr; } }

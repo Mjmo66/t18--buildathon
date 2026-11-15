@@ -170,15 +170,17 @@ function Detail() {
       <div className="ch-end-actions">
         {request.status === 'open' ? (
           <>
-            <Button
-              variant="secondary"
-              block
-              disabled={busy}
-              hint="Stop new sign-ups. Volunteers you confirmed still come."
-              onClick={() => setStatus('filled', 'Done.')}
-            >
-              We have enough volunteers
-            </Button>
+            {request.schedule_type === 'recurring' && (
+              <Button
+                variant="secondary"
+                block
+                disabled={busy}
+                hint="Stop new sign-ups. Volunteers you confirmed still come."
+                onClick={() => setStatus('filled', 'Done.')}
+              >
+                We have enough volunteers
+              </Button>
+            )}
             <Button
               variant="danger-outline"
               block
@@ -189,7 +191,7 @@ function Detail() {
               Cancel this request
             </Button>
           </>
-        ) : (
+        ) : (request.status === 'closed' || request.schedule_type === 'recurring') && (
           <Button
             variant="secondary"
             block

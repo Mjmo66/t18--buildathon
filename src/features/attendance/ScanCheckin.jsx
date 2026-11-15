@@ -25,6 +25,7 @@ function friendlyError(message = '') {
   if (m.includes('invalid code') || m.includes('invalid input syntax')) {
     return "That code isn't right. Ask the organiser to show it again.";
   }
+  if (m.includes('check-in opens')) return message;
   if (m.includes('no accepted signup')) {
     return "You don't have a confirmed place on this shift. You may already be checked in, or the charity hasn't confirmed you yet.";
   }

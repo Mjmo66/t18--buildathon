@@ -7,6 +7,7 @@ import { Fingerprint, Mail } from 'lucide-react';
 import { Alert, Button, Card, Field } from '../../components/ui/index.js';
 import { usePasskeySupport, errorMessage } from './usePasskeySupport.js';
 import PasswordField from './PasswordField.jsx';
+import DemoButtons from './DemoButtons.jsx';
 
 const FACE_ID_HINT = "Your phone checks it's you. No password to remember.";
 
@@ -115,6 +116,7 @@ export default function Login() {
       </Card>
       <div className="auth-switch">
         <Button to="/signup" variant="secondary" block>Create an account</Button>
+        <DemoButtons />
       </div>
     </div>
   );
