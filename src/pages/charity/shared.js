@@ -1,5 +1,6 @@
 // Shared constants and helpers for the charity space.
-import { addMonths, addWeeks, endOfDay, format, isAfter } from 'date-fns';
+import { addMonths, addWeeks, endOfDay, isAfter } from 'date-fns';
+import { formatDayTime, formatDuration, formatLongDate } from '../../components/format.js';
 
 export const CATEGORIES = [
   { value: 'environment', label: 'Environment' },
@@ -11,22 +12,23 @@ export const CATEGORIES = [
   { value: 'events', label: 'Events' },
 ];
 
+// label: short word; detail: what it means in plain words (shown on the radio cards and detail pages).
 export const PHYSICAL_LEVELS = [
-  { value: 'light', label: 'Light' },
-  { value: 'moderate', label: 'Moderate' },
-  { value: 'heavy', label: 'Heavy' },
+  { value: 'light', label: 'Light', detail: 'Mostly sitting or standing' },
+  { value: 'moderate', label: 'Moderate', detail: 'Some walking and lifting' },
+  { value: 'heavy', label: 'Heavy', detail: 'Lots of lifting' },
 ];
 
 export const EXPERIENCE_LEVELS = [
-  { value: 'none', label: 'None' },
-  { value: 'some', label: 'Some' },
-  { value: 'experienced', label: 'Experienced' },
+  { value: 'none', label: 'No experience needed', detail: 'Anyone can help' },
+  { value: 'some', label: 'Some experience', detail: 'Helpful, but we can show them' },
+  { value: 'experienced', label: 'Experienced only', detail: 'They must have done this before' },
 ];
 
 export const RECURRENCES = [
-  { value: 'weekly', label: 'Weekly' },
-  { value: 'fortnightly', label: 'Fortnightly' },
-  { value: 'monthly', label: 'Monthly' },
+  { value: 'weekly', label: 'Every week' },
+  { value: 'fortnightly', label: 'Every 2 weeks' },
+  { value: 'monthly', label: 'Every month' },
 ];
 
 export const REQUEST_STATUSES = [
@@ -101,16 +103,22 @@ export function nextShifts(request, n = 3, from = new Date()) {
   return out;
 }
 
-export const fmtShift = (d) => format(d, 'EEE d MMM, HH:mm');
-export const fmtDate = (d) => format(d, 'd MMM yyyy');
+/** "Thursday 19 November, 2pm" (plain words, 12-hour). */
+export const fmtShift = (d) => formatDayTime(d);
+/** "19 November 2026". */
+export const fmtDate = (d) => formatLongDate(d);
 
-export function fmtHours(h) {
-  const n = Number(h) || 0;
-  return Number.isInteger(n) ? String(n) : n.toFixed(1);
-}
-
+/** "Just once" or "Every week until 24 January 2027". */
 export function scheduleSummary(r) {
-  if (r.schedule_type !== 'recurring') return `One-time · ${fmtShift(new Date(r.starts_at))}`;
+  if (r.schedule_type !== 'recurring') return 'Just once';
   const rec = labelOf(RECURRENCES, r.recurrence);
   return r.ends_on ? `${rec} until ${fmtDate(new Date(`${r.ends_on}T00:00:00`))}` : rec;
 }
+
+/** "2 hours · 2 of 12 places filled". */
+export function requestFacts(r, confirmed) {
+  return `${formatDuration(r.duration_hours)} · ${confirmed} of ${r.slots} places filled`;
+}
+
+/** "1 volunteer", "3 volunteers". */
+export const volunteers = (n) => `${n} ${n === 1 ? 'volunteer' : 'volunteers'}`;

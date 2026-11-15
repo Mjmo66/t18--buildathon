@@ -1,7 +1,7 @@
-// Navigation links for the charity space. section: sidebar group; tab: false = sidebar only.
+// Navigation links for the charity space. tab: false = sidebar only; hint: optional desktop tooltip.
 export const charityLinks = [
-  { to: '/charity', label: 'Overview', icon: 'dashboard', section: 'Overview' },
-  { to: '/charity/requests', label: 'Requests', icon: 'requests', section: 'Requests' },
-  { to: '/charity/requests/new', label: 'New request', icon: 'plus', section: 'Requests', tab: false },
-  { to: '/charity/profile', label: 'Profile', icon: 'org', section: 'Account' },
+  { to: '/charity', label: 'Home', icon: 'home' },
+  { to: '/charity/requests', label: 'My requests', icon: 'requests' },
+  { to: '/charity/requests/new', label: 'Ask for volunteers', icon: 'plus', tab: false },
+  { to: '/charity/profile', label: 'Profile', icon: 'user' },
 ];

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Clock, Download, ListChecks, Lock, Star } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { Button } from '../../components/ui/index.js';
 import { BADGES, formatDate, formatHours } from './shared';
 import './attendance.css';
 
-/** Volunteer: hours, points, badges, printable certificate. */
+/** Volunteer: hours and shifts in one line, earned badges, printable certificate. */
 export function RewardsSummary({ profile }) {
   const profileId = profile?.id;
   const [fresh, setFresh] = useState(null);     // latest profile row (hours/points change on check-in)
@@ -35,9 +36,6 @@ export function RewardsSummary({ profile }) {
 
   const name = fresh?.display_name ?? profile.display_name;
   const hours = Number(fresh?.hours_total ?? profile.hours_total ?? 0);
-  const points = fresh?.points ?? profile.points ?? 0;
-  const progress = { hours, shifts: shifts.length };
-
   function printCertificate() {
     const done = () => {
       document.body.classList.remove('att-printing');
@@ -48,52 +46,37 @@ export function RewardsSummary({ profile }) {
     window.print();
   }
 
+  const earnedBadges = BADGES.filter((b) => earned.has(b.code));
+  const shiftCount = shifts.length;
+
   return (
     <div className="att-rewards">
-      <div className="stat-grid att-stat-grid">
-        <div className="stat-card">
-          <span className="micro-label">Hours</span>
-          <Clock className="stat-icon" size={16} strokeWidth={1.75} aria-hidden="true" />
-          <span className="stat-value">{formatHours(hours)}</span>
-          <span className="stat-sub is-success">verified</span>
-        </div>
-        <div className="stat-card">
-          <span className="micro-label">Points</span>
-          <Star className="stat-icon" size={16} strokeWidth={1.75} aria-hidden="true" />
-          <span className="stat-value">{points}</span>
-          <span className="stat-sub is-accent">10 per hour</span>
-        </div>
-        <div className="stat-card">
-          <span className="micro-label">Shifts</span>
-          <ListChecks className="stat-icon" size={16} strokeWidth={1.75} aria-hidden="true" />
-          <span className="stat-value">{shifts.length}</span>
-          <span className="stat-sub">attended</span>
-        </div>
-      </div>
+      <p className="att-summary">
+        <strong>{formatHours(hours)}</strong> given · <strong>{shiftCount}</strong> {shiftCount === 1 ? 'shift' : 'shifts'}
+      </p>
 
-      <h3 className="att-h">Badges</h3>
-      <ul className="att-badges">
-        {BADGES.map((b) => {
-          const at = earned.get(b.code);
-          const [have, need, unit] = b.progress(progress);
-          const BadgeIcon = at ? b.icon : Lock;
-          return (
-            <li key={b.code} className={`att-badge ${at ? 'att-badge-earned' : 'att-badge-locked'}`}
-                aria-label={`${b.label}: ${at ? 'earned' : 'locked'}`}>
-              <span className="att-badge-icon" aria-hidden="true"><BadgeIcon size={20} strokeWidth={1.75} /></span>
-              <span className="att-badge-label">{b.label}</span>
-              <span className="att-badge-meta">
-                {at ? formatDate(at) : `${Math.min(Math.round(have * 10) / 10, need)} / ${need} ${unit}`}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+      {earnedBadges.length > 0 && (
+        <>
+          <h3 className="att-h">Your badges</h3>
+          <ul className="att-badges">
+            {earnedBadges.map((b) => (
+              <li key={b.code} className="att-badge">
+                <span className="att-badge-icon" aria-hidden="true"><b.icon size={22} strokeWidth={1.75} /></span>
+                <span className="att-badge-text">
+                  <span className="att-badge-label">{b.label}</span>
+                  <span className="att-badge-meta">Earned {formatDate(earned.get(b.code))}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
-      <button type="button" className="att-btn att-block" onClick={printCertificate} disabled={hours <= 0}>
-        <Download size={18} strokeWidth={1.75} aria-hidden="true" />
+      <Button variant="secondary" size="lg" block icon={<Download size={22} aria-hidden="true" />} onClick={printCertificate}
+        disabled={hours <= 0}
+        hint={hours <= 0 ? 'You can print it after your first shift.' : 'Print a certificate of your hours, or save it as a PDF.'}>
         Download certificate
-      </button>
+      </Button>
 
       {createPortal(
         <div className="att-certificate-root" aria-hidden="true">
@@ -102,7 +85,7 @@ export function RewardsSummary({ profile }) {
             <div className="att-cert-intro">This certifies that</div>
             <div className="att-cert-name">{name}</div>
             <div className="att-cert-intro">completed</div>
-            <div className="att-cert-hours">{formatHours(hours)} of verified volunteering</div>
+            <div className="att-cert-hours">{formatHours(hours)} of volunteering</div>
             <div className="att-cert-intro">with charities in St Andrews, Scotland.</div>
             <table className="att-cert-table">
               <thead><tr><th>Date</th><th>Shift</th><th>Charity</th><th>Hours</th></tr></thead>

@@ -1,60 +1,47 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { isToday } from 'date-fns';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { ScanCheckin } from '../../features/attendance/index.jsx';
+import { Alert, Badge, Button, ConfirmDialog, EmptyState, useToast } from '../../components/ui/index.js';
+import { formatDayTime, formatShiftRange } from '../../components/format.js';
 import { SIGNUP_SELECT } from './data.js';
-import { format } from 'date-fns';
-import { CalendarX2, Clock, Hourglass, MapPin, ScanLine, TriangleAlert, CircleCheck, X } from 'lucide-react';
-import { Empty, Loading, Meta, formatHours, formatWhen } from './ui.jsx';
+import { CalendarX2, MapPin, ScanLine, Search } from 'lucide-react';
+import { Loading, SIGNUP_STATUS } from './ui.jsx';
 
-const STATUS = {
-  applied: { label: 'Pending', cls: 'v-chip v-chip-no' },
-  accepted: { label: 'Accepted', cls: 'v-chip' },
-  attended: { label: 'Attended', cls: 'v-chip' },
-  no_show: { label: 'No-show', cls: 'v-chip v-chip-danger' },
-  declined: { label: 'Declined', cls: 'v-chip v-chip-plain' },
-  cancelled: { label: 'Cancelled', cls: 'v-chip v-chip-plain' },
-};
+const CHECK_IN_HELP = 'Scan the code the organiser shows you when you get there.';
+const CANCEL_HINT = "Let the charity know you can't come. You can sign up again later.";
 
 function ShiftCard({ s, children }) {
   const r = s.requests;
-  const d = new Date(s.shift_at);
+  const st = SIGNUP_STATUS[s.status] ?? { label: s.status, tone: 'neutral' };
   return (
-    <div className="v-card">
-      <div className="v-shift">
-        <span className="v-shift-date" aria-hidden="true">
-          <small>{format(d, 'MMM')}</small>
-          <strong>{format(d, 'd')}</strong>
-        </span>
-        <div className="v-shift-main">
-          <div className="v-between" style={{ alignItems: 'flex-start' }}>
-            <Link to={`/user/requests/${s.request_id}`} style={{ color: 'inherit', textDecoration: 'none', minWidth: 0 }}>
-              <h3>{r?.title ?? 'Request'}</h3>
-            </Link>
-            <span className={STATUS[s.status].cls}>{STATUS[s.status].label}</span>
-          </div>
-          {r?.charities?.org_name && <span className="v-muted v-small">{r.charities.org_name}</span>}
-        </div>
+    <article className="v-card v-shift">
+      <Badge tone={st.tone}>{st.label}</Badge>
+      <div className="v-request-head">
+        <h3 className="v-request-title">
+          <Link to={`/user/requests/${s.request_id}`} className="v-title-link">{r?.title ?? 'Shift'}</Link>
+        </h3>
+        {r?.charities?.org_name && <p className="v-request-org">{r.charities.org_name}</p>}
       </div>
-      <div className="v-meta">
-        <Meta icon={Clock}>{formatWhen(s.shift_at)}</Meta>
-        {r && <Meta icon={Hourglass}>{formatHours(s.hours_credited ?? r.duration_hours)}</Meta>}
-        {r?.address && <Meta icon={MapPin}>{r.address}</Meta>}
-      </div>
+      <p className="v-request-line">{formatShiftRange(s.shift_at, s.hours_credited ?? r?.duration_hours)}</p>
+      {r?.address && (
+        <p className="v-request-line v-with-icon"><MapPin size={20} aria-hidden="true" />{r.address}</p>
+      )}
       {children}
-    </div>
+    </article>
   );
 }
 
 export default function MyShifts() {
   const { user, profile, refreshProfile } = useAuth();
+  const toast = useToast();
   const [signups, setSignups] = useState(null);
-  const [tab, setTab] = useState('upcoming');
   const [scanning, setScanning] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  const [cancelling, setCancelling] = useState(null);
   const [error, setError] = useState(null);
-  const [notice, setNotice] = useState(null);
 
   const reload = useCallback(async () => {
     if (!user) { setSignups([]); return; }
@@ -65,18 +52,30 @@ export default function MyShifts() {
   }, [user]);
   useEffect(() => { reload(); }, [reload]);
 
-  const cancel = async (s) => {
-    if (!window.confirm(`Cancel ${s.requests?.title ?? 'this shift'} on ${formatWhen(s.shift_at)}?`)) return;
+  const closeCancel = useCallback(() => setCancelling(null), []);
+  const closeScanner = useCallback(() => setScanning(false), []);
+
+  useEffect(() => {
+    if (!scanning) return undefined;
+    const onKey = (e) => { if (e.key === 'Escape') closeScanner(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [scanning, closeScanner]);
+
+  const cancel = async () => {
+    const s = cancelling;
+    if (!s) return;
     setBusyId(s.id); setError(null);
     const { error: err } = await supabase.from('signups').update({ status: 'cancelled' }).eq('id', s.id);
     setBusyId(null);
+    setCancelling(null);
     if (err) setError(`Could not cancel: ${err.message}`);
+    else toast('Your place is cancelled.', 'success');
     reload();
   };
 
+  // The sheet stays open on ScanCheckin's success panel; its "Done" button closes it.
   const onCheckedIn = async () => {
-    setScanning(false);
-    setNotice('Checked in. Hours and points added.');
     await reload();
     refreshProfile();
   };
@@ -86,62 +85,72 @@ export default function MyShifts() {
   const upcoming = signups.filter((s) => ['applied', 'accepted'].includes(s.status));
   const past = signups.filter((s) => ['attended', 'no_show'].includes(s.status)).reverse();
   const hasAccepted = upcoming.some((s) => s.status === 'accepted');
+  const acceptedToday = upcoming.some((s) => s.status === 'accepted' && isToday(new Date(s.shift_at)));
+
+  const checkInButton = (
+    <Button size="lg" block icon={<ScanLine size={22} aria-hidden="true" />} help={CHECK_IN_HELP} onClick={() => setScanning(true)}>
+      I've arrived: check in
+    </Button>
+  );
 
   return (
     <div className="v-page">
       <h1>My shifts</h1>
-      {profile?.suspended && <div className="v-notice v-notice-warn"><TriangleAlert size={18} strokeWidth={1.75} aria-hidden="true" /><span>Your account is suspended after 3 no-shows.</span></div>}
-      <div className="v-tabs" role="group" aria-label="Shifts">
-        <button type="button" aria-pressed={tab === 'upcoming'} onClick={() => setTab('upcoming')}>Upcoming <span className="v-mono">{upcoming.length}</span></button>
-        <button type="button" aria-pressed={tab === 'past'} onClick={() => setTab('past')}>Past <span className="v-mono">{past.length}</span></button>
-      </div>
-      {notice && <div className="v-notice v-notice-ok"><CircleCheck size={18} strokeWidth={1.75} aria-hidden="true" /><span>{notice}</span></div>}
-      {error && <p className="v-error" role="alert">{error}</p>}
-
-      {tab === 'upcoming' && (
-        <div className="v-list">
-          {hasAccepted && (
-            <button type="button" className="v-btn v-btn-block" onClick={() => setScanning(true)}>
-              <ScanLine size={18} strokeWidth={2} aria-hidden="true" />Check in
-            </button>
-          )}
-          {upcoming.length === 0 && (
-            <Empty icon={<CalendarX2 size={22} strokeWidth={1.75} />} action={<Link to="/user" className="v-btn">Find a shift</Link>}>No upcoming shifts.</Empty>
-          )}
-          {upcoming.map((s) => (
-            <ShiftCard key={s.id} s={s}>
-              <div className="v-row">
-                {s.status === 'accepted' && (
-                  <button type="button" className="v-btn v-btn-sm" onClick={() => setScanning(true)}>
-                    <ScanLine size={16} strokeWidth={2} aria-hidden="true" />Check in
-                  </button>
-                )}
-                <button type="button" className="v-btn v-btn-danger v-btn-sm" disabled={busyId === s.id} onClick={() => cancel(s)}>
-                  {busyId === s.id ? 'Cancelling…' : 'Cancel'}
-                </button>
-              </div>
-            </ShiftCard>
-          ))}
-        </div>
+      {profile?.suspended && (
+        <Alert tone="warning">You can't sign up for new shifts after 3 missed shifts.</Alert>
       )}
+      {error && <Alert tone="danger">{error}</Alert>}
 
-      {tab === 'past' && (
-        <div className="v-list">
-          {past.length === 0 && <Empty icon={<CalendarX2 size={22} strokeWidth={1.75} />}>No past shifts yet.</Empty>}
-          {past.map((s) => <ShiftCard key={s.id} s={s} />)}
-        </div>
-      )}
+      {/* Check-in for an accepted shift on another day (the card shows it on the shift day). */}
+      {hasAccepted && !acceptedToday && checkInButton}
+
+      <section className="v-list" aria-labelledby="v-coming-up">
+        <h2 id="v-coming-up" className="v-section-title">Coming up</h2>
+        {upcoming.length === 0 && (
+          <EmptyState
+            icon={<CalendarX2 size={26} aria-hidden="true" />}
+            title="No shifts coming up."
+            action={<Button to="/user" block icon={<Search size={20} aria-hidden="true" />}>Find shifts</Button>}
+          />
+        )}
+        {upcoming.map((s) => (
+          <ShiftCard key={s.id} s={s}>
+            {s.status === 'accepted' && isToday(new Date(s.shift_at)) ? checkInButton : (
+              <Button variant="secondary" block hint={CANCEL_HINT} loading={busyId === s.id} onClick={() => setCancelling(s)}>
+                Cancel my place
+              </Button>
+            )}
+          </ShiftCard>
+        ))}
+      </section>
+
+      <section className="v-list" aria-labelledby="v-done">
+        <h2 id="v-done" className="v-section-title">Done</h2>
+        {past.length === 0 && <p className="v-muted">No finished shifts yet.</p>}
+        {past.map((s) => <ShiftCard key={s.id} s={s} />)}
+      </section>
+
+      <ConfirmDialog
+        open={!!cancelling}
+        title="Cancel your place?"
+        confirmLabel="Yes, cancel my place"
+        cancelLabel="No, keep it"
+        tone="danger"
+        busy={!!busyId}
+        onConfirm={cancel}
+        onCancel={closeCancel}
+      >
+        {cancelling && `${cancelling.requests?.title ?? 'This shift'}, ${formatDayTime(cancelling.shift_at)}`}
+      </ConfirmDialog>
 
       {scanning && (
-        <div className="v-sheet-backdrop" onClick={() => setScanning(false)}>
-          <div className="v-sheet" role="dialog" aria-modal="true" aria-label="Check in" onClick={(e) => e.stopPropagation()}>
-            <div className="v-between">
-              <h2 style={{ margin: 0 }}>Scan the charity's QR code</h2>
-              <button type="button" className="v-btn v-btn-secondary v-btn-sm" onClick={() => setScanning(false)} aria-label="Close">
-                <X size={18} strokeWidth={2} aria-hidden="true" />
-              </button>
+        <div className="v-sheet-backdrop" onClick={closeScanner}>
+          <div className="v-sheet" role="dialog" aria-modal="true" aria-labelledby="v-checkin-title" onClick={(e) => e.stopPropagation()}>
+            <div className="v-sheet-head">
+              <h2 id="v-checkin-title">Check in</h2>
+              <Button variant="secondary" onClick={closeScanner}>Close</Button>
             </div>
-            <ScanCheckin onCheckedIn={onCheckedIn} />
+            <ScanCheckin onCheckedIn={onCheckedIn} onDone={closeScanner} />
           </div>
         </div>
       )}

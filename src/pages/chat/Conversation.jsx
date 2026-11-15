@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { format, isSameDay } from 'date-fns';
-import { ChevronLeft, Hourglass, Lock, SendHorizontal, TriangleAlert } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { isSameDay } from 'date-fns';
+import { ChevronLeft, Hourglass, Lock, TriangleAlert } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import {
@@ -13,6 +13,8 @@ import {
   sendMessage,
   subscribeToMessages,
 } from '../../lib/chat';
+import { Button } from '../../components/ui/index.js';
+import { formatTime } from '../../components/format.js';
 import Avatar from './Avatar.jsx';
 import KeySheet from './KeySheet.jsx';
 import { dayLabel, mergeMessages } from './util.js';
@@ -245,48 +247,58 @@ export default function Conversation() {
   if (!user) {
     return (
       <div className="chat-page">
-        <p className="chat-muted">Sign in to see this chat.</p>
-        <Link className="button" to="/">Sign in</Link>
+        <p className="chat-muted">Sign in to see your messages.</p>
+        <Button to="/login">Sign in</Button>
       </div>
     );
   }
 
-  const remaining = MAX_MESSAGE_LENGTH - text.length;
   const canSend = !!text.trim() && !sending && !!conv && !noPeerKey;
+  const sendBlocker = !conv
+    ? 'Wait for the conversation to load'
+    : noPeerKey
+      ? NO_PEER_KEY_MESSAGE
+      : !text.trim()
+        ? 'Type a message first'
+        : '';
 
   return (
     <div className="chat-screen" ref={screenRef}>
       <header className="chat-header">
-        <Link to="/chat" className="chat-back" aria-label="Back to chats"><ChevronLeft size={24} strokeWidth={2} /></Link>
-        {conv ? (
-          <>
-            <Avatar name={conv.peerName} size={38} />
-            <div className="chat-header-text">
-              <span className="chat-header-name">{conv.peerName}</span>
-              {conv.requestTitle && <span className="chat-header-sub">{conv.requestTitle}</span>}
-            </div>
-          </>
-        ) : (
-          <div className="chat-header-text"><span className="chat-header-name">{loadError ? 'Chat' : 'Loading…'}</span></div>
+        <div className="chat-header-row">
+          <Button to="/chat" variant="secondary" className="chat-back" icon={<ChevronLeft size={20} strokeWidth={2} aria-hidden="true" />}>
+            Messages
+          </Button>
+          {conv ? (
+            <>
+              <Avatar name={conv.peerName} size={38} />
+              <div className="chat-header-text">
+                <span className="chat-header-name">{conv.peerName}</span>
+                {conv.requestTitle && <span className="chat-header-sub">{conv.requestTitle}</span>}
+              </div>
+            </>
+          ) : (
+            <div className="chat-header-text"><span className="chat-header-name">{loadError ? 'Messages' : 'Loading…'}</span></div>
+          )}
+        </div>
+        {conv && (
+          <p className="chat-private">
+            <Lock size={16} strokeWidth={2} aria-hidden="true" className="chat-private-icon" />
+            <span>
+              Private: only you and {conv.peerName} can read this.{' '}
+              <button type="button" className="link-button chat-private-link" onClick={openSheet} aria-haspopup="dialog">
+                Compare security codes
+              </button>
+            </span>
+          </p>
         )}
-        <button
-          type="button"
-          className="e2e-chip"
-          onClick={openSheet}
-          disabled={!conv}
-          aria-haspopup="dialog"
-          title="End-to-end encrypted: compare keys"
-        >
-          <Lock size={14} strokeWidth={2} aria-hidden="true" />
-          <span>Encrypted</span>
-        </button>
       </header>
 
       <div className="chat-scroll" ref={scrollRef} onScroll={onScroll} role="log">
         {loadError && (
           <div className="chat-alert" role="alert">
             <span>{loadError}</span>
-            <Link className="chat-link-button" to="/chat">Back to chats</Link>
+            <Button to="/chat" variant="secondary">Back to Messages</Button>
           </div>
         )}
         {!loadError && !messagesLoaded && <p className="chat-muted chat-center">Loading messages…</p>}
@@ -303,11 +315,11 @@ export default function Conversation() {
               <div className={`bubble-row ${m.mine ? 'mine' : 'theirs'}`}>
                 <div className={`bubble ${m.undecryptable ? 'bubble-broken' : ''}`}>
                   {m.undecryptable ? (
-                    <span className="bubble-text"><TriangleAlert size={14} strokeWidth={2} aria-hidden="true" className="bubble-warn" /> {UNDECRYPTABLE_TEXT}</span>
+                    <span className="bubble-text"><TriangleAlert size={18} strokeWidth={2} aria-hidden="true" className="bubble-warn" /> {UNDECRYPTABLE_TEXT}</span>
                   ) : (
                     <span className="bubble-text">{m.text}</span>
                   )}
-                  <time className="bubble-time" dateTime={m.createdAt}>{format(date, 'HH:mm')}</time>
+                  <time className="bubble-time" dateTime={m.createdAt}>{formatTime(date)}</time>
                 </div>
               </div>
             </Fragment>
@@ -324,7 +336,7 @@ export default function Conversation() {
       {sendError && sendError !== NO_PEER_KEY_MESSAGE && (
         <div className="chat-alert chat-alert-inline" role="alert">
           <span>{sendError}</span>
-          <button type="button" className="chat-link-button" onClick={() => setSendError(null)}>Dismiss</button>
+          <Button variant="secondary" onClick={() => setSendError(null)}>Dismiss</Button>
         </div>
       )}
 
@@ -345,16 +357,15 @@ export default function Conversation() {
             onChange={(e) => setText(e.target.value)}
             onKeyDown={onKeyDown}
             onFocus={() => noPeerKey && refreshPeerKey()}
-            placeholder={noPeerKey ? 'Waiting for their key…' : 'Message'}
+            placeholder={noPeerKey ? NO_PEER_KEY_MESSAGE : 'Type a message'}
             disabled={noPeerKey || !conv}
             enterKeyHint="send"
             aria-label="Message"
           />
-          {remaining < 500 && <span className="chat-counter">{remaining}</span>}
         </div>
-        <button type="submit" className="chat-send" disabled={!canSend} aria-label="Send">
-          <SendHorizontal size={20} strokeWidth={2} aria-hidden="true" />
-        </button>
+        <Button type="submit" className="chat-send" disabled={!canSend} hint={sendBlocker || undefined} loading={sending}>
+          Send
+        </Button>
       </form>
 
       {conv && (

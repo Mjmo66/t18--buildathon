@@ -8,3 +8,6 @@ export { default as EmptyState } from './EmptyState.jsx';
 export { default as Spinner } from './Spinner.jsx';
 export { default as Alert } from './Alert.jsx';
 export { ToastProvider, useToast } from './Toast.jsx';
+export { default as Tooltip } from './Tooltip.jsx';
+export { default as ConfirmDialog } from './ConfirmDialog.jsx';
+export { default as IconButton } from './IconButton.jsx';

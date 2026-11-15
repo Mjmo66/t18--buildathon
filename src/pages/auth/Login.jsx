@@ -3,9 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { signInWithPasskey } from '../../lib/auth/passkey';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
-import { Fingerprint, KeyRound } from 'lucide-react';
+import { Fingerprint, Mail } from 'lucide-react';
 import { Alert, Button, Card, Field } from '../../components/ui/index.js';
 import { usePasskeySupport, errorMessage } from './usePasskeySupport.js';
+import PasswordField from './PasswordField.jsx';
+
+const FACE_ID_HELP = "Your phone checks it's you. No password to remember.";
 
 export default function Login() {
   const { refreshProfile } = useAuth();
@@ -16,6 +19,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [resetSent, setResetSent] = useState(false);
   const showPassword = usePassword || passkeys === false;
 
   async function done() {
@@ -52,35 +56,60 @@ export default function Login() {
     }
   }
 
+  async function handleForgot() {
+    setError('');
+    setResetSent(false);
+    if (!email.trim()) {
+      setError('Type your email address above first, then press "Forgot password?" again.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/login`,
+      });
+      if (err) throw err;
+      setResetSent(true);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="auth-page">
       <h1>Sign in</h1>
       <Card>
         {error && <Alert tone="danger">{error}</Alert>}
+        {resetSent && <Alert tone="success">We've emailed you a link to choose a new password.</Alert>}
         {showPassword ? (
           <form className="stack" onSubmit={handlePassword}>
             <Field label="Email" type="email" autoComplete="email" required value={email}
               onChange={(e) => setEmail(e.target.value)} />
-            <Field label="Password" type="password" autoComplete="current-password" required value={password}
+            <PasswordField label="Password" autoComplete="current-password" required value={password}
               onChange={(e) => setPassword(e.target.value)} />
-            <Button type="submit" block loading={busy}>Sign in</Button>
+            <Button type="submit" size="lg" block loading={busy}>Sign in</Button>
+            <button type="button" className="link-button" onClick={handleForgot} disabled={busy}>
+              Forgot password?
+            </button>
             {passkeys && (
-              <button type="button" className="link-button" onClick={() => setUsePassword(false)}>
-                <Fingerprint size={16} strokeWidth={1.75} aria-hidden="true" />
-                Use a passkey instead
-              </button>
+              <Button variant="secondary" size="lg" block loading={busy} onClick={handlePasskey}
+                icon={<Fingerprint size={20} strokeWidth={2} aria-hidden="true" />}>
+                Sign in with Face ID or fingerprint
+              </Button>
             )}
           </form>
         ) : (
           <div className="stack">
-            <Button block loading={busy || passkeys === null} onClick={handlePasskey}>
-              <Fingerprint size={18} strokeWidth={2} aria-hidden="true" />
-              Sign in with passkey
+            <Button size="lg" block loading={busy || passkeys === null} onClick={handlePasskey} help={FACE_ID_HELP}
+              icon={<Fingerprint size={20} strokeWidth={2} aria-hidden="true" />}>
+              Sign in with Face ID or fingerprint
             </Button>
-            <button type="button" className="link-button" onClick={() => setUsePassword(true)}>
-              <KeyRound size={16} strokeWidth={1.75} aria-hidden="true" />
-              Use a password instead
-            </button>
+            <Button variant="secondary" size="lg" block onClick={() => setUsePassword(true)}
+              icon={<Mail size={20} strokeWidth={2} aria-hidden="true" />}>
+              Sign in with email and password
+            </Button>
           </div>
         )}
       </Card>

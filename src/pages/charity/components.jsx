@@ -1,9 +1,9 @@
-// Small building blocks for the charity pages (plain elements; shell UI can replace them at merge).
+// Small building blocks for the charity pages, built on the shared UI kit.
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { BadgeCheck, CircleAlert, LocateFixed, MapPin } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
+import { Button } from '../../components/ui/index.js';
 import { PLACES, REGISTER_LABELS, detectRegister, normaliseCharityNumber } from './shared.js';
 import './charity.css';
 
@@ -22,12 +22,25 @@ export function ErrorNote({ error }) {
 
 export function VerifiedBadge({ verified }) {
   return verified
-    ? <span className="ch-badge ch-badge-ok"><BadgeCheck size={14} strokeWidth={2} aria-hidden="true" />Verified charity</span>
-    : <span className="ch-badge ch-badge-warn"><CircleAlert size={14} strokeWidth={2} aria-hidden="true" />Not verified yet</span>;
+    ? <span className="ch-badge ch-badge-ok"><BadgeCheck size={18} strokeWidth={2} aria-hidden="true" />Checked charity</span>
+    : <span className="ch-badge ch-badge-warn"><CircleAlert size={18} strokeWidth={2} aria-hidden="true" />Not checked yet</span>;
 }
 
+// Plain words for request and signup statuses.
+export const STATUS_WORDS = {
+  open: 'Open',
+  filled: 'Enough volunteers',
+  closed: 'Cancelled',
+  applied: 'Waiting for your reply',
+  accepted: 'Confirmed',
+  attended: 'Came',
+  no_show: 'Did not come',
+  declined: 'You said no',
+  cancelled: 'Cancelled their place',
+};
+
 export function StatusPill({ status }) {
-  return <span className={`ch-pill ch-pill-${status}`}>{status.replace('_', ' ')}</span>;
+  return <span className={`ch-pill ch-pill-${status}`}>{STATUS_WORDS[status] ?? status}</span>;
 }
 
 /** Renders children only for a signed-in charity with a charities row; otherwise the right state. */
@@ -38,7 +51,7 @@ export function CharityGate({ children }) {
     return (
       <Empty>
         <p>Sign in with your charity account.</p>
-        <Link className="button" to="/">Go to sign in</Link>
+        <Button to="/">Go to sign in</Button>
       </Empty>
     );
   }
@@ -48,7 +61,7 @@ export function CharityGate({ children }) {
 }
 
 /** Calls verify_charity() and refreshes the auth context. */
-export function VerifyButton({ className = 'button' }) {
+export function VerifyButton({ variant = 'primary' }) {
   const { refreshProfile } = useAuth();
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState(null);
@@ -63,9 +76,9 @@ export function VerifyButton({ className = 'button' }) {
   };
   return (
     <span className="ch-verify">
-      <button type="button" className={className} onClick={verify} disabled={busy}>
-        {busy ? 'Checking…' : 'Verify now'}
-      </button>
+      <Button variant={variant} onClick={verify} loading={busy} hint="Look up your charity number in the official register.">
+        {busy ? 'Checking…' : 'Check my charity now'}
+      </Button>
       {msg && <span className="ch-error">{msg}</span>}
     </span>
   );
@@ -105,9 +118,14 @@ export function PlacePicker({ value, onChange, idPrefix = 'place' }) {
           {PLACES.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
         </select>
       </label>
-      <button type="button" className="ch-btn-secondary" onClick={useMyLocation}>
-        <LocateFixed size={16} strokeWidth={1.75} aria-hidden="true" />Use my location
-      </button>
+      <Button
+        variant="secondary"
+        icon={<LocateFixed size={20} aria-hidden="true" />}
+        onClick={useMyLocation}
+        hint="Use the place where you are now."
+      >
+        Use my location
+      </Button>
       {geoState && <span className="ch-muted">{geoState}</span>}
       <label className="ch-field">
         <span>Address</span>
@@ -120,7 +138,7 @@ export function PlacePicker({ value, onChange, idPrefix = 'place' }) {
         />
       </label>
       {value.lat != null && (
-        <span className="ch-muted ch-coords"><MapPin size={14} strokeWidth={1.75} aria-hidden="true" />{value.lat.toFixed(4)}, {value.lng.toFixed(4)}</span>
+        <span className="ch-muted ch-coords"><MapPin size={20} aria-hidden="true" />Place found on the map</span>
       )}
     </div>
   );
@@ -181,13 +199,13 @@ export function CharityOnboarding() {
           />
           {normalised && (
             <small className={register ? 'ch-muted' : 'ch-error'}>
-              {register ? REGISTER_LABELS[register] : 'Format not recognised'}
+              {register ? REGISTER_LABELS[register] : 'We don’t recognise this number yet'}
             </small>
           )}
         </label>
         <PlacePicker value={loc} onChange={setLoc} idPrefix="onb" />
         <ErrorNote error={error} />
-        <button className="button ch-btn-block" disabled={busy}>{busy ? 'Saving…' : 'Save and verify'}</button>
+        <Button type="submit" size="lg" block loading={busy}>{busy ? 'Saving…' : 'Save and check my charity'}</Button>
       </form>
     </section>
   );

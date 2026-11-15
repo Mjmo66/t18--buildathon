@@ -1,0 +1,52 @@
+import { cloneElement, useEffect, useId, useRef, useState } from 'react';
+
+const canHover = () => typeof window !== 'undefined' && window.matchMedia?.('(hover: hover)').matches;
+
+// Small styled explanation shown above a control: on mouse hover (only on devices that can hover)
+// and on keyboard focus. Never the only label: the child must already have visible text.
+// Linked with aria-describedby; Escape closes it; it stays open while the pointer is over it.
+// Usage: <Tooltip hint="What happens when I press this"><button>…</button></Tooltip>
+export default function Tooltip({ hint, block = false, children }) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const timer = useRef();
+  useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+  if (!hint) return children;
+
+  const show = () => {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setOpen(true), 400);
+  };
+  const hide = () => {
+    clearTimeout(timer.current);
+    setOpen(false);
+  };
+  const onFocus = (e) => {
+    // Keyboard focus only: a tap on a phone also focuses, and phones show the visible label instead.
+    if (e.target.matches?.(':focus-visible')) show();
+  };
+  const describedBy = [children.props['aria-describedby'], `${id}-tip`].filter(Boolean).join(' ');
+
+  return (
+    <span
+      className={`tooltip-wrap ${block ? 'tooltip-wrap-block' : ''}`}
+      onMouseEnter={() => canHover() && show()}
+      onMouseLeave={hide}
+      onFocus={onFocus}
+      onBlur={hide}
+    >
+      {cloneElement(children, { 'aria-describedby': describedBy })}
+      <span role="tooltip" id={`${id}-tip`} className={`tooltip ${open ? 'is-open' : ''}`}>
+        {hint}
+      </span>
+    </span>
+  );
+}
