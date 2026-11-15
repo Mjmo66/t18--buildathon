@@ -5,6 +5,7 @@ import RequestDetail from './RequestDetail.jsx';
 import MyShifts from './MyShifts.jsx';
 import Profile from './Profile.jsx';
 import ThankYou from './ThankYou.jsx';
+import Verification from './Verification.jsx';
 
 export const userRoutes = [
   { index: true, element: <Discover /> },
@@ -13,4 +14,5 @@ export const userRoutes = [
   { path: 'preferences', element: <Preferences /> },
   { path: 'profile', element: <Profile /> },
   { path: 'thanks', element: <ThankYou /> },
+  { path: 'verification', element: <Verification /> },
 ];

@@ -1,0 +1,22 @@
+/* Volunteer Verification screen, ported from the Lovable design (commit 132895a). */
+.lv .lv-verify .verify-back {display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--lv-primary);margin-bottom:10px;}
+.lv .lv-verify .verify-demo {margin-bottom:14px;}
+.lv .cred-hero {display:flex;gap:12px;align-items:flex-start;background:var(--lv-primary);color:var(--lv-primary-foreground);border-radius:10px;padding:16px;margin-bottom:16px;}
+.lv .cred-hero > svg {width:26px;height:26px;flex-shrink:0;}
+.lv .cred-hero strong {font-family:var(--lv-font-display);font-size:18px;font-weight:600;display:block;}
+.lv .cred-hero p {font-size:12px;opacity:.9;margin-top:2px;}
+.lv .cred-list {list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.lv .cred-row {display:flex;align-items:center;gap:10px;border:1px solid var(--lv-border);border-radius:8px;padding:12px;background:var(--lv-card);}
+.lv .cred-icon {width:34px;height:34px;flex-shrink:0;border-radius:8px;display:grid;place-items:center;background:var(--lv-secondary);color:var(--lv-primary);}
+.lv .cred-icon svg {width:18px;height:18px;}
+.lv .cred-main {flex:1;min-width:0;}
+.lv .cred-title {display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.lv .cred-title strong {font-size:14px;}
+.lv .cred-desc {font-size:12px;color:var(--lv-muted-foreground);margin-top:3px;line-height:1.45;}
+.lv .cred-badge {display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:650;padding:3px 7px;border-radius:4px;white-space:nowrap;}
+.lv .cred-badge svg {width:12px;height:12px;}
+.lv .cred-verified {color:var(--lv-success);background:var(--lv-success-soft);}
+.lv .cred-pending {color:var(--lv-warning);background:var(--lv-warning-soft);}
+.lv .cred-missing {color:var(--lv-muted-foreground);background:var(--lv-muted);}
+.lv .cred-add {flex-shrink:0;min-height:36px;padding:0 14px;border:1px solid var(--lv-border);border-radius:6px;background:var(--lv-card);color:var(--lv-primary);font-size:13px;font-weight:600;cursor:pointer;}
+.lv .cred-add:hover {border-color:var(--lv-primary);background:var(--lv-accent);}

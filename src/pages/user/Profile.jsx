@@ -4,7 +4,8 @@ import { groupsFromAvailability } from '../../features/matching/index.js';
 import { Button } from '../../components/ui/index.js';
 import SignOutButton from '../../components/SignOutButton.jsx';
 import TextSizeSetting from '../../components/TextSizeSetting.jsx';
-import { Check, Power, SlidersHorizontal } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Check, ChevronRight, Power, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { usePrefs } from './data.js';
 import { useAvailability } from './availability.js';
 import { LABELS, Loading } from './ui.jsx';
@@ -87,6 +88,10 @@ export default function Profile() {
           <div className="detail-row"><span>Email</span><span>{user.email}</span></div>
           <div className="detail-row"><span>Hours given</span><span>{hours} {hours === 1 ? 'hour' : 'hours'}</span></div>
           <div className="detail-row"><span>Points</span><span>{profile.points ?? 0}</span></div>
+          <Link to="/user/verification" className="detail-row" style={{ color: 'var(--lv-primary)', fontWeight: 600 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'inherit' }}><ShieldCheck size={16} aria-hidden="true" /> Verification</span>
+            <ChevronRight size={16} aria-hidden="true" />
+          </Link>
           {prefs && (
             <div className="detail-row">
               <span>Physical work</span><span>{LABELS.physicalShort[prefs.physical_max] ?? prefs.physical_max}</span>
