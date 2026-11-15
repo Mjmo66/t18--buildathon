@@ -1,15 +1,17 @@
 import { useState } from 'react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
+import { Button, useToast } from '../../components/ui/index.js';
+import SignOutButton from '../../components/SignOutButton.jsx';
 import { CharityGate, ErrorNote, PlacePicker, VerifiedBadge, VerifyButton } from './components.jsx';
 import { REGISTER_LABELS, fmtDate } from './shared.js';
 
 function Profile() {
   const { user, charity, refreshProfile } = useAuth();
+  const toast = useToast();
   const [orgName, setOrgName] = useState(charity.org_name);
   const [loc, setLoc] = useState({ address: charity.address ?? '', lat: charity.lat, lng: charity.lng });
   const [error, setError] = useState(null);
-  const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const verified = Boolean(charity.verified_at);
 
@@ -20,48 +22,59 @@ function Profile() {
   const save = async (e) => {
     e.preventDefault();
     setError(null);
-    setSaved(false);
+    
     if (!orgName.trim()) { setError('Enter your organisation name.'); return; }
     setBusy(true);
     const { error: err } = await supabase.from('charities')
       .update({ org_name: orgName.trim(), address: loc.address.trim() || null, lat: loc.lat, lng: loc.lng })
       .eq('profile_id', user.id);
     if (err) setError(err);
-    else { await refreshProfile(); setSaved(true); }
+    else { await refreshProfile(); toast('Saved.', 'success'); }
     setBusy(false);
   };
 
   return (
     <section className="ch-page">
-      <h1>Charity profile</h1>
+      <h1>Profile</h1>
 
       <div className="ch-card ch-details">
         <dl>
-          <dt>Charity number</dt><dd><code>{charity.charity_number}</code></dd>
+          <dt>Charity number</dt><dd>{charity.charity_number}</dd>
           <dt>Register</dt><dd>{REGISTER_LABELS[charity.register] ?? charity.register}</dd>
           <dt>Status</dt>
           <dd>
             <div className="ch-row">
               <VerifiedBadge verified={verified} />
               {verified
-                ? <span className="ch-muted ch-small">since {fmtDate(new Date(charity.verified_at))}</span>
-                : <VerifyButton className="ch-btn-secondary" />}
+                ? <span className="ch-muted">since {fmtDate(new Date(charity.verified_at))}</span>
+                : <VerifyButton variant="secondary" />}
             </div>
           </dd>
-          <dt>Account</dt><dd>{user.email ?? '—'}</dd>
+          <dt>Email</dt><dd>{user.email ?? '—'}</dd>
         </dl>
       </div>
 
       <form className="ch-form ch-card" onSubmit={save} noValidate>
         <label className="ch-field">
           <span>Organisation name</span>
-          <input value={orgName} onChange={(e) => { setOrgName(e.target.value); setSaved(false); }} autoComplete="organization" />
+          <input value={orgName} onChange={(e) => setOrgName(e.target.value)} autoComplete="organization" />
         </label>
-        <PlacePicker value={loc} onChange={(v) => { setLoc(v); setSaved(false); }} idPrefix="profile" />
+        <PlacePicker value={loc} onChange={setLoc} idPrefix="profile" />
         <ErrorNote error={error} />
-        {saved && <p className="ch-ok" role="status">Saved.</p>}
-        <button className="button ch-btn-block" disabled={busy || !dirty}>{busy ? 'Saving…' : 'Save changes'}</button>
+        <Button
+          type="submit"
+          block
+          loading={busy}
+          disabled={!dirty}
+          hint={dirty ? 'Keep these changes.' : 'Change the name or place first.'}
+        >
+          {busy ? 'Saving…' : 'Save changes'}
+        </Button>
       </form>
+
+      <div className="ch-signout">
+        <SignOutButton />
+      </div>
     </section>
   );
 }

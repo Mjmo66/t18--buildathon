@@ -1,27 +1,34 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, BadgeCheck, MessageSquare, QrCode } from 'lucide-react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { isToday, startOfDay } from 'date-fns';
+import { ArrowLeft, CalendarDays, Dumbbell, GraduationCap, MapPin, QrCode, Repeat, Users } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { getOrCreateConversation } from '../../lib/chat';
 import { AttendancePanel, CheckinQR } from '../../features/attendance/index.jsx';
+import { Button, ConfirmDialog, useToast } from '../../components/ui/index.js';
+import { formatShiftRange } from '../../components/format.js';
 import { CharityGate, Empty, ErrorNote, Loading, StatusPill } from './components.jsx';
 import {
-  CATEGORIES, EXPERIENCE_LEVELS, PHYSICAL_LEVELS, fmtHours, fmtShift, labelOf, nextShifts, scheduleSummary,
+  EXPERIENCE_LEVELS, PHYSICAL_LEVELS, labelOf, nextShifts, requestFacts, scheduleSummary,
 } from './shared.js';
 
-const ACTIVE = ['applied', 'accepted', 'attended', 'no_show'];
+const ICON = { size: 22, strokeWidth: 1.75, 'aria-hidden': true };
 
 function Detail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
+  const [params] = useSearchParams();
   const [request, setRequest] = useState(undefined); // undefined = loading, null = not found
   const [signups, setSignups] = useState([]);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [showQR, setShowQR] = useState(false);
+  const [showQR, setShowQR] = useState(params.get('checkin') === '1');
   const [messaging, setMessaging] = useState(null);
+  const [askCancel, setAskCancel] = useState(false);
+  const closeAsk = useCallback(() => setAskCancel(false), []);
 
   const reload = useCallback(async () => {
     setError(null);
@@ -39,11 +46,13 @@ function Detail() {
 
   useEffect(() => { reload(); }, [reload]);
 
-  const setStatus = async (status) => {
+  const setStatus = async (status, done) => {
     setBusy(true);
     const { error: err } = await supabase.from('requests').update({ status }).eq('id', id);
     setBusy(false);
-    if (err) setError(err); else reload();
+    setAskCancel(false);
+    if (err) setError(err);
+    else { toast(done, 'success'); reload(); }
   };
 
   const message = async (volunteerId) => {
@@ -62,121 +71,141 @@ function Detail() {
     return (
       <Empty>
         <ErrorNote error={error} />
-        <p>Request not found.</p>
-        <Link className="button" to="/charity/requests">Back to requests</Link>
+        <p>We can&rsquo;t find this request.</p>
+        <Button variant="secondary" to="/charity/requests">Back to all requests</Button>
       </Empty>
     );
   }
   if (request.charity_id !== user.id) return <Empty><p>This request belongs to another charity.</p></Empty>;
 
-  // One row per volunteer with their latest signup status (a volunteer may have several shifts).
-  const applicants = [];
-  const byVolunteer = new Map();
-  for (const s of signups.filter((x) => ACTIVE.includes(x.status))) {
-    if (!byVolunteer.has(s.volunteer_id)) {
-      const row = { volunteerId: s.volunteer_id, name: s.volunteer?.display_name ?? 'Volunteer', verified: s.volunteer?.verified, statuses: [] };
-      byVolunteer.set(s.volunteer_id, row);
-      applicants.push(row);
-    }
-    byVolunteer.get(s.volunteer_id).statuses.push(s.status);
-  }
   const confirmed = signups.filter((s) => ['accepted', 'attended'].includes(s.status)).length;
   const upcoming = nextShifts(request, 3);
+  // Shift day: a shift of this request starts today (also once it has started).
+  const todayShift = nextShifts(request, 1, startOfDay(new Date()))[0];
+  const shiftDay = Boolean(todayShift && isToday(todayShift)) && request.status !== 'closed';
+  const recurring = request.schedule_type === 'recurring';
+  const physical = PHYSICAL_LEVELS.find((o) => o.value === request.physical_level);
+  const experience = EXPERIENCE_LEVELS.find((o) => o.value === request.experience);
 
   return (
-    <section className="ch-page ch-page-wide">
-      <Link className="back-link" to="/charity/requests"><ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />Requests</Link>
-      <header className="ch-head">
-        <div className="ch-title">
-          <h1>{request.title}</h1>
-          <div className="ch-row">
-            <StatusPill status={request.status} />
-            <span className="ch-muted ch-small">{labelOf(CATEGORIES, request.category)}</span>
-          </div>
-        </div>
+    <section className="ch-page">
+      <Link className="back-link" to="/charity/requests">
+        <ArrowLeft size={20} strokeWidth={2} aria-hidden="true" />Back to all requests
+      </Link>
+      <header className="ch-title">
+        <h1>{request.title}</h1>
+        <div className="ch-row"><StatusPill status={request.status} /></div>
       </header>
 
       <ErrorNote error={error} />
 
-      <div className="ch-detail-grid">
-        <div className="ch-col">
-          <div className="ch-card ch-details">
-            {request.description && <p className="ch-desc">{request.description}</p>}
-            <dl>
-              <dt>Schedule</dt><dd>{scheduleSummary(request)}</dd>
-              <dt>{request.schedule_type === 'recurring' ? 'Next shifts' : 'Shift'}</dt>
-              <dd>
-                {upcoming.length ? (
-                  <ul className="ch-plain">{upcoming.map((d) => <li key={d.toISOString()}>{fmtShift(d)}</li>)}</ul>
-                ) : 'No upcoming shifts'}
-              </dd>
-              <dt>Duration</dt><dd>{fmtHours(request.duration_hours)} h</dd>
-              <dt>Volunteers</dt><dd>{confirmed}/{request.slots} confirmed</dd>
-              <dt>Physical</dt><dd>{labelOf(PHYSICAL_LEVELS, request.physical_level)}</dd>
-              <dt>Experience</dt>
-              <dd>
-                {labelOf(EXPERIENCE_LEVELS, request.experience)}
-                {request.experience_notes && <span className="ch-muted"> · {request.experience_notes}</span>}
-              </dd>
-              <dt>Location</dt><dd>{request.address || '—'}</dd>
-            </dl>
-          </div>
-
-          <div className="ch-actions">
-            {request.status === 'open' ? (
-              <>
-                <button type="button" className="ch-btn-secondary" disabled={busy} onClick={() => setStatus('filled')}>Mark filled</button>
-                <button type="button" className="ch-btn-danger" disabled={busy} onClick={() => setStatus('closed')}>Close request</button>
-              </>
-            ) : (
-              <button type="button" className="button" disabled={busy} onClick={() => setStatus('open')}>Reopen</button>
-            )}
-            <button type="button" className="ch-btn-secondary" onClick={() => setShowQR((v) => !v)}>
-              <QrCode size={16} strokeWidth={1.75} aria-hidden="true" />
-              {showQR ? 'Hide check-in QR' : 'Show check-in QR'}
-            </button>
-          </div>
-
-          <h2>Applicants</h2>
-          {applicants.length === 0 ? (
-            <Empty><p>No applicants yet.</p></Empty>
-          ) : (
-            <ul className="ch-list">
-              {applicants.map((a) => (
-                <li key={a.volunteerId} className="ch-card ch-row ch-between ch-applicant">
-                  <div className="ch-applicant-main">
-                    <strong className="ch-name">{a.name}{a.verified && <BadgeCheck className="ch-verified" size={15} strokeWidth={2} aria-label="Verified" />}</strong>
-                    <div className="ch-row ch-small">
-                      {[...new Set(a.statuses)].map((st) => <StatusPill key={st} status={st} />)}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="ch-btn-secondary"
-                    disabled={messaging === a.volunteerId}
-                    onClick={() => message(a.volunteerId)}
-                  >
-                    <MessageSquare size={16} strokeWidth={1.75} aria-hidden="true" />
-                    {messaging === a.volunteerId ? 'Opening…' : 'Message'}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+      {showQR ? (
+        <div className="ch-card ch-qr">
+          <CheckinQR request={request} />
+          <Button variant="secondary" block onClick={() => setShowQR(false)}>Hide check-in code</Button>
         </div>
+      ) : (
+        <Button
+          variant={shiftDay ? 'primary' : 'secondary'}
+          size={shiftDay ? 'lg' : 'md'}
+          block={shiftDay}
+          className="ch-checkin-btn"
+          icon={<QrCode size={22} aria-hidden="true" />}
+          hint="Show a code that volunteers scan when they arrive."
+          onClick={() => setShowQR(true)}
+        >
+          Show check-in code
+        </Button>
+      )}
 
-        <div className="ch-col">
-          {showQR && (
-            <div className="ch-card ch-qr">
-              <CheckinQR request={request} />
-            </div>
-          )}
-          <h2>Signups</h2>
-          <div className="ch-card">
-            <AttendancePanel request={request} onChange={reload} />
-          </div>
-        </div>
+      <div className="ch-card ch-facts">
+        {request.description && <p className="ch-desc">{request.description}</p>}
+        <ul className="ch-fact-list">
+          <li>
+            <CalendarDays {...ICON} />
+            <span>
+              {upcoming.length === 0 && 'No shifts coming up'}
+              {upcoming.length > 0 && !recurring && formatShiftRange(upcoming[0], request.duration_hours)}
+              {upcoming.length > 0 && recurring && (
+                <>
+                  Next: {formatShiftRange(upcoming[0], request.duration_hours)}
+                  {upcoming.length > 1 && (
+                    <span className="ch-fact-sub">
+                      Then {upcoming.slice(1).map((d) => formatShiftRange(d, request.duration_hours)).join('; ')}
+                    </span>
+                  )}
+                </>
+              )}
+            </span>
+          </li>
+          {recurring && <li><Repeat {...ICON} /><span>{scheduleSummary(request)}</span></li>}
+          <li><MapPin {...ICON} /><span>{request.address || 'No place given'}</span></li>
+          <li><Users {...ICON} /><span>{requestFacts(request, confirmed)}</span></li>
+          <li>
+            <Dumbbell {...ICON} />
+            <span>{physical ? `${physical.label}: ${physical.detail.toLowerCase()}` : labelOf(PHYSICAL_LEVELS, request.physical_level)}</span>
+          </li>
+          <li>
+            <GraduationCap {...ICON} />
+            <span>
+              {experience?.label ?? labelOf(EXPERIENCE_LEVELS, request.experience)}
+              {request.experience_notes && `: ${request.experience_notes}`}
+            </span>
+          </li>
+        </ul>
       </div>
+
+      <div className="ch-card">
+        <AttendancePanel request={request} onChange={reload} onMessage={message} messagingId={messaging} />
+      </div>
+
+      <div className="ch-end-actions">
+        {request.status === 'open' ? (
+          <>
+            <Button
+              variant="secondary"
+              block
+              disabled={busy}
+              hint="Stop new sign-ups. Volunteers you confirmed still come."
+              onClick={() => setStatus('filled', 'Done. No new volunteers can sign up.')}
+            >
+              We have enough volunteers
+            </Button>
+            <Button
+              variant="danger"
+              block
+              disabled={busy}
+              hint="Take this request down. Volunteers can no longer sign up."
+              onClick={() => setAskCancel(true)}
+            >
+              Cancel this request
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="secondary"
+            block
+            disabled={busy}
+            hint="Let volunteers sign up again."
+            onClick={() => setStatus('open', 'This request is open again.')}
+          >
+            Open this request again
+          </Button>
+        )}
+      </div>
+
+      <ConfirmDialog
+        open={askCancel}
+        title="Cancel this request?"
+        confirmLabel="Yes, cancel this request"
+        cancelLabel="No, keep it"
+        tone="danger"
+        busy={busy}
+        onConfirm={() => setStatus('closed', 'This request is cancelled.')}
+        onCancel={closeAsk}
+      >
+        {request.title}. Volunteers can no longer sign up.
+      </ConfirmDialog>
     </section>
   );
 }

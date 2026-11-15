@@ -1,17 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CircleCheck } from 'lucide-react';
+import { Check, MessageCircle, UserX } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { formatHours, formatShift } from './shared';
-import './attendance.css';
+import { Button, ConfirmDialog, useToast } from '../../components/ui/index.js';
+import { formatDayTime, formatDuration } from '../../components/format.js';
+import '../../pages/charity/charity.css';
 
-const STATUS_LABEL = {
-  applied: 'Applied',
-  accepted: 'Accepted',
-  declined: 'Declined',
-  cancelled: 'Cancelled',
-  attended: 'Attended',
-  no_show: 'No-show',
-};
 const ORDER = { applied: 0, accepted: 1, attended: 2, no_show: 3, declined: 4, cancelled: 5 };
 
 const SELECT =
@@ -25,21 +18,45 @@ function sweepDue(request) {
   return end + 24 * 3600e3 < Date.now();
 }
 
-/** Charity: list of signups for one request with Accept/Decline and Attended/No-show actions.
- *  Calls onChange() after any change so the parent can reload. */
-export function AttendancePanel({ request, onChange }) {
+/** Has this signup's shift started? ("Came" / "Didn't come" only from the start time.) */
+function hasStarted(s, request) {
+  const at = s.shift_at ?? request.starts_at;
+  return at ? new Date(at).getTime() <= Date.now() : false;
+}
+
+/** One plain sentence about where this volunteer stands. */
+function statusSentence(s, started) {
+  switch (s.status) {
+    case 'applied': return 'Wants to help. Waiting for your reply.';
+    case 'accepted': return started ? 'Confirmed. Did they come?' : `Confirmed. Coming ${s.shift_at ? formatDayTime(s.shift_at) : 'soon'}.`;
+    case 'attended': return s.hours_credited != null ? `Came. ${formatDuration(s.hours_credited)} recorded.` : 'Came.';
+    case 'no_show': return 'Did not come.';
+    case 'declined': return 'You said no.';
+    case 'cancelled': return 'Cancelled their place.';
+    default: return '';
+  }
+}
+
+/** Charity: the one "Volunteers" list for a request. Each row shows the name, a plain status sentence and
+ *  only the actions valid now: Accept / Say no while waiting, Message always, Came / Didn't come from the
+ *  shift start. Calls onChange() after any change so the parent can reload.
+ *  onMessage(volunteerId) opens a chat; messagingId is the volunteer whose chat is opening. */
+export function AttendancePanel({ request, onChange, onMessage, messagingId = null }) {
   const requestId = request?.id;
+  const toast = useToast();
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
   const [signups, setSignups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(null);       // signup id being changed
   const [confirmId, setConfirmId] = useState(null);
-  const [flash, setFlash] = useState('');
   const signupsRef = useRef([]);
-  const ownChanges = useRef(new Set());          // ids we changed ourselves (skip "checked in" flash)
+  const ownChanges = useRef(new Set());          // ids we changed ourselves (skip "checked in" note)
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const sweptFor = useRef(null);
+  const closeConfirm = useCallback(() => setConfirmId(null), []);
 
   const load = useCallback(async () => {
     if (!requestId) return;
@@ -63,7 +80,10 @@ export function AttendancePanel({ request, onChange }) {
         sweptFor.current = requestId;
         const { data: n } = await supabase.rpc('sweep_no_shows', { p_request: requestId });
         if (n > 0) {
-          setFlash(`${n} marked no-show (no check-in within 24 h of the shift)`);
+          toastRef.current(
+            `${n} ${n === 1 ? 'volunteer' : 'volunteers'} marked as did not come (no check-in within a day of the shift).`,
+            'info',
+          );
           onChangeRef.current?.();
         }
       }
@@ -84,7 +104,7 @@ export function AttendancePanel({ request, onChange }) {
           const before = signupsRef.current.find((s) => s.id === row?.id);
           if (row?.status === 'attended' && before && before.status !== 'attended'
               && !ownChanges.current.has(row.id)) {
-            setFlash(`${before.volunteer?.display_name ?? 'A volunteer'} checked in`);
+            toastRef.current(`${before.volunteer?.display_name ?? 'A volunteer'} has checked in.`, 'success');
           }
           load();
           onChangeRef.current?.();
@@ -93,13 +113,7 @@ export function AttendancePanel({ request, onChange }) {
     return () => { supabase.removeChannel(channel); };
   }, [requestId, load]);
 
-  useEffect(() => {
-    if (!flash) return undefined;
-    const t = setTimeout(() => setFlash(''), 6000);
-    return () => clearTimeout(t);
-  }, [flash]);
-
-  async function run(id, fn, own = false) {
+  async function run(id, fn, done, own = false) {
     setBusy(id);
     setError('');
     if (own) {
@@ -110,86 +124,131 @@ export function AttendancePanel({ request, onChange }) {
     setBusy(null);
     setConfirmId(null);
     if (err) { setError(err.message); return; }
+    if (done) toast(done, 'success');
     await load();
     onChangeRef.current?.();
   }
 
-  const setStatus = (id, status) =>
-    run(id, () => supabase.from('signups').update({ status }).eq('id', id));
-  const mark = (id, attended) =>
-    run(id, () => supabase.rpc('mark_attendance', { p_signup: id, p_attended: attended }), true);
+  const nameOf = (s) => s?.volunteer?.display_name ?? 'Volunteer';
+  const setStatus = (s, status, done) =>
+    run(s.id, () => supabase.from('signups').update({ status }).eq('id', s.id), done);
+  const mark = (s, attended, done) =>
+    run(s.id, () => supabase.rpc('mark_attendance', { p_signup: s.id, p_attended: attended }), done, true);
 
   if (!requestId) return null;
 
   const taken = signups.filter((s) => ['accepted', 'attended'].includes(s.status)).length;
   const recurring = request.schedule_type === 'recurring';
+  const confirming = signups.find((s) => s.id === confirmId);
 
   return (
-    <div className="att-panel">
-      <div className="att-panel-head">
-        <h3 className="att-h">Volunteers</h3>
-        <span className="att-chip">{taken} / {request.slots ?? '–'} places</span>
+    <section className="ch-att" aria-labelledby={`att-h-${requestId}`}>
+      <div className="ch-att-head">
+        <h2 id={`att-h-${requestId}`}>Volunteers</h2>
+        <span className="ch-att-places">{taken} of {request.slots ?? '–'} places filled</span>
       </div>
 
-      {flash && <div className="att-flash" role="status"><CircleCheck size={18} strokeWidth={2} aria-hidden="true" />{flash}</div>}
-      {error && <div className="att-error" role="alert">{error}</div>}
-      {loading && <div className="att-muted">Loading…</div>}
-      {!loading && signups.length === 0 && <div className="att-empty">No signups yet</div>}
+      {error && <p className="ch-error" role="alert">{error}</p>}
+      {loading && <p className="ch-muted" role="status">Loading…</p>}
+      {!loading && signups.length === 0 && <p className="ch-att-empty">No one has signed up yet.</p>}
 
-      <ul className="att-list">
-        {signups.map((s) => {
-          const name = s.volunteer?.display_name ?? 'Volunteer';
-          const warns = s.volunteer?.warnings_count ?? 0;
-          return (
-            <li key={s.id} className={`att-row att-row-${s.status}`}>
-              <div className="att-row-main">
-                <div className="att-row-name">
-                  {name}
-                  {s.volunteer?.verified && <span className="att-chip att-chip-ok">Verified</span>}
+      {signups.length > 0 && (
+        <ul className="ch-att-list">
+          {signups.map((s) => {
+            const name = nameOf(s);
+            const warns = s.volunteer?.warnings_count ?? 0;
+            const started = hasStarted(s, request);
+            const isBusy = busy === s.id;
+            return (
+              <li key={s.id} className={`ch-att-row ch-att-row-${s.status}`}>
+                <div className="ch-att-main">
+                  <strong className="ch-att-name">{name}</strong>
+                  <span className="ch-att-status">{statusSentence(s, started)}</span>
+                  {recurring && s.shift_at && s.status !== 'accepted' && (
+                    <span className="ch-muted">Shift: {formatDayTime(s.shift_at)}</span>
+                  )}
                   {warns > 0 && (
-                    <span className="att-chip att-chip-warn">{warns} warning{warns > 1 ? 's' : ''}</span>
+                    <span className="ch-att-warn">{warns} {warns === 1 ? 'warning' : 'warnings'} for not coming</span>
                   )}
                 </div>
-                <div className="att-muted att-small">
-                  <span className={`att-status att-status-${s.status}`}>{STATUS_LABEL[s.status]}</span>
-                  {recurring && <> · {formatShift(s.shift_at)}</>}
-                  {s.status === 'attended' && s.hours_credited != null && <> · {formatHours(s.hours_credited)}</>}
-                </div>
-              </div>
 
-              <div className="att-actions">
-                {s.status === 'applied' && (
-                  <>
-                    <button type="button" className="att-btn att-btn-primary" disabled={busy === s.id}
-                            onClick={() => setStatus(s.id, 'accepted')}>Accept</button>
-                    <button type="button" className="att-btn" disabled={busy === s.id}
-                            onClick={() => setStatus(s.id, 'declined')}>Decline</button>
-                  </>
-                )}
-                {s.status === 'accepted' && confirmId !== s.id && (
-                  <>
-                    <button type="button" className="att-btn att-btn-primary" disabled={busy === s.id}
-                            onClick={() => mark(s.id, true)}>Attended</button>
-                    <button type="button" className="att-btn att-btn-danger-outline" disabled={busy === s.id}
-                            onClick={() => setConfirmId(s.id)}>No-show</button>
-                  </>
-                )}
-              </div>
-
-              {confirmId === s.id && (
-                <div className="att-confirm" role="alertdialog" aria-label={`Confirm no-show for ${name}`}>
-                  <div>This gives {name} a warning.</div>
-                  <div className="att-actions">
-                    <button type="button" className="att-btn" onClick={() => setConfirmId(null)}>Cancel</button>
-                    <button type="button" className="att-btn att-btn-danger" disabled={busy === s.id}
-                            onClick={() => mark(s.id, false)}>Confirm no-show</button>
-                  </div>
+                <div className="ch-att-actions">
+                  {s.status === 'applied' && (
+                    <>
+                      <Button
+                        variant="primary"
+                        icon={<Check size={20} aria-hidden="true" />}
+                        loading={isBusy}
+                        disabled={isBusy}
+                        hint={`Tell ${name} they can come.`}
+                        onClick={() => setStatus(s, 'accepted', `${name} is confirmed.`)}
+                      >
+                        Accept
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        disabled={isBusy}
+                        hint={`Let ${name} know you don't need them this time.`}
+                        onClick={() => setStatus(s, 'declined', `You said no to ${name}.`)}
+                      >
+                        Say no
+                      </Button>
+                    </>
+                  )}
+                  {s.status === 'accepted' && started && (
+                    <>
+                      <Button
+                        variant="success"
+                        icon={<Check size={20} aria-hidden="true" />}
+                        loading={isBusy}
+                        disabled={isBusy}
+                        hint={`Record ${name}'s hours for this shift.`}
+                        onClick={() => mark(s, true, `${name} came. Hours recorded.`)}
+                      >
+                        Came
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        icon={<UserX size={20} aria-hidden="true" />}
+                        disabled={isBusy}
+                        hint={`Mark that ${name} did not come. They get a warning.`}
+                        onClick={() => setConfirmId(s.id)}
+                      >
+                        Didn&rsquo;t come
+                      </Button>
+                    </>
+                  )}
+                  {onMessage && (
+                    <Button
+                      variant="secondary"
+                      icon={<MessageCircle size={20} aria-hidden="true" />}
+                      loading={messagingId === s.volunteer_id}
+                      disabled={messagingId === s.volunteer_id}
+                      hint={`Send ${name} a private message.`}
+                      onClick={() => onMessage(s.volunteer_id)}
+                    >
+                      {messagingId === s.volunteer_id ? 'Opening…' : 'Message'}
+                    </Button>
+                  )}
                 </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <ConfirmDialog
+        open={Boolean(confirming)}
+        title={`Mark ${nameOf(confirming)} as did not come?`}
+        confirmLabel="Yes, mark as did not come"
+        cancelLabel="No, go back"
+        tone="danger"
+        busy={busy === confirmId}
+        onConfirm={() => confirming && mark(confirming, false, `${nameOf(confirming)} is marked as did not come.`)}
+        onCancel={closeConfirm}
+      >
+        This gives {nameOf(confirming)} a warning.
+      </ConfirmDialog>
+    </section>
   );
 }

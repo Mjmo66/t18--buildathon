@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { endOfWeek, format, isToday, startOfWeek } from 'date-fns';
-import {
-  CalendarClock, ChevronRight, ClipboardList, Building2, Clock, Hourglass, MessagesSquare, Plus, UserRoundCheck,
-  UserRoundPlus, Users,
-} from 'lucide-react';
+import { endOfWeek, isToday, startOfWeek } from 'date-fns';
+import { CalendarClock, ClipboardList, Hourglass, Plus, QrCode, UserRoundPlus, Users } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
+import { Button } from '../../components/ui/index.js';
+import { formatTime } from '../../components/format.js';
 import { CharityGate, ErrorNote, Loading, VerifiedBadge, VerifyButton } from './components.jsx';
-import { fmtHours } from './shared.js';
+import { volunteers } from './shared.js';
 
-const ICON = { size: 16, strokeWidth: 1.75, 'aria-hidden': true };
+const ICON = { size: 22, strokeWidth: 1.75, 'aria-hidden': true };
 
 function Dashboard() {
   const { user, charity } = useAuth();
@@ -71,105 +70,89 @@ function Dashboard() {
 
   return (
     <section className="ch-page ch-page-wide">
-      <header className="page-head">
-        <div className="ch-title">
-          <h1>{charity.org_name || 'Overview'}</h1>
-          <div className="ch-row">
-            <VerifiedBadge verified={verified} />
-            {!verified && <VerifyButton className="ch-btn-secondary" />}
-          </div>
+      <header className="ch-title">
+        <h1>{charity.org_name || 'Home'}</h1>
+        <div className="ch-row">
+          <VerifiedBadge verified={verified} />
+          {!verified && <VerifyButton variant="secondary" />}
         </div>
-        <Link className="btn btn-primary" to="/charity/requests/new">
-          <Plus size={18} strokeWidth={2} aria-hidden="true" />New request
-        </Link>
       </header>
+
+      <Button
+        to="/charity/requests/new"
+        size="lg"
+        className="ch-main-action"
+        icon={<Plus size={22} strokeWidth={2.25} aria-hidden="true" />}
+        hint="Ask for volunteers for a task, a date and a place."
+      >
+        Ask for volunteers
+      </Button>
 
       <ErrorNote error={error} />
       {!stats && !error && <Loading />}
       {stats && (
         <>
-          <div className="stat-grid">
-            <Link className="stat-card" to="/charity/requests?status=open">
-              <span className="micro-label">Open requests</span>
-              <ClipboardList className="stat-icon" {...ICON} />
-              <span className="stat-value">{stats.open}</span>
-              <span className="stat-sub is-accent">{stats.filled} filled</span>
-            </Link>
-            <Link className="stat-card" to="/charity/requests?status=open">
-              <span className="micro-label">Pending</span>
-              <Hourglass className="stat-icon" {...ICON} />
-              <span className="stat-value">{stats.pending}</span>
-              <span className={`stat-sub ${stats.pending > 0 ? 'is-warning' : 'is-success'}`}>
-                {stats.pending > 0 ? 'to review' : 'all reviewed'}
-              </span>
-            </Link>
-            <div className="stat-card">
-              <span className="micro-label">Confirmed</span>
-              <Users className="stat-icon" {...ICON} />
-              <span className="stat-value">{stats.confirmedWeek}</span>
-              <span className="stat-sub is-success">this week · {fmtHours(stats.hours)} h total</span>
-            </div>
-          </div>
-
           <div className="list-card">
             <div className="list-card-head">
-              <h2>Needs attention</h2>
-              <span className={`count ${stats.attention.length > 0 ? 'count-hot' : ''}`}>{stats.attention.length}</span>
+              <h2>To do</h2>
             </div>
             {stats.attention.length === 0 ? (
-              <p className="list-empty">Nothing waiting.</p>
+              <p className="list-empty">Nothing to do right now.</p>
             ) : (
-              stats.attention.map((a) => (
-                <Link key={`${a.kind}-${a.requestId}`} className="list-row" to={`/charity/requests/${a.requestId}`}>
-                  <span className="list-row-icon">
-                    {a.kind === 'pending' ? <UserRoundPlus {...ICON} /> : <CalendarClock {...ICON} />}
-                  </span>
-                  <span className="list-row-main">
-                    <span className="list-row-title">
-                      {a.kind === 'pending' ? `Review ${a.n === 1 ? 'application' : 'applications'}` : 'Shift today'} · {a.title}
+              <ul className="ch-todo">
+                {stats.attention.map((a) => (
+                  <li key={`${a.kind}-${a.requestId}`} className="list-row ch-todo-row">
+                    <span className="list-row-icon">
+                      {a.kind === 'pending' ? <UserRoundPlus {...ICON} /> : <CalendarClock {...ICON} />}
                     </span>
-                  </span>
-                  <span className="list-row-meta">
-                    {a.kind === 'pending'
-                      ? `${a.n} pending`
-                      : `${a.at ? format(new Date(a.at), 'HH:mm') : 'Today'} · ${a.n} vol`}
-                  </span>
-                </Link>
-              ))
+                    <span className="list-row-main">
+                      <span className="list-row-title">{a.title}</span>
+                      <span className="list-row-meta">
+                        {a.kind === 'pending'
+                          ? `${volunteers(a.n)} waiting for your reply`
+                          : `Today${a.at ? `, ${formatTime(a.at)}` : ''} · ${volunteers(a.n)} coming`}
+                      </span>
+                    </span>
+                    {a.kind === 'pending' ? (
+                      <Button
+                        variant="secondary"
+                        to={`/charity/requests/${a.requestId}`}
+                        hint="See who applied and accept or decline them."
+                      >
+                        Review
+                      </Button>
+                    ) : (
+                      <Button
+                        to={`/charity/requests/${a.requestId}?checkin=1`}
+                        icon={<QrCode size={20} aria-hidden="true" />}
+                        hint="Show a code that volunteers scan when they arrive."
+                      >
+                        Check in volunteers
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 
-          <nav className="quick-actions" aria-label="Quick actions">
-            <Link className="qa-btn" to="/charity/requests/new"><Plus {...ICON} />New request</Link>
-            <Link className="qa-btn" to="/charity/requests"><ClipboardList {...ICON} />All requests</Link>
-            <Link className="qa-btn" to="/chat"><MessagesSquare {...ICON} />Chats</Link>
-            <Link className="qa-btn" to="/charity/profile"><Building2 {...ICON} />Profile</Link>
-          </nav>
-
-          <details className="summary-row">
-            <summary>
-              <ChevronRight className="chev" {...ICON} />
-              <strong>Requests</strong>
-              <span className="meta">{stats.open} open · {stats.filled} filled</span>
-            </summary>
-            <div className="summary-body ch-row">
-              <Link className="ch-btn-secondary" to="/charity/requests?status=open">Open</Link>
-              <Link className="ch-btn-secondary" to="/charity/requests?status=filled">Filled</Link>
-              <Link className="ch-btn-secondary" to="/charity/requests?status=closed">Closed</Link>
+          <div className="stat-grid">
+            <Link className="stat-card" to="/charity/requests">
+              <span className="micro-label">Open requests</span>
+              <ClipboardList className="stat-icon" {...ICON} />
+              <span className="stat-value">{stats.open}</span>
+            </Link>
+            <div className="stat-card">
+              <span className="micro-label">Waiting for your reply</span>
+              <Hourglass className="stat-icon" {...ICON} />
+              <span className="stat-value">{stats.pending}</span>
             </div>
-          </details>
-          <details className="summary-row">
-            <summary>
-              <ChevronRight className="chev" {...ICON} />
-              <strong>Volunteers</strong>
-              <span className="meta">{stats.confirmedAll} confirmed</span>
-            </summary>
-            <dl className="summary-body ch-kv">
-              <dt><UserRoundCheck {...ICON} />Attended shifts</dt><dd className="mono">{stats.attended}</dd>
-              <dt><Clock {...ICON} />Hours delivered</dt><dd className="mono">{fmtHours(stats.hours)} h</dd>
-              <dt><Hourglass {...ICON} />No-shows</dt><dd className="mono">{stats.noShows}</dd>
-            </dl>
-          </details>
+            <div className="stat-card">
+              <span className="micro-label">Volunteers coming this week</span>
+              <Users className="stat-icon" {...ICON} />
+              <span className="stat-value">{stats.confirmedWeek}</span>
+            </div>
+          </div>
         </>
       )}
     </section>

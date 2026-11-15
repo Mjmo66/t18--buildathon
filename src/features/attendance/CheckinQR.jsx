@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { Maximize2 } from 'lucide-react';
-import { formatShift, shortCode } from './shared';
-import './attendance.css';
+import { Maximize2, X } from 'lucide-react';
+import { Button } from '../../components/ui/index.js';
+import { formatShiftRange } from '../../components/format.js';
+import { shortCode } from './shared';
+import '../../pages/charity/charity.css';
 
 /** Charity: QR code a volunteer scans to check in. Payload JSON {"r": request.id, "c": request.checkin_code}. */
 export function CheckinQR({ request }) {
@@ -17,39 +19,52 @@ export function CheckinQR({ request }) {
   }, [fullScreen]);
 
   if (!request?.id || !request?.checkin_code) {
-    return <div className="att-card att-muted">No check-in code for this request.</div>;
+    return <p className="ch-muted">This request has no check-in code.</p>;
   }
 
   const payload = JSON.stringify({ r: request.id, c: request.checkin_code });
-  const shift = formatShift(request.starts_at, request.duration_hours);
+  const shift = request.starts_at ? formatShiftRange(request.starts_at, request.duration_hours) : '';
   const code = shortCode(request.checkin_code);
 
   const body = (big) => (
     <>
-      <div className="att-qr-box">
-        <QRCodeSVG value={payload} size={big ? 512 : 256} level="M" marginSize={2}
+      <h2 className="ch-att-qr-title">Show this to volunteers when they arrive</h2>
+      <div className="ch-att-qr-box">
+        <QRCodeSVG value={payload} size={big ? 640 : 320} level="M" marginSize={2}
                    style={{ width: '100%', height: 'auto', display: 'block' }}
-                   title={`Check-in QR for ${request.title}`} />
+                   role="img" aria-label={`Check-in code for ${request.title}`} />
       </div>
-      <div className="att-qr-title">{request.title}</div>
-      {shift && <div className="att-muted">{shift}</div>}
-      <div className="att-qr-code" aria-label="Manual check-in code"><span className="micro-label">Code</span> {code}</div>
+      <div className="ch-att-qr-code">
+        <span className="ch-att-qr-code-label">Or type this code</span>
+        <span className="ch-att-qr-digits" aria-label={`Code ${code.split('').join(' ')}`}>{code}</span>
+      </div>
+      <div className="ch-att-qr-meta">
+        <strong>{request.title}</strong>
+        {shift && <span>{shift}</span>}
+      </div>
     </>
   );
 
   return (
-    <div className="att-card att-qr">
+    <div className="ch-att-qr">
       {body(false)}
-      <button type="button" className="att-btn att-btn-primary att-block" onClick={() => setFullScreen(true)}>
-        <Maximize2 size={18} strokeWidth={1.75} aria-hidden="true" />
+      <Button
+        block
+        variant="secondary"
+        icon={<Maximize2 size={20} aria-hidden="true" />}
+        hint="Make the code fill the screen so it is easier to scan."
+        onClick={() => setFullScreen(true)}
+      >
         Show full screen
-      </button>
+      </Button>
       {fullScreen && createPortal(
-        <div className="att-qr-full" role="dialog" aria-modal="true" aria-label="Check-in QR code"
+        <div className="ch-att-qr-full" role="dialog" aria-modal="true" aria-label="Check-in code"
              onClick={() => setFullScreen(false)}>
-          <div className="att-qr-full-inner" onClick={(e) => e.stopPropagation()}>
+          <div className="ch-att-qr-full-inner" onClick={(e) => e.stopPropagation()}>
             {body(true)}
-            <button type="button" className="att-btn att-block" onClick={() => setFullScreen(false)}>Close</button>
+            <Button block variant="secondary" icon={<X size={20} aria-hidden="true" />} onClick={() => setFullScreen(false)}>
+              Close
+            </Button>
           </div>
         </div>,
         document.body,
