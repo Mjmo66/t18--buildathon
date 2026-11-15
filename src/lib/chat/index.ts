@@ -40,7 +40,7 @@ export interface ConversationSummary {
   lastMessageAt: string | null;
 }
 
-export const NO_PEER_KEY_MESSAGE = "They haven't opened the app yet, so the chat can't be encrypted";
+export const NO_PEER_KEY_MESSAGE = 'You can message once they have opened Kindred.';
 
 export class PeerHasNoKeyError extends Error {
   constructor() {

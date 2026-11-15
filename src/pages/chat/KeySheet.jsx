@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Lock } from 'lucide-react';
 import { publicKeyFingerprint } from '../../lib/chat';
+import { Button } from '../../components/ui/index.js';
 import Avatar from './Avatar.jsx';
 
 function Fingerprint({ label, name, publicKey }) {
@@ -19,12 +20,12 @@ function Fingerprint({ label, name, publicKey }) {
               <span key={i} style={{ '--swatch-hue': (parseInt(g, 16) % 360) }} />
             ))}
           </div>
-          <code className="key-fingerprint" aria-label={`Key fingerprint of ${label}: ${groups.join(' ')}`}>
+          <code className="key-fingerprint" aria-label={`Security code of ${label}: ${groups.join(' ')}`}>
             {groups.map((g, i) => <span key={i}>{g}</span>)}
           </code>
         </>
       ) : (
-        <p className="chat-muted key-missing">{fp === 'invalid key' ? 'Invalid key' : 'No key yet'}</p>
+        <p className="chat-muted key-missing">{fp === 'invalid key' ? 'Code not readable' : 'Not set up yet'}</p>
       )}
     </div>
   );
@@ -55,12 +56,12 @@ export default function KeySheet({ open, onClose, myName, myKey, peerName, peerK
         <div className="sheet-grabber" aria-hidden="true" />
         <div className="sheet-head">
           <span className="sheet-lock" aria-hidden="true"><Lock size={20} strokeWidth={2} /></span>
-          <h2 id="key-sheet-title">End-to-end encrypted</h2>
+          <h2 id="key-sheet-title">Compare security codes</h2>
         </div>
-        <p className="sheet-lede">Check in person that both phones show the same codes.</p>
+        <p className="sheet-lede">When you meet, check that both phones show the same codes.</p>
         <Fingerprint label="You" name={myName} publicKey={myKey} />
         <Fingerprint label={peerName} name={peerName} publicKey={peerKey} />
-        <button ref={closeRef} type="button" className="btn btn-primary btn-block sheet-close" onClick={onClose}>Done</button>
+        <Button ref={closeRef} size="lg" block className="sheet-close" onClick={onClose}>Done</Button>
       </div>
     </div>
   );

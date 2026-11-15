@@ -1,5 +1,5 @@
 // Small helpers shared by the chat pages.
-import { format, isToday, isYesterday } from 'date-fns';
+import { formatDay } from '../../components/format.js';
 
 export function initials(name) {
   const parts = (name || '?').trim().split(/\s+/).filter(Boolean);
@@ -13,10 +13,9 @@ export function hueOf(text) {
   return h;
 }
 
+/** "Today", "Yesterday" or "Thursday 19 November". */
 export function dayLabel(date) {
-  if (isToday(date)) return 'Today';
-  if (isYesterday(date)) return 'Yesterday';
-  return format(date, 'EEE d MMM yyyy');
+  return formatDay(date);
 }
 
 /** Insert messages, de-duplicated by id, oldest first. */
