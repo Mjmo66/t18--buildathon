@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { endOfWeek, isToday, startOfWeek } from 'date-fns';
+import { endOfWeek, isToday, startOfDay, startOfWeek } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { CalendarClock, ChevronRight, Clock, Plus, QrCode, UserRoundPlus } from 'lucide-react';
+import { CalendarClock, ChevronRight, Plus, QrCode, UserRoundPlus } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/index.js';
@@ -61,6 +61,7 @@ function Dashboard() {
     }
 
     setStats({
+      comingAll: signups.filter((s) => s.status === 'accepted' && s.shift_at && new Date(s.shift_at) >= startOfDay(now)).length,
       upcoming: [...ahead.values()].sort((a, b) => a.at.localeCompare(b.at)).slice(0, 4),
       open: reqRes.count ?? 0,
       filled: filledRes.count ?? 0,
@@ -154,13 +155,13 @@ function Dashboard() {
                 <span className="ch-stat-num">{stats.open}</span>
                 <span className="ch-stat-label">{stats.open === 1 ? 'open request' : 'open requests'}</span>
               </Link>
-              <Link className="ch-stat" to="/charity/requests">
-                <span className={`ch-stat-num ${stats.pending > 0 ? 'ch-stat-warn' : ''}`}>{stats.pending}</span>
-                <span className="ch-stat-label">waiting for your reply</span>
-              </Link>
               <div className="ch-stat">
-                <span className="ch-stat-num">{stats.confirmedWeek}</span>
-                <span className="ch-stat-label">{stats.confirmedWeek === 1 ? 'volunteer' : 'volunteers'} coming this week</span>
+                <span className="ch-stat-num">{stats.comingAll}</span>
+                <span className="ch-stat-label">{stats.comingAll === 1 ? 'volunteer coming' : 'volunteers coming'}</span>
+              </div>
+              <div className="ch-stat">
+                <span className="ch-stat-num">{formatDuration(stats.hours)}</span>
+                <span className="ch-stat-label">given so far</span>
               </div>
             </div>
           </section>
@@ -179,7 +180,7 @@ function Dashboard() {
                       <span className="list-row-icon"><CalendarClock {...ICON} /></span>
                       <span className="list-row-main">
                         <span className="list-row-title">{u.title}</span>
-                        <span className="list-row-sub">{formatDayTime(u.at)} · {countOf(u.n, 'volunteer')} coming</span>
+                        <span className="list-row-sub">{formatDayTime(u.at)} · {u.n} coming</span>
                       </span>
                       <ChevronRight size={24} strokeWidth={2} aria-hidden="true" className="ch-chevron" />
                     </Link>
@@ -189,14 +190,6 @@ function Dashboard() {
             )}
           </div>
 
-          {stats.attended > 0 && (
-            <div className="ch-sofar">
-              <Clock {...ICON} />
-              <span>
-                <strong>So far:</strong> volunteers gave {formatDuration(stats.hours)} over {countOf(stats.attended, 'shift')}.
-              </span>
-            </div>
-          )}
         </>
       )}
     </section>

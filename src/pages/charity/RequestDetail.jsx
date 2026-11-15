@@ -105,19 +105,8 @@ function Detail() {
   const physical = PHYSICAL_LEVELS.find((o) => o.value === request.physical_level);
   const experience = EXPERIENCE_LEVELS.find((o) => o.value === request.experience);
 
-  return (
-    <section className="ch-page">
-      <Link className="back-link" to="/charity/requests">
-        <ArrowLeft size={20} strokeWidth={2} aria-hidden="true" />Back to all requests
-      </Link>
-      <header className="ch-title">
-        <h1>{request.title}</h1>
-        {request.status !== 'open' && <div className="ch-row"><StatusPill status={request.status} /></div>}
-      </header>
-
-      <ErrorNote error={error} />
-
-      {showQR ? (
+  // Check-in: at the top on the shift day, otherwise below the volunteers.
+  const checkin = showQR ? (
         <div className="ch-card ch-qr">
           <CheckinQR request={request} />
           <Button variant="secondary" block onClick={() => setShowQR(false)}>Hide check-in code</Button>
@@ -134,7 +123,21 @@ function Detail() {
         >
           Show check-in code
         </Button>
-      )}
+      );
+
+  return (
+    <section className="ch-page">
+      <Link className="back-link" to="/charity/requests">
+        <ArrowLeft size={20} strokeWidth={2} aria-hidden="true" />Back to all requests
+      </Link>
+      <header className="ch-title">
+        <h1>{request.title}</h1>
+        {request.status !== 'open' && <div className="ch-row"><StatusPill status={request.status} /></div>}
+      </header>
+
+      <ErrorNote error={error} />
+
+      {shiftDay && checkin}
 
       <div className="ch-card ch-facts">
         {request.description && <p className="ch-desc">{request.description}</p>}
@@ -161,6 +164,8 @@ function Detail() {
       <div className="ch-card">
         <AttendancePanel request={request} onChange={reload} onMessage={message} messagingId={messaging} />
       </div>
+
+      {!shiftDay && checkin}
 
       <div className="ch-end-actions">
         {request.status === 'open' ? (

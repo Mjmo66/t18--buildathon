@@ -33,15 +33,13 @@ function hasStarted(s, request) {
   return at ? new Date(at).getTime() <= Date.now() : false;
 }
 
-/** One plain sentence about where this volunteer stands. */
-function statusSentence(s, started) {
+/** Second line for a volunteer, only when it adds to the group heading. */
+function statusNote(s, started) {
   switch (s.status) {
-    case 'applied': return 'Wants to help. Waiting for your reply.';
-    case 'accepted': return started ? 'Confirmed. Did they come?' : `Confirmed. Coming ${s.shift_at ? formatDayTime(s.shift_at) : 'soon'}.`;
-    case 'attended': return s.hours_credited != null ? `Came. ${formatDuration(s.hours_credited)} recorded.` : 'Came.';
-    case 'no_show': return 'Did not come.';
-    case 'declined': return 'You said no.';
-    case 'cancelled': return 'Cancelled their place.';
+    case 'accepted': return started ? 'Did they come?' : '';
+    case 'attended': return s.hours_credited != null ? `${formatDuration(s.hours_credited)} recorded` : '';
+    case 'declined': return 'You said no';
+    case 'cancelled': return 'Cancelled their place';
     default: return '';
   }
 }
@@ -154,14 +152,13 @@ export function AttendancePanel({ request, onChange, onMessage, messagingId = nu
     const warns = s.volunteer?.warnings_count ?? 0;
     const started = hasStarted(s, request);
     const isBusy = busy === s.id;
+    const note = statusNote(s, started);
     return (
       <li key={s.id} className={`ch-att-row ch-att-row-${s.status}`}>
         <div className="ch-att-main">
           <strong className="ch-att-name">{name}</strong>
-          <span className="ch-att-status">{statusSentence(s, started)}</span>
-          {recurring && s.shift_at && s.status !== 'accepted' && (
-            <span className="ch-muted">Shift: {formatDayTime(s.shift_at)}</span>
-          )}
+          {note && <span className="ch-att-status">{note}</span>}
+          {recurring && s.shift_at && <span className="ch-muted">{formatDayTime(s.shift_at)}</span>}
           {warns > 0 && (
             <span className="ch-att-warn">{warns} {warns === 1 ? 'warning' : 'warnings'} for not coming</span>
           )}
