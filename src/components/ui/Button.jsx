@@ -4,7 +4,7 @@ import Spinner from './Spinner.jsx';
 import Tooltip from './Tooltip.jsx';
 
 // The one button of the app. Always give it visible text.
-// variant: 'primary' | 'secondary' | 'danger' | 'success'
+// variant: 'primary' | 'secondary' | 'danger' | 'danger-outline' | 'success'
 // size: 'md' (48px, default) | 'lg' (56px: the one main action of a screen). 'sm' is treated as 'md'.
 // block: full width. to: render a router link styled as a button. href: plain link (e.g. Maps).
 // hint: "what happens when I press this", shown on hover / keyboard focus (desktop only).

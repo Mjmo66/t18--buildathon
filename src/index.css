@@ -293,6 +293,9 @@ svg.lucide { flex-shrink: 0; }
 .btn-secondary:hover:not(:disabled):not(.is-disabled) { background: var(--surface-2); border-color: var(--text); }
 .btn-danger { background: var(--danger); color: #fff; }
 .btn-danger:hover:not(:disabled) { background: #971c13; }
+/* Destructive but quiet: red outline, never louder than the safe choice */
+.btn-danger-outline { background: var(--surface); color: var(--danger); border-color: var(--danger); }
+.btn-danger-outline:hover:not(:disabled):not(.is-disabled) { background: #fdf0ef; }
 .btn-success { background: var(--success); color: #fff; }
 .btn-success:hover:not(:disabled) { background: #145a39; }
 .btn-with-help { display: inline-flex; flex-direction: column; gap: 6px; }
@@ -366,6 +369,9 @@ svg.lucide { flex-shrink: 0; }
   border-top-color: var(--ink);
 }
 .tooltip.is-open { visibility: visible; opacity: 1; pointer-events: auto; }
+/* No room above (e.g. under the page title): show below instead */
+.tooltip.is-below { bottom: auto; top: calc(100% + 8px); }
+.tooltip.is-below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--ink); }
 
 /* ---------- Confirm dialog ---------- */
 .dialog-backdrop {
@@ -665,7 +671,7 @@ button.chip-selected:hover { border-color: var(--accent-hover); }
 .auth-page > .ui-card { display: flex; flex-direction: column; gap: 16px; padding: 24px; }
 .auth-page h1 { margin: 0 0 16px; }
 .auth-brand { display: flex; justify-content: center; margin-bottom: 20px; }
-.auth-switch { text-align: center; color: var(--muted); font-size: 1rem; margin-top: 20px; }
+.auth-switch { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
 .role-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .role-picker .chip { justify-content: center; min-height: var(--tap-primary); border-radius: var(--radius-sm); }
 .divider {

@@ -1,14 +1,14 @@
 import { useEffect, useId, useRef } from 'react';
 
 // Ask before something that can't be undone. Plain words, two big buttons.
-// The safe choice (cancelLabel) is focused by default; Escape and the backdrop also choose it.
-// tone: 'danger' (red confirm button) | 'primary'.
+// The safe choice (cancelLabel) comes first, primary and focused; Escape and the backdrop also choose it.
+// tone: 'danger' (red-outlined confirm button, second) | 'primary' (plain secondary confirm button).
 export default function ConfirmDialog({
   open,
   title,
   children,
   confirmLabel = 'Yes',
-  cancelLabel = 'No, go back',
+  cancelLabel = 'No, keep it',
   tone = 'danger',
   busy = false,
   onConfirm,
@@ -39,11 +39,11 @@ export default function ConfirmDialog({
         <h2 id={`${id}-t`} className="dialog-title">{title}</h2>
         {children && <div id={`${id}-b`} className="dialog-body">{children}</div>}
         <div className="dialog-actions">
-          <button type="button" className={`btn btn-${tone === 'danger' ? 'danger' : 'primary'} btn-block`} disabled={busy} onClick={onConfirm}>
-            <span>{confirmLabel}</span>
-          </button>
           <button type="button" ref={safeRef} className="btn btn-primary btn-block dialog-safe" onClick={onCancel}>
             <span>{cancelLabel}</span>
+          </button>
+          <button type="button" className={`btn btn-${tone === 'danger' ? 'danger-outline' : 'secondary'} btn-block`} disabled={busy} onClick={onConfirm}>
+            <span>{confirmLabel}</span>
           </button>
         </div>
       </div>

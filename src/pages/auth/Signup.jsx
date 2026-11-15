@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Building2, Fingerprint, HandHeart } from 'lucide-react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { signUpWithPasskey } from '../../lib/auth/passkey';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
@@ -94,10 +94,12 @@ export default function Signup() {
       <h1>{isCharity ? 'Register your charity' : role ? 'Join as a volunteer' : 'Create an account'}</h1>
       <Card>
         <form className="stack" onSubmit={showPassword ? handlePassword : handlePasskey}>
-          <div className="role-picker" role="group" aria-label="I am">
-            <Chip selected={role === 'volunteer'} onClick={() => pickRole('volunteer')}><HandHeart size={18} strokeWidth={1.75} aria-hidden="true" /> Volunteer</Chip>
-            <Chip selected={role === 'charity'} onClick={() => pickRole('charity')}><Building2 size={18} strokeWidth={1.75} aria-hidden="true" /> Charity</Chip>
-          </div>
+          {!queryRole && (
+            <div className="role-picker" role="group" aria-label="I am">
+              <Chip selected={role === 'volunteer'} onClick={() => pickRole('volunteer')}><HandHeart size={18} strokeWidth={1.75} aria-hidden="true" /> Volunteer</Chip>
+              <Chip selected={role === 'charity'} onClick={() => pickRole('charity')}><Building2 size={18} strokeWidth={1.75} aria-hidden="true" /> Charity</Chip>
+            </div>
+          )}
           {error && <Alert tone="danger">{error}</Alert>}
           <Field
             label={isCharity ? 'Organisation name' : 'Your name'}
@@ -122,18 +124,23 @@ export default function Signup() {
             help={!showPassword ? "Your phone checks it's you. No password to remember." : undefined}
             icon={!showPassword ? <Fingerprint size={20} strokeWidth={2} aria-hidden="true" /> : undefined}
           >
-            {showPassword ? 'Create account' : 'Continue with Face ID or fingerprint'}
+            {showPassword ? 'Create account' : 'Sign up with Face ID or fingerprint'}
           </Button>
           {passkeys && (
             <Button variant="secondary" block onClick={() => setUsePassword((v) => !v)}>
-              {showPassword ? 'Use Face ID or fingerprint instead' : 'Use a password instead'}
+              {showPassword ? 'Use Face ID instead' : 'Use a password instead'}
             </Button>
           )}
         </form>
       </Card>
-      <p className="auth-switch">
-        Already have an account? <Link to="/login">Sign in</Link>
-      </p>
+      <div className="auth-switch">
+        <Button to="/login" variant="secondary" block>I already have an account</Button>
+        {queryRole && (
+          <Button variant="secondary" block onClick={() => pickRole(isCharity ? 'volunteer' : 'charity')}>
+            {isCharity ? "I'm volunteering instead" : "I'm signing up a charity"}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

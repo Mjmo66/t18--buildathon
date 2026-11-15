@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { signInWithPasskey } from '../../lib/auth/passkey';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
@@ -8,7 +8,7 @@ import { Alert, Button, Card, Field } from '../../components/ui/index.js';
 import { usePasskeySupport, errorMessage } from './usePasskeySupport.js';
 import PasswordField from './PasswordField.jsx';
 
-const FACE_ID_HELP = "Your phone checks it's you. No password to remember.";
+const FACE_ID_HINT = "Your phone checks it's you. No password to remember.";
 
 export default function Login() {
   const { refreshProfile } = useAuth();
@@ -102,20 +102,20 @@ export default function Login() {
           </form>
         ) : (
           <div className="stack">
-            <Button size="lg" block loading={busy || passkeys === null} onClick={handlePasskey} help={FACE_ID_HELP}
+            <Button size="lg" block loading={busy || passkeys === null} onClick={handlePasskey} hint={FACE_ID_HINT}
               icon={<Fingerprint size={20} strokeWidth={2} aria-hidden="true" />}>
               Sign in with Face ID or fingerprint
             </Button>
             <Button variant="secondary" size="lg" block onClick={() => setUsePassword(true)}
               icon={<Mail size={20} strokeWidth={2} aria-hidden="true" />}>
-              Sign in with email and password
+              Use a password instead
             </Button>
           </div>
         )}
       </Card>
-      <p className="auth-switch">
-        New here? <Link to="/signup">Create an account</Link>
-      </p>
+      <div className="auth-switch">
+        <Button to="/signup" variant="secondary" block>Create an account</Button>
+      </div>
     </div>
   );
 }
