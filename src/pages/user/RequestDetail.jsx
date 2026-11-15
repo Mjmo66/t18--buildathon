@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { getOrCreateConversation } from '../../lib/chat';
 import { matchRequest, nextShifts } from '../../features/matching/index.js';
 import { Alert, Badge, Button, ConfirmDialog, useToast } from '../../components/ui/index.js';
-import { formatDayTime, formatLongDate, formatShiftRange } from '../../components/format.js';
+import { formatDayTime, formatShiftRange } from '../../components/format.js';
 import { REQUEST_SELECT, usePrefs } from './data.js';
 import {
   ArrowLeft, CalendarDays, CalendarCheck, Check, CircleCheck, Dumbbell, GraduationCap, MapPin, MessageCircle, Navigation, Repeat,
@@ -184,10 +184,7 @@ export default function RequestDetail() {
           </Fact>
           {recurring && (
             <Fact icon={Repeat}>
-              <span>
-                {LABELS.recurrence[request.recurrence]}
-                {request.ends_on ? ` until ${formatLongDate(request.ends_on)}` : ''}
-              </span>
+              <span>{LABELS.recurrence[request.recurrence]}</span>
             </Fact>
           )}
           {request.address && (

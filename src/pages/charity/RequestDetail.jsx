@@ -137,8 +137,8 @@ function Detail() {
             <Dumbbell {...ICON} />
             <span>
               {physical?.detail ?? labelOf(PHYSICAL_LEVELS, request.physical_level)}
-              {' · '}
-              {experience?.label ?? labelOf(EXPERIENCE_LEVELS, request.experience)}
+              {request.experience && request.experience !== 'none'
+                && ` · ${experience?.label ?? labelOf(EXPERIENCE_LEVELS, request.experience)}`}
             </span>
           </li>
         </ul>

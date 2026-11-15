@@ -28,7 +28,7 @@ export default function Tooltip({ hint, block = false, children }) {
     timer.current = setTimeout(() => {
       // Flip below when the space above is too small (sticky header, page title).
       const top = wrap.current?.getBoundingClientRect().top ?? 999;
-      setBelow(top < 140);
+      setBelow(top < 240);
       setOpen(true);
     }, 400);
   };

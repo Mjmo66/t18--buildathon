@@ -1,5 +1,5 @@
 // Shared constants and helpers for the charity space.
-import { addMonths, addWeeks, endOfDay, isAfter } from 'date-fns';
+import { addMonths, addWeeks, endOfDay, format, isAfter } from 'date-fns';
 import { formatDayTime, formatDuration, formatLongDate } from '../../components/format.js';
 
 export const CATEGORIES = [
@@ -112,7 +112,7 @@ export const fmtDate = (d) => formatLongDate(d);
 export function scheduleSummary(r) {
   if (r.schedule_type !== 'recurring') return 'Just once';
   const rec = labelOf(RECURRENCES, r.recurrence);
-  return r.ends_on ? `${rec} until ${fmtDate(new Date(`${r.ends_on}T00:00:00`))}` : rec;
+  return r.ends_on ? `${rec} until ${format(new Date(`${r.ends_on}T00:00:00`), 'd MMM')}` : rec;
 }
 
 /** "2 hrs · 2 of 12 places filled". */
