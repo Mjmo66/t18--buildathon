@@ -1,197 +1,70 @@
-/* Attendance & rewards. Prefix att-; uses only the tokens in src/index.css. */
+/* Attendance & rewards (volunteer side). Prefix att-; uses only the tokens in src/index.css.
+   Buttons are the shared .btn (<Button>). The charity panel and QR card are styled in charity.css (ch-att-*). */
 
 .att-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  padding: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-.att-h { margin: 0; font-size: 1rem; font-weight: 700; }
-.att-muted { color: var(--muted); }
-.att-small { font-size: 0.85rem; }
-.att-empty { color: var(--muted); padding: 12px 0; font-size: 0.9rem; }
-.att-error {
-  background: var(--danger-soft); color: var(--danger);
-  border: 1px solid color-mix(in srgb, var(--danger) 20%, transparent);
-  border-radius: var(--radius-sm); padding: 10px 12px; font-size: 0.9rem;
-}
-.att-flash {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--success-soft); color: var(--success);
-  border: 1px solid color-mix(in srgb, var(--success) 20%, transparent);
-  border-radius: var(--radius-sm); padding: 10px 12px; font-weight: 600; font-size: 0.92rem;
-  animation: att-pop 0.3s ease-out;
-}
-
-/* Buttons: same shape as .btn, 44 px touch targets */
-.att-btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 44px; padding: 10px 16px; border-radius: var(--radius-sm);
-  border: 1px solid var(--border-strong); background: var(--surface); color: var(--text);
-  box-shadow: var(--shadow-sm);
-  font: inherit; font-size: 0.92rem; font-weight: 600; cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.att-btn:hover:not(:disabled) { background: var(--surface-2); }
-.att-btn:disabled { opacity: 0.5; cursor: default; }
-.att-btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.att-btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
-.att-btn-danger { background: var(--danger); border-color: var(--danger); color: var(--surface); }
-.att-btn-danger:hover:not(:disabled) { background: var(--danger); filter: brightness(0.95); }
-.att-btn-danger-outline { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
-.att-btn-danger-outline:hover:not(:disabled) { background: var(--danger-soft); }
-.att-block { width: 100%; }
-.att-link {
-  background: none; border: none; color: var(--accent); font: inherit; font-size: 0.9rem; font-weight: 550;
-  min-height: 44px; padding: 8px; cursor: pointer; align-self: center;
-}
-.att-link:hover { text-decoration: underline; text-underline-offset: 3px; }
-
-.att-chip {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 0.72rem; font-weight: 650; padding: 1px 7px; border-radius: 6px;
-  background: var(--surface-2); color: var(--muted);
-}
-.att-panel-head .att-chip { font-family: var(--mono); font-weight: 600; }
-.att-chip-ok { background: var(--success-soft); color: var(--success); }
-.att-chip-warn { background: var(--warning-soft); color: var(--warning); }
-
-/* ---------- QR (the code stays black on white in every theme so scanners read it) ---------- */
-.att-qr { align-items: center; text-align: center; }
-.att-qr-box {
-  width: 100%; max-width: 280px; background: #fff; padding: 10px;
-  border-radius: var(--radius); border: 1px solid var(--border);
-}
-.att-qr-title { font-weight: 700; font-size: 1.05rem; }
-.att-qr-code {
-  display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 1.05rem; font-weight: 600; letter-spacing: 0.18em; color: var(--text);
-  padding: 4px 10px; border-radius: var(--radius-sm); background: var(--surface-2);
-}
-.att-qr-code .micro-label { letter-spacing: 0.12em; }
-.att-qr-full {
-  position: fixed; inset: 0; z-index: 1000; background: #fff; color: #111;
-  display: flex; align-items: center; justify-content: center; padding: 16px;
-}
-.att-qr-full-inner {
-  width: 100%; max-width: min(92vw, 80vh); display: flex; flex-direction: column;
-  align-items: center; gap: 12px; text-align: center;
-}
-.att-qr-full .att-qr-box { max-width: none; padding: 0; border: none; }
-.att-qr-full .att-qr-title { font-size: 1.4rem; }
-.att-qr-full .att-muted, .att-qr-full .att-qr-code, .att-qr-full .micro-label { color: #555; background: transparent; }
-.att-qr-full .att-btn { background: #fff; color: #111; border-color: #ccc; box-shadow: none; }
-
-/* ---------- Attendance panel ---------- */
-.att-panel { display: flex; flex-direction: column; gap: 12px; }
-.att-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.att-list {
-  list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
-  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden;
-}
-.att-list:empty { display: none; }
-.att-row {
-  padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
-}
-.att-row + .att-row { border-top: 1px solid var(--border); }
-.att-row-main { flex: 1 1 180px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.att-row-name { font-weight: 600; font-size: 0.95rem; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.att-row-main .att-muted.att-small { font-family: var(--mono); font-size: 0.74rem; color: var(--subtle); }
-.att-row-declined, .att-row-cancelled { opacity: 0.6; }
-.att-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.att-actions .att-btn { flex: 1 1 auto; min-height: 40px; }
-.att-status { font-family: var(--font); font-weight: 650; font-size: 0.8rem; }
-.att-status-accepted { color: var(--accent); }
-.att-status-attended { color: var(--success); }
-.att-status-no_show { color: var(--danger); }
-.att-confirm {
-  flex-basis: 100%; background: var(--danger-soft); color: var(--danger);
-  border-radius: var(--radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 8px; font-weight: 600;
-}
+.att-h { margin: 0; font-size: 1.15rem; font-weight: 700; }
 
 /* ---------- Scanner ---------- */
+.att-scan { display: flex; flex-direction: column; gap: 14px; }
+.att-instruction { margin: 0; font-size: 1.1rem; font-weight: 600; color: var(--text); }
 .att-scanner {
   width: 100%; aspect-ratio: 1; border-radius: var(--radius); overflow: hidden;
   background: var(--ink); border: 1px solid var(--border);
 }
 .att-scanner-placeholder {
-  height: 100%; display: flex; align-items: center; justify-content: center; color: var(--subtle);
+  height: 100%; display: flex; align-items: center; justify-content: center;
+  color: var(--on-accent); font-size: 1.05rem;
 }
-.att-manual { display: flex; flex-direction: column; gap: 8px; }
-.att-label { font-weight: 600; font-size: 0.875rem; }
+.att-manual { display: flex; flex-direction: column; gap: 12px; }
+.att-label { font-weight: 650; font-size: 1.05rem; }
 .att-input {
-  min-height: 44px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong);
-  background: var(--surface); color: var(--text); font-family: var(--mono); font-size: 1.1rem;
-  letter-spacing: 0.16em; text-transform: uppercase;
+  width: 100%; min-height: 64px; padding: 10px 14px; border-radius: var(--radius-sm);
+  border: 2px solid var(--border-strong); background: var(--surface); color: var(--text);
+  font-family: var(--mono); font-size: 1.55rem; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; text-align: center;
 }
+.att-input::placeholder { color: var(--muted); }
 .att-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 
-/* ---------- Celebration ---------- */
-.att-celebrate { align-items: center; text-align: center; padding: 24px 16px 16px; animation: att-pop 0.35s ease-out; }
-.att-celebrate .att-h { font-size: 1.25rem; letter-spacing: -0.01em; }
-.att-celebrate-icon {
-  width: 76px; height: 76px; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--raspberry-soft); color: var(--raspberry);
-  box-shadow: 0 0 0 8px color-mix(in srgb, var(--raspberry-soft) 50%, transparent);
-  animation: att-burst 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
-}
-.att-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; width: 100%; }
-.att-stat {
-  background: var(--surface-2); border-radius: var(--radius-sm); padding: 10px 12px;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-}
-.att-stat strong { font-size: 1.4rem; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.att-new-badges { display: flex; flex-direction: column; gap: 8px; width: 100%; }
-@keyframes att-pop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-@keyframes att-burst { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-@media (prefers-reduced-motion: reduce) {
-  .att-celebrate, .att-celebrate-icon, .att-flash, .att-badge-new { animation: none; }
-}
+/* ---------- Checked in ---------- */
+.att-done { align-items: center; text-align: center; padding: 24px 18px 18px; border: 2px solid var(--success); background: var(--success-soft); }
+.att-done-icon { color: var(--success); }
+.att-done-title { margin: 0; font-size: 1.35rem; color: var(--text); }
+.att-done-line { margin: 0; font-size: 1.05rem; color: var(--text); }
 
 /* ---------- Rewards ---------- */
 .att-rewards { display: flex; flex-direction: column; gap: 14px; }
-.att-badges {
-  list-style: none; margin: 0; padding: 0;
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
-}
-.att-badge {
-  border: 1px solid var(--border); border-radius: var(--radius); padding: 12px;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
-  background: var(--surface); box-shadow: var(--shadow-sm); min-width: 0;
-}
+.att-summary { margin: 0; font-size: 1.2rem; color: var(--text); }
+.att-summary strong { font-weight: 750; }
+.att-badges { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.att-badge { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .att-badge-icon {
-  width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
-  background: var(--surface-2); color: var(--subtle); flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent); flex-shrink: 0;
 }
-.att-badge-label { font-weight: 650; font-size: 0.9rem; }
-.att-badge-meta { font-family: var(--mono); font-size: 0.72rem; color: var(--subtle); }
-.att-badge-locked .att-badge-label { color: var(--muted); }
-.att-badge-earned .att-badge-icon { background: var(--accent-soft); color: var(--accent); }
-.att-badges .att-badge-earned:first-child .att-badge-icon { background: var(--raspberry-soft); color: var(--raspberry); }
-.att-badge-new {
-  flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px;
-  font-weight: 600; font-size: 0.9rem; text-align: left; animation: att-pop 0.4s ease-out;
-}
-.att-badge-new .att-badge-icon { background: var(--raspberry-soft); color: var(--raspberry); }
+.att-badge-text { display: flex; flex-direction: column; min-width: 0; }
+.att-badge-label { font-weight: 650; font-size: 1.05rem; }
+.att-badge-meta { font-size: 0.95rem; color: var(--muted); }
 
 /* ---------- Warnings ---------- */
 .att-warnings {
   background: var(--warning-soft); color: var(--warning);
-  border: 1px solid color-mix(in srgb, var(--warning) 22%, transparent);
-  border-radius: var(--radius); padding: 12px 16px;
-  display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem;
+  border: 1px solid var(--warning);
+  border-radius: var(--radius); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 4px; font-size: 1rem;
 }
-.att-warnings-suspended {
-  background: var(--danger-soft); color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 22%, transparent);
-}
-.att-warnings-title { font-weight: 700; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
-.att-warnings-list { margin: 4px 0 0; padding-left: 26px; font-size: 0.85rem; }
+.att-warnings-suspended { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+.att-warnings-title { font-weight: 700; display: flex; align-items: center; gap: 8px; font-size: 1.05rem; }
+.att-warnings-list { margin: 4px 0 0; padding-left: 26px; font-size: 0.95rem; }
 
 /* ---------- Certificate (print only) ---------- */
 .att-certificate-root { display: none; }
@@ -210,4 +83,4 @@
 .att-cert-hours { font-size: 1.4rem; font-weight: 700; margin: 8px 0; }
 .att-cert-table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 0.9rem; text-align: left; }
 .att-cert-table th, .att-cert-table td { border-bottom: 1px solid #bbb; padding: 6px 4px; }
-.att-cert-foot { margin-top: 24px; font-size: 0.8rem; color: #555; }
+.att-cert-foot { margin-top: 24px; font-size: 0.85rem; color: #555; }

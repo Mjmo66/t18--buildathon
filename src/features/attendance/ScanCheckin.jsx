@@ -1,7 +1,8 @@
-import { lazy, Suspense, useRef, useState } from 'react';
-import { PartyPopper } from 'lucide-react';
+import { lazy, Suspense, useId, useRef, useState } from 'react';
+import { Camera, CircleCheck, Keyboard } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { badgeByCode, currentUserId, formatHours, pointsFor } from './shared';
+import { Alert, Button } from '../../components/ui/index.js';
+import { currentUserId, formatHours } from './shared';
 import './attendance.css';
 
 // The scanner pulls in a WASM barcode decoder; load it only when this screen opens.
@@ -22,18 +23,12 @@ function parsePayload(text) {
 function friendlyError(message = '') {
   const m = message.toLowerCase();
   if (m.includes('invalid code') || m.includes('invalid input syntax')) {
-    return "This QR code isn't valid. Ask the charity to show it again.";
+    return "That code isn't right. Ask the organiser to show it again.";
   }
   if (m.includes('no accepted signup')) {
-    return "You don't have an accepted place on this shift. You may already be checked in, or the charity hasn't accepted you yet.";
+    return "You don't have a confirmed place on this shift. You may already be checked in, or the charity hasn't confirmed you yet.";
   }
-  return `Check-in failed: ${message || 'unknown error'}`;
-}
-
-async function badgeCodes(userId) {
-  if (!userId) return new Set();
-  const { data } = await supabase.from('badges').select('code').eq('volunteer_id', userId);
-  return new Set((data ?? []).map((b) => b.code));
+  return `Could not check you in: ${message || 'please try again'}`;
 }
 
 /** Manual entry: the 6-character code under the charity's QR, or a pasted payload. */
@@ -41,25 +36,26 @@ async function resolveManual(input, userId) {
   const payload = parsePayload(input);
   if (payload) return payload;
   const prefix = input.replace(/[\s-]/g, '').toLowerCase();
-  if (prefix.length < 6) return { error: 'Enter the 6-character code shown under the QR.' };
+  if (prefix.length < 6) return { error: 'Type all 6 characters of the code under the picture.' };
   const { data, error } = await supabase.from('signups')
     .select('request:requests(id, checkin_code)')
     .eq('volunteer_id', userId).eq('status', 'accepted');
   if (error) return { error: friendlyError(error.message) };
   const hit = (data ?? []).map((s) => s.request).find((r) => r?.checkin_code?.startsWith(prefix));
-  if (!hit) return { error: "That code doesn't match any shift you're accepted for." };
+  if (!hit) return { error: "That code doesn't match any of your confirmed shifts." };
   return { request: hit.id, code: hit.checkin_code };
 }
 
-/** Volunteer: camera scanner that calls check_in(); onCheckedIn(signup) on success. */
-export function ScanCheckin({ onCheckedIn }) {
+/** Volunteer: camera scanner that calls check_in(); onCheckedIn(signup) on success, onDone() on "Done". */
+export function ScanCheckin({ onCheckedIn, onDone }) {
   const [phase, setPhase] = useState('scan');   // scan | working | done
   const [cameraError, setCameraError] = useState('');
   const [manual, setManual] = useState(false);
   const [manualText, setManualText] = useState('');
   const [error, setError] = useState('');
-  const [result, setResult] = useState(null);   // {signup, title, newBadges}
+  const [result, setResult] = useState(null);   // {signup, title}
   const working = useRef(false);
+  const inputId = useId();
 
   async function checkIn(resolve) {
     if (working.current) return;
@@ -75,18 +71,12 @@ export function ScanCheckin({ onCheckedIn }) {
         setPhase('scan');
         return;
       }
-      const before = await badgeCodes(userId);
       const { data: signup, error: err } = await supabase.rpc('check_in',
         { p_request: target.request, p_code: target.code });
       if (err) { setError(friendlyError(err.message)); setPhase('scan'); return; }
-      const after = await badgeCodes(userId);
       const { data: req } = await supabase.from('requests').select('title')
         .eq('id', signup.request_id).maybeSingle();
-      setResult({
-        signup,
-        title: req?.title ?? '',
-        newBadges: [...after].filter((c) => !before.has(c)).map(badgeByCode),
-      });
+      setResult({ signup, title: req?.title ?? '' });
       setPhase('done');
       onCheckedIn?.(signup);
     } catch (e) {
@@ -107,83 +97,80 @@ export function ScanCheckin({ onCheckedIn }) {
 
   function onCameraError(err) {
     setCameraError(CAMERA_BLOCKED.has(err?.kind)
-      ? 'Camera not available. Enter the code shown under the QR instead.'
-      : `Camera error: ${err?.message ?? 'unknown'}`);
+      ? "The camera isn't available. Type the code instead."
+      : `The camera isn't working (${err?.message ?? 'unknown problem'}). Type the code instead.`);
     setManual(true);
   }
 
-  function reset() {
+  function done() {
     setResult(null);
     setError('');
     setManualText('');
     setPhase('scan');
+    onDone?.();
   }
 
   if (phase === 'done' && result) {
     const hrs = result.signup.hours_credited;
     return (
-      <div className="att-card att-celebrate" role="status">
-        <div className="att-celebrate-icon" aria-hidden="true"><PartyPopper size={34} strokeWidth={1.75} /></div>
-        <h3 className="att-h">You're checked in!</h3>
-        {result.title && <div className="att-muted">{result.title}</div>}
-        <div className="att-stats">
-          <div className="att-stat"><span className="micro-label">Hours</span><strong>+{formatHours(hrs)}</strong></div>
-          <div className="att-stat"><span className="micro-label">Points</span><strong>+{pointsFor(hrs)}</strong></div>
-        </div>
-        {result.newBadges.length > 0 && (
-          <div className="att-new-badges">
-            {result.newBadges.map((b) => (
-              <div key={b.code} className="att-badge att-badge-earned att-badge-new">
-                <span className="att-badge-icon" aria-hidden="true"><b.icon size={20} strokeWidth={1.75} /></span>
-                <span>New badge: {b.label}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        <button type="button" className="att-btn att-block" onClick={reset}>Done</button>
+      <div className="att-card att-done" role="status">
+        <CircleCheck className="att-done-icon" size={48} strokeWidth={2} aria-hidden="true" />
+        <h3 className="att-done-title">You're checked in. Thank you!</h3>
+        {result.title && <p className="att-done-line">{result.title}</p>}
+        {hrs != null && <p className="att-done-line">{formatHours(hrs)} added to your record</p>}
+        <Button size="lg" block onClick={done}>Done</Button>
       </div>
     );
   }
 
   return (
-    <div className="att-card att-scan">
+    <div className="att-scan">
       {!manual && (
-        <div className="att-scanner">
-          <Suspense fallback={<div className="att-scanner-placeholder">Starting camera…</div>}>
-            <Scanner
-              onScan={onScan}
-              onError={onCameraError}
-              constraints={{ facingMode: 'environment' }}
-              formats={['qr_code']}
-              paused={phase === 'working'}
-              sound={false}
-              components={{ finder: true, torch: true }}
-            />
-          </Suspense>
-        </div>
+        <>
+          <p className="att-instruction">Point your camera at the code the organiser shows you.</p>
+          <div className="att-scanner">
+            <Suspense fallback={<div className="att-scanner-placeholder">Starting the camera…</div>}>
+              <Scanner
+                onScan={onScan}
+                onError={onCameraError}
+                constraints={{ facingMode: 'environment' }}
+                formats={['qr_code']}
+                paused={phase === 'working'}
+                sound={false}
+                components={{ finder: true, torch: false, onOff: false, zoom: false }}
+              />
+            </Suspense>
+          </div>
+        </>
       )}
 
-      {phase === 'working' && <div className="att-muted" role="status">Checking in…</div>}
-      {error && <div className="att-error" role="alert">{error}</div>}
-      {cameraError && <div className="att-muted att-small">{cameraError}</div>}
+      {phase === 'working' && <p className="att-instruction" role="status">Checking you in…</p>}
+      {error && <Alert tone="danger">{error}</Alert>}
+      {cameraError && <Alert tone="warning">{cameraError}</Alert>}
 
       {manual ? (
         <form className="att-manual" onSubmit={(e) => {
           e.preventDefault();
           checkIn((uid) => resolveManual(manualText, uid));
         }}>
-          <label className="att-label" htmlFor="att-manual-code">Check-in code</label>
-          <input id="att-manual-code" className="att-input" value={manualText} autoComplete="off"
-                 autoCapitalize="characters" placeholder="e.g. 3F9A1C"
+          <label className="att-label" htmlFor={inputId}>The code under the picture</label>
+          <input id={inputId} className="att-input" value={manualText} autoComplete="off"
+                 autoCapitalize="characters" spellCheck={false} maxLength={12} placeholder="3F9A1C"
                  onChange={(e) => setManualText(e.target.value)} />
-          <button type="submit" className="att-btn att-btn-primary att-block"
-                  disabled={phase === 'working' || !manualText.trim()}>Check in</button>
+          <Button type="submit" size="lg" block loading={phase === 'working'}
+                  disabled={!manualText.trim()} hint={!manualText.trim() ? 'Type the code first.' : undefined}>
+            Check in
+          </Button>
           {!cameraError && (
-            <button type="button" className="att-link" onClick={() => setManual(false)}>Use camera</button>
+            <Button variant="secondary" block icon={<Camera size={20} aria-hidden="true" />} onClick={() => setManual(false)}>
+              Use the camera
+            </Button>
           )}
         </form>
       ) : (
-        <button type="button" className="att-link" onClick={() => setManual(true)}>Enter code instead</button>
+        <Button variant="secondary" block icon={<Keyboard size={20} aria-hidden="true" />} onClick={() => setManual(true)}>
+          Type the code instead
+        </Button>
       )}
     </div>
   );

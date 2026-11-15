@@ -28,10 +28,10 @@ export function WarningsBanner({ profile }) {
         {suspended
           ? <ShieldAlert size={18} strokeWidth={2} aria-hidden="true" />
           : <TriangleAlert size={18} strokeWidth={2} aria-hidden="true" />}
-        {suspended ? 'Account suspended' : `${count} of ${MAX_WARNINGS} warnings`}
+        {suspended ? "You can't sign up for new shifts" : `${count} of ${MAX_WARNINGS} warnings`}
       </div>
       {suspended && (
-        <div>You have {count} warnings, so you can't sign up for new shifts.</div>
+        <div>You have {count} warnings for missed shifts.</div>
       )}
       {warnings.length > 0 && (
         <ul className="att-warnings-list">
