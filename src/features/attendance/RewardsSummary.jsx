@@ -62,10 +62,7 @@ export function RewardsSummary({ profile }) {
             {earnedBadges.map((b) => (
               <li key={b.code} className="att-badge">
                 <span className="att-badge-icon" aria-hidden="true"><b.icon size={22} strokeWidth={1.75} /></span>
-                <span className="att-badge-text">
-                  <span className="att-badge-label">{b.label}</span>
-                  <span className="att-badge-meta">Earned {formatDate(earned.get(b.code))}</span>
-                </span>
+                <span className="att-badge-label">{b.label}</span>
               </li>
             ))}
           </ul>

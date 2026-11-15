@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { endOfWeek, isToday, startOfWeek } from 'date-fns';
-import { CalendarClock, ClipboardList, Hourglass, Plus, QrCode, UserRoundPlus, Users } from 'lucide-react';
+import { CalendarClock, Plus, QrCode, UserRoundPlus } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/index.js';
 import { formatTime } from '../../components/format.js';
 import { CharityGate, ErrorNote, Loading, VerifiedBadge, VerifyButton } from './components.jsx';
-import { volunteers } from './shared.js';
 
 const ICON = { size: 22, strokeWidth: 1.75, 'aria-hidden': true };
 
@@ -72,6 +70,9 @@ function Dashboard() {
     <section className="ch-page ch-page-wide">
       <header className="ch-title">
         <h1>{charity.org_name || 'Home'}</h1>
+        {stats && (stats.open > 0 || stats.pending > 0) && (
+          <p className="ch-muted">{stats.open} open · {stats.pending} waiting</p>
+        )}
         <div className="ch-row">
           <VerifiedBadge verified={verified} />
           {!verified && <VerifyButton variant="secondary" />}
@@ -106,11 +107,11 @@ function Dashboard() {
                       {a.kind === 'pending' ? <UserRoundPlus {...ICON} /> : <CalendarClock {...ICON} />}
                     </span>
                     <span className="list-row-main">
-                      <span className="list-row-title">{a.title}</span>
-                      <span className="list-row-meta">
-                        {a.kind === 'pending'
-                          ? `${volunteers(a.n)} waiting for your reply`
-                          : `Today${a.at ? `, ${formatTime(a.at)}` : ''} · ${volunteers(a.n)} coming`}
+                      <span className="list-row-title">
+                        {a.title}
+                        <span className="ch-todo-count">
+                          {a.kind === 'pending' ? ` · ${a.n} waiting` : ` · ${a.at ? formatTime(a.at) : 'today'} · ${a.n} coming`}
+                        </span>
                       </span>
                     </span>
                     {a.kind === 'pending' ? (
@@ -127,7 +128,7 @@ function Dashboard() {
                         icon={<QrCode size={20} aria-hidden="true" />}
                         hint="Show a code that volunteers scan when they arrive."
                       >
-                        Check in volunteers
+                        Check in
                       </Button>
                     )}
                   </li>
@@ -136,23 +137,6 @@ function Dashboard() {
             )}
           </div>
 
-          <div className="stat-grid">
-            <Link className="stat-card" to="/charity/requests">
-              <span className="micro-label">Open requests</span>
-              <ClipboardList className="stat-icon" {...ICON} />
-              <span className="stat-value">{stats.open}</span>
-            </Link>
-            <div className="stat-card">
-              <span className="micro-label">Waiting for your reply</span>
-              <Hourglass className="stat-icon" {...ICON} />
-              <span className="stat-value">{stats.pending}</span>
-            </div>
-            <div className="stat-card">
-              <span className="micro-label">Volunteers coming this week</span>
-              <Users className="stat-icon" {...ICON} />
-              <span className="stat-value">{stats.confirmedWeek}</span>
-            </div>
-          </div>
         </>
       )}
     </section>

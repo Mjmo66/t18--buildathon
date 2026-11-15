@@ -3,29 +3,23 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import {
-  CATEGORIES, EXPERIENCE_LEVELS, PHYSICAL_LEVELS, SLOTS, TRANSPORTS, WEEKDAYS, WEEKDAY_LABELS,
-  haversineKm, isAvailabilityEmpty,
+  CATEGORIES, EXPERIENCE_LEVELS, PHYSICAL_LEVELS, TIME_GROUPS, TRANSPORTS, TRANSPORT_DEFAULT_KM,
+  availabilityFromGroups, groupsFromAvailability, haversineKm,
 } from '../../features/matching/index.js';
 import { PLACES } from '../../features/matching/places.js';
 import { Alert, Button, Chip, Field, useToast } from '../../components/ui/index.js';
-import { milesToKm } from '../../components/format.js';
 import { usePrefs, setSkippedPrefs } from './data.js';
-import { Check, CircleCheck, LocateFixed } from 'lucide-react';
+import { Bike, Bus, Car, Check, ChevronDown, CircleCheck, Footprints, LocateFixed } from 'lucide-react';
 import { LABELS, Loading, capital } from './ui.jsx';
 
-const SLOT_LABEL = { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' };
-const ANY_DISTANCE_KM = 50;
-/** Distance choices in miles; stored as km in max_km. */
-const DISTANCES = [
-  { label: 'Up to 1 mile', km: milesToKm(1) },
-  { label: '2 miles', km: milesToKm(2) },
-  { label: '5 miles', km: milesToKm(5) },
-  { label: 'Any distance', km: ANY_DISTANCE_KM },
-];
+const TIME_LABELS = {
+  weekdayMornings: 'Weekday mornings', weekdayAfternoons: 'Weekday afternoons', evenings: 'Evenings', weekends: 'Weekends',
+};
+const TRANSPORT_ICONS = { walk: Footprints, bike: Bike, bus: Bus, car: Car };
 const SAVE_HINT = 'Keep these choices. Your list of shifts updates straight away.';
 
 const DEFAULT_FORM = {
-  lat: null, lng: null, transport: 'walk', max_km: milesToKm(1),
+  lat: null, lng: null, transport: 'walk', max_km: TRANSPORT_DEFAULT_KM.walk,
   availability: {}, physical_max: 'moderate', experience: 'none', interests: [],
 };
 
@@ -40,14 +34,15 @@ function nearestPlace(lat, lng) {
 }
 
 /** A row of big toggle buttons with text; the chosen one is filled and ticked. */
-function Options({ value, options, labels, onChange, stack = false, label }) {
+function Options({ value, options, labels, icons, onChange, stack = false, label }) {
   return (
     <div className={`v-options${stack ? ' v-options-stack' : ''}`} role="group" aria-label={label}>
       {options.map((o) => {
         const on = Array.isArray(value) ? value.includes(o) : value === o;
+        const I = icons?.[o];
         return (
           <Chip key={o} selected={on} onClick={() => onChange(o)}>
-            {on && <Check size={20} strokeWidth={2.5} aria-hidden="true" />}
+            {on ? <Check size={20} strokeWidth={2.5} aria-hidden="true" /> : I && <I size={20} aria-hidden="true" />}
             {labels?.[o] ?? capital(o)}
           </Chip>
         );
@@ -56,57 +51,30 @@ function Options({ value, options, labels, onChange, stack = false, label }) {
   );
 }
 
-function Step({ n, title, children }) {
+function Section({ id, title, children }) {
   return (
-    <section className="v-card v-step" aria-labelledby={`v-step-${n}`}>
-      <h2 className="v-step-title" id={`v-step-${n}`}>
-        <span className="v-step-num" aria-hidden="true">{n}</span>
-        {title}
-      </h2>
+    <section className="v-card v-step" aria-labelledby={id}>
+      <h2 className="v-step-title" id={id}>{title}</h2>
       {children}
     </section>
   );
 }
 
-/** "Any time" toggle (on by default); when off, one row per day with Morning / Afternoon / Evening. */
-export function AvailabilityPicker({ value, onChange, anyTime, setAnyTime }) {
-  const has = (d, s) => (value[d] ?? []).includes(s);
-  const toggle = (d, s) => {
-    const cur = value[d] ?? [];
-    const next = { ...value, [d]: has(d, s) ? cur.filter((x) => x !== s) : [...cur, s] };
-    const clean = {};
-    for (const day of WEEKDAYS) if (next[day]?.length) clean[day] = SLOTS.filter((x) => next[day].includes(x));
-    onChange(clean);
-  };
-  const setAny = (on) => {
-    setAnyTime(on);
-    if (on) onChange({});
-  };
-
+/** Five big toggles. "Any time" (no group, stored as {}) switches the other four off; any other one switches it off. */
+function TimeToggles({ groups, onChange }) {
+  const toggle = (g) => onChange(groups.includes(g) ? groups.filter((x) => x !== g) : [...groups, g]);
+  const anyTime = groups.length === 0;
+  const item = (key, label, on, onClick) => (
+    <Chip key={key} selected={on} onClick={onClick}>
+      {on && <Check size={20} strokeWidth={2.5} aria-hidden="true" />}
+      {label}
+    </Chip>
+  );
   return (
-    <>
-      <Chip selected={anyTime} className="v-big-toggle" onClick={() => setAny(!anyTime)}>
-        {anyTime && <Check size={22} strokeWidth={2.5} aria-hidden="true" />}
-        Any time
-      </Chip>
-      {!anyTime && (
-        <ul className="v-days">
-          {WEEKDAYS.map((d) => (
-            <li key={d}>
-              <span className="v-day-name" id={`v-day-${d}`}>{WEEKDAY_LABELS[d]}</span>
-              <div className="v-slots" role="group" aria-labelledby={`v-day-${d}`}>
-                {SLOTS.map((s) => (
-                  <Chip key={s} selected={has(d, s)} onClick={() => toggle(d, s)}>
-                    {has(d, s) && <Check size={18} strokeWidth={2.5} aria-hidden="true" />}
-                    {SLOT_LABEL[s]}
-                  </Chip>
-                ))}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
+    <div className="v-options v-options-stack" role="group" aria-label="When are you free?">
+      {Object.keys(TIME_GROUPS).map((g) => item(g, TIME_LABELS[g], groups.includes(g), () => toggle(g)))}
+      {item('any', 'Any time', anyTime, () => onChange([]))}
+    </div>
   );
 }
 
@@ -122,7 +90,8 @@ export default function Preferences() {
   const [error, setError] = useState(null);
   const [locating, setLocating] = useState(false);
   const [locSource, setLocSource] = useState(null); // 'gps' | place name
-  const [anyTime, setAnyTime] = useState(true);
+  const [groups, setGroups] = useState([]); // TIME_GROUPS keys that are on; [] = any time
+  const [more, setMore] = useState(false);
 
   useEffect(() => {
     if (prefs) {
@@ -131,7 +100,7 @@ export default function Preferences() {
         availability: prefs.availability ?? {}, physical_max: prefs.physical_max,
         experience: prefs.experience, interests: prefs.interests ?? [],
       });
-      setAnyTime(isAvailabilityEmpty(prefs.availability));
+      setGroups(groupsFromAvailability(prefs.availability ?? {}));
     }
   }, [prefs]);
 
@@ -170,11 +139,11 @@ export default function Preferences() {
     setSaving(true);
     setError(null);
     const { error: err } = await supabase.from('volunteer_prefs').upsert({
-      profile_id: user.id, ...form, max_km: Number(form.max_km),
+      profile_id: user.id, ...form, availability: availabilityFromGroups(groups), max_km: Number(form.max_km),
     });
     setSaving(false);
     if (err) { setError(`Could not save: ${err.message}`); return; }
-    toast('Saved. Your shifts list is updated.', 'success');
+    toast('Saved.', 'success');
     navigate('/user', { replace: welcome });
   };
 
@@ -189,14 +158,12 @@ export default function Preferences() {
       : near && near.d < 0.05 ? near.name
       : near ? `Near ${near.name}` : 'Your chosen place';
   }
-  const distanceKey = DISTANCES.find((o) => Math.abs(o.km - Number(form.max_km)) < 0.05)?.label;
-  const distanceLabels = Object.fromEntries(DISTANCES.map((o) => [o.label, o.label]));
 
   return (
     <form className="v-page" onSubmit={save}>
       <h1>{welcome ? 'Find shifts that suit you' : 'Shifts I’m shown'}</h1>
 
-      <Step n={1} title="Where are you?">
+      <Section id="v-where" title="Where are you?">
         {locLabel && (
           <p className="v-status"><CircleCheck size={22} strokeWidth={2} aria-hidden="true" />{locLabel}</p>
         )}
@@ -208,33 +175,35 @@ export default function Preferences() {
           <option value="">Choose an area</option>
           {PLACES.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
         </Field>
-      </Step>
+      </Section>
 
-      <Step n={2} title="How far can you travel?">
-        <p className="v-question">How will you get there?</p>
+      <Section id="v-travel" title="How will you get there?">
         <Options label="How will you get there?" value={form.transport} options={TRANSPORTS} labels={LABELS.transport}
-          onChange={(transport) => update({ transport })} />
-        <p className="v-question">How far?</p>
-        <Options label="How far?" value={distanceKey} options={DISTANCES.map((o) => o.label)} labels={distanceLabels}
-          onChange={(label) => update({ max_km: DISTANCES.find((o) => o.label === label).km })} />
-      </Step>
+          icons={TRANSPORT_ICONS} onChange={(transport) => update({ transport, max_km: TRANSPORT_DEFAULT_KM[transport] })} />
+      </Section>
 
-      <Step n={3} title="When are you free?">
-        <AvailabilityPicker value={form.availability} anyTime={anyTime} setAnyTime={setAnyTime}
-          onChange={(availability) => update({ availability })} />
-      </Step>
+      <Section id="v-when" title="When are you free?">
+        <TimeToggles groups={groups} onChange={setGroups} />
+      </Section>
 
-      <Step n={4} title="Anything else? (optional)">
-        <p className="v-question">How much physical work?</p>
-        <Options stack label="How much physical work?" value={form.physical_max} options={PHYSICAL_LEVELS}
-          labels={LABELS.physicalShort} onChange={(physical_max) => update({ physical_max })} />
-        <p className="v-question">Your experience</p>
-        <Options stack label="Your experience" value={form.experience} options={EXPERIENCE_LEVELS}
-          labels={LABELS.experienceMine} onChange={(experience) => update({ experience })} />
-        <p className="v-question">What do you like?</p>
-        <Options label="What do you like?" value={form.interests} options={CATEGORIES} labels={LABELS.category}
-          onChange={(c) => update({ interests: form.interests.includes(c) ? form.interests.filter((x) => x !== c) : [...form.interests, c] })} />
-      </Step>
+      {!more ? (
+        <Button variant="secondary" block onClick={() => setMore(true)} aria-expanded={false}
+          icon={<ChevronDown size={20} aria-hidden="true" />}>
+          More choices (optional)
+        </Button>
+      ) : (
+        <Section id="v-more" title="More choices">
+          <p className="v-question">How much physical work?</p>
+          <Options stack label="How much physical work?" value={form.physical_max} options={PHYSICAL_LEVELS}
+            labels={LABELS.physicalShort} onChange={(physical_max) => update({ physical_max })} />
+          <p className="v-question">Your experience</p>
+          <Options stack label="Your experience" value={form.experience} options={EXPERIENCE_LEVELS}
+            labels={LABELS.experienceMine} onChange={(experience) => update({ experience })} />
+          <p className="v-question">What do you like?</p>
+          <Options label="What do you like?" value={form.interests} options={CATEGORIES} labels={LABELS.category}
+            onChange={(c) => update({ interests: form.interests.includes(c) ? form.interests.filter((x) => x !== c) : [...form.interests, c] })} />
+        </Section>
+      )}
 
       {error && <Alert tone="danger">{error}</Alert>}
       {welcome && (

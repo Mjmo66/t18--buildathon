@@ -6,6 +6,7 @@
 .ch-page h2 { margin: 0; font-size: 1.2rem; }
 
 .ch-title { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ch-title p { margin: 0; }
 .ch-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .ch-between { justify-content: space-between; }
 .ch-muted { color: var(--muted); }
@@ -92,6 +93,7 @@
 .ch-todo { list-style: none; margin: 0; padding: 0; }
 .ch-todo-row { flex-wrap: wrap; }
 .ch-todo-row .list-row-main { flex: 1 1 200px; }
+.ch-todo-count { font-weight: 500; color: var(--muted); }
 @media (max-width: 520px) {
   .ch-todo-row .btn, .ch-todo-row .tooltip-wrap { width: 100%; }
 }

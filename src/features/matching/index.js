@@ -65,6 +65,40 @@ export function nextShifts(request, from = new Date(), count = 5) {
   return out;
 }
 
+/** The five big "When are you free?" toggles map onto the stored 7×3 grid. "Any time" is no group (= {}). */
+export const TIME_GROUPS = {
+  weekdayMornings: { mon: ['morning'], tue: ['morning'], wed: ['morning'], thu: ['morning'], fri: ['morning'] },
+  weekdayAfternoons: { mon: ['afternoon'], tue: ['afternoon'], wed: ['afternoon'], thu: ['afternoon'], fri: ['afternoon'] },
+  evenings: Object.fromEntries(WEEKDAYS.map((d) => [d, ['evening']])),
+  weekends: { sat: [...SLOTS], sun: [...SLOTS] },
+};
+
+/** Groups ticked → full availability grid (union of their slots, in day and slot order). [] → {} (any time). */
+export function availabilityFromGroups(groups) {
+  const out = {};
+  for (const d of WEEKDAYS) {
+    const slots = SLOTS.filter((s) => groups.some((g) => TIME_GROUPS[g]?.[d]?.includes(s)));
+    if (slots.length) out[d] = slots;
+  }
+  return out;
+}
+
+/** Stored grid → groups to show as on: a group is on when any of its stored slots is ticked.
+ *  A slot two groups share (Saturday evening: Evenings and Weekends) lights a group only when no group that is
+ *  already on covers it, so Weekends alone reads back as Weekends, not Weekends + Evenings. {} → [] (any time). */
+export function groupsFromAvailability(availability) {
+  if (isAvailabilityEmpty(availability)) return [];
+  const names = Object.keys(TIME_GROUPS);
+  const has = (g, d, s) => TIME_GROUPS[g][d]?.includes(s) ?? false;
+  const stored = WEEKDAYS.flatMap((d) => (availability[d] ?? []).map((s) => [d, s]));
+  const shared = ([d, s]) => names.filter((g) => has(g, d, s)).length > 1;
+  const on = new Set(names.filter((g) => stored.some(([d, s]) => !shared([d, s]) && has(g, d, s))));
+  for (const [d, s] of stored) {
+    if (![...on].some((g) => has(g, d, s))) names.filter((g) => has(g, d, s)).forEach((g) => on.add(g));
+  }
+  return names.filter((g) => on.has(g));
+}
+
 /** True if the availability grid has no slot ticked (treated as "any time"). */
 export function isAvailabilityEmpty(availability) {
   return !availability || WEEKDAYS.every((d) => !(availability[d]?.length));

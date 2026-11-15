@@ -22,8 +22,8 @@ export function ErrorNote({ error }) {
 
 export function VerifiedBadge({ verified }) {
   return verified
-    ? <span className="ch-badge ch-badge-ok"><BadgeCheck size={18} strokeWidth={2} aria-hidden="true" />Checked charity</span>
-    : <span className="ch-badge ch-badge-warn"><CircleAlert size={18} strokeWidth={2} aria-hidden="true" />Not checked yet</span>;
+    ? <span className="ch-badge ch-badge-ok"><BadgeCheck size={18} strokeWidth={2} aria-hidden="true" />Verified charity</span>
+    : <span className="ch-badge ch-badge-warn"><CircleAlert size={18} strokeWidth={2} aria-hidden="true" />Not verified yet</span>;
 }
 
 // Plain words for request and signup statuses.
