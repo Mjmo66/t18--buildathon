@@ -82,7 +82,7 @@
 
 /* The one main action of a screen: full width on phones, natural width on desktop.
    A button with a hint sits inside .tooltip-wrap, so the wrapper is what the page column aligns. */
-.ch-main-action, .ch-page > .tooltip-wrap { align-self: flex-start; }
+.ch-main-action, .ch-page > .tooltip-wrap:not(.tooltip-wrap-block) { align-self: flex-start; }
 @media (max-width: 899px) {
   .ch-main-action { align-self: stretch; width: 100%; }
   .ch-page > .tooltip-wrap:has(> .ch-main-action) { align-self: stretch; }
