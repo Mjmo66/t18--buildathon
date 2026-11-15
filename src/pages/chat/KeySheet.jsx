@@ -18,7 +18,7 @@ function Fingerprint({ label, name, publicKey }) {
               <span key={i} style={{ '--swatch-hue': (parseInt(g, 16) % 360) }} />
             ))}
           </div>
-          <code className="key-fingerprint" aria-label={`${label} key fingerprint ${groups.join(' ')}`}>
+          <code className="key-fingerprint" aria-label={`Key fingerprint of ${label}: ${groups.join(' ')}`}>
             {groups.map((g, i) => <span key={i}>{g}</span>)}
           </code>
         </>
