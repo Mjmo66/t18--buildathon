@@ -10,10 +10,23 @@ import { Button, ConfirmDialog, useToast } from '../../components/ui/index.js';
 import { formatShiftRange } from '../../components/format.js';
 import { CharityGate, Empty, ErrorNote, Loading, StatusPill } from './components.jsx';
 import {
-  EXPERIENCE_LEVELS, PHYSICAL_LEVELS, labelOf, nextShifts, requestFacts, scheduleSummary, volunteers,
+  EXPERIENCE_LEVELS, PHYSICAL_LEVELS, labelOf, nextShifts, scheduleSummary, volunteers,
 } from './shared.js';
 
 const ICON = { size: 22, strokeWidth: 1.75, 'aria-hidden': true };
+
+/** One labelled fact: icon, small label, value. */
+function Fact({ icon: I, label, children }) {
+  return (
+    <li>
+      <I {...ICON} />
+      <span className="ch-fact">
+        <span className="ch-fact-label">{label}</span>
+        <span className="ch-fact-value">{children}</span>
+      </span>
+    </li>
+  );
+}
 
 function Detail() {
   const { id } = useParams();
@@ -82,8 +95,12 @@ function Detail() {
   const coming = signups.filter((s) => s.status === 'accepted').length;
   const upcoming = nextShifts(request, 3);
   // Shift day: a shift of this request starts today (also once it has started).
-  const todayShift = nextShifts(request, 1, startOfDay(new Date()))[0];
-  const shiftDay = Boolean(todayShift && isToday(todayShift)) && request.status !== 'closed';
+  // A confirmed signup dated today counts too, so the page agrees with Home's "Check in".
+  const seriesToday = nextShifts(request, 1, startOfDay(new Date()))[0];
+  const signupToday = signups.find((s) => ['accepted', 'attended'].includes(s.status) && s.shift_at && isToday(new Date(s.shift_at)));
+  const todayShift = seriesToday && isToday(seriesToday) ? seriesToday : signupToday ? new Date(signupToday.shift_at) : null;
+  const shiftDay = Boolean(todayShift) && request.status !== 'closed';
+  const shownShift = shiftDay ? todayShift : upcoming[0];
   const recurring = request.schedule_type === 'recurring';
   const physical = PHYSICAL_LEVELS.find((o) => o.value === request.physical_level);
   const experience = EXPERIENCE_LEVELS.find((o) => o.value === request.experience);
@@ -122,25 +139,22 @@ function Detail() {
       <div className="ch-card ch-facts">
         {request.description && <p className="ch-desc">{request.description}</p>}
         <ul className="ch-fact-list">
-          <li>
-            <CalendarDays {...ICON} />
-            <span>
-              {upcoming.length === 0 && 'No shifts coming up'}
-              {upcoming.length > 0 && !recurring && formatShiftRange(upcoming[0], request.duration_hours)}
-              {upcoming.length > 0 && recurring && `Next: ${formatShiftRange(upcoming[0], request.duration_hours)}`}
+          <Fact icon={CalendarDays} label={recurring && !shiftDay ? 'Next shift' : 'When'}>
+            {shownShift ? formatShiftRange(shownShift, request.duration_hours) : 'No shifts coming up'}
+          </Fact>
+          {recurring && <Fact icon={Repeat} label="Repeats">{scheduleSummary(request)}</Fact>}
+          <Fact icon={MapPin} label="Where">{request.address || 'No place given'}</Fact>
+          <Fact icon={Users} label="Places">
+            {confirmed} of {request.slots} filled
+            <span className="ch-meter" aria-hidden="true">
+              <span style={{ width: `${Math.min(100, Math.round((confirmed / Math.max(1, request.slots)) * 100))}%` }} />
             </span>
-          </li>
-          {recurring && <li><Repeat {...ICON} /><span>{scheduleSummary(request)}</span></li>}
-          <li><MapPin {...ICON} /><span>{request.address || 'No place given'}</span></li>
-          <li><Users {...ICON} /><span>{requestFacts(request, confirmed)}</span></li>
-          <li>
-            <Dumbbell {...ICON} />
-            <span>
-              {physical?.detail ?? labelOf(PHYSICAL_LEVELS, request.physical_level)}
-              {request.experience && request.experience !== 'none'
-                && ` · ${experience?.label ?? labelOf(EXPERIENCE_LEVELS, request.experience)}`}
-            </span>
-          </li>
+          </Fact>
+          <Fact icon={Dumbbell} label="What it involves">
+            {physical?.detail ?? labelOf(PHYSICAL_LEVELS, request.physical_level)}
+            {request.experience && request.experience !== 'none'
+              && ` · ${experience?.label ?? labelOf(EXPERIENCE_LEVELS, request.experience)}`}
+          </Fact>
         </ul>
       </div>
 

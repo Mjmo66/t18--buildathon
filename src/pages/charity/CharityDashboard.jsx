@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { endOfWeek, isToday, startOfWeek } from 'date-fns';
-import { CalendarClock, Plus, QrCode, UserRoundPlus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { CalendarClock, ChevronRight, Clock, Plus, QrCode, UserRoundPlus } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/ui/index.js';
-import { formatTime } from '../../components/format.js';
+import { formatDayTime, formatDuration, formatTime } from '../../components/format.js';
 import { CharityGate, ErrorNote, Loading, VerifiedBadge, VerifyButton } from './components.jsx';
 
 const ICON = { size: 22, strokeWidth: 1.75, 'aria-hidden': true };
+const countOf = (n, word) => `${n} ${n === 1 ? word : `${word}s`}`;
 
 function Dashboard() {
   const { user, charity } = useAuth();
@@ -48,7 +50,18 @@ function Dashboard() {
       return [...map.values()];
     };
 
+    // Coming up: confirmed volunteers per request and shift, soonest first (today's are in To do).
+    const ahead = new Map();
+    for (const s of confirmedSignups) {
+      if (s.status !== 'accepted' || !s.shift_at || isToday(new Date(s.shift_at)) || new Date(s.shift_at) < now) continue;
+      const key = `${s.request_id}|${s.shift_at}`;
+      const g = ahead.get(key) ?? { requestId: s.request_id, title: s.requests?.title ?? 'Request', at: s.shift_at, n: 0 };
+      g.n += 1;
+      ahead.set(key, g);
+    }
+
     setStats({
+      upcoming: [...ahead.values()].sort((a, b) => a.at.localeCompare(b.at)).slice(0, 4),
       open: reqRes.count ?? 0,
       filled: filledRes.count ?? 0,
       pending: pending.length,
@@ -67,12 +80,9 @@ function Dashboard() {
   const verified = Boolean(charity.verified_at);
 
   return (
-    <section className="ch-page ch-page-wide">
+    <section className="ch-page">
       <header className="ch-title">
         <h1>{charity.org_name || 'Home'}</h1>
-        {stats && (stats.open > 0 || stats.pending > 0) && (
-          <p className="ch-muted">{stats.open} open · {stats.pending} waiting</p>
-        )}
         <div className="ch-row">
           <VerifiedBadge verified={verified} />
           {!verified && <VerifyButton variant="secondary" />}
@@ -107,11 +117,11 @@ function Dashboard() {
                       {a.kind === 'pending' ? <UserRoundPlus {...ICON} /> : <CalendarClock {...ICON} />}
                     </span>
                     <span className="list-row-main">
-                      <span className="list-row-title">
-                        {a.title}
-                        <span className="ch-todo-count">
-                          {a.kind === 'pending' ? ` · ${a.n} waiting` : ` · ${a.at ? formatTime(a.at) : 'today'} · ${a.n} coming`}
-                        </span>
+                      <span className="list-row-title">{a.title}</span>
+                      <span className="list-row-sub">
+                        {a.kind === 'pending'
+                          ? `${countOf(a.n, 'volunteer')} waiting for your reply`
+                          : `Today${a.at ? ` at ${formatTime(a.at)}` : ''} · ${countOf(a.n, 'volunteer')} coming`}
                       </span>
                     </span>
                     {a.kind === 'pending' ? (
@@ -137,6 +147,56 @@ function Dashboard() {
             )}
           </div>
 
+          <section aria-labelledby="ch-glance">
+            <h2 id="ch-glance" className="ch-section-title">At a glance</h2>
+            <div className="ch-stats">
+              <Link className="ch-stat" to="/charity/requests">
+                <span className="ch-stat-num">{stats.open}</span>
+                <span className="ch-stat-label">{stats.open === 1 ? 'open request' : 'open requests'}</span>
+              </Link>
+              <Link className="ch-stat" to="/charity/requests">
+                <span className={`ch-stat-num ${stats.pending > 0 ? 'ch-stat-warn' : ''}`}>{stats.pending}</span>
+                <span className="ch-stat-label">waiting for your reply</span>
+              </Link>
+              <div className="ch-stat">
+                <span className="ch-stat-num">{stats.confirmedWeek}</span>
+                <span className="ch-stat-label">{stats.confirmedWeek === 1 ? 'volunteer' : 'volunteers'} coming this week</span>
+              </div>
+            </div>
+          </section>
+
+          <div className="list-card">
+            <div className="list-card-head">
+              <h2>Coming up</h2>
+            </div>
+            {stats.upcoming.length === 0 ? (
+              <p className="list-empty">No confirmed volunteers yet.</p>
+            ) : (
+              <ul>
+                {stats.upcoming.map((u) => (
+                  <li key={`${u.requestId}-${u.at}`}>
+                    <Link className="list-row ch-link-row" to={`/charity/requests/${u.requestId}`}>
+                      <span className="list-row-icon"><CalendarClock {...ICON} /></span>
+                      <span className="list-row-main">
+                        <span className="list-row-title">{u.title}</span>
+                        <span className="list-row-sub">{formatDayTime(u.at)} · {countOf(u.n, 'volunteer')} coming</span>
+                      </span>
+                      <ChevronRight size={24} strokeWidth={2} aria-hidden="true" className="ch-chevron" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {stats.attended > 0 && (
+            <div className="ch-sofar">
+              <Clock {...ICON} />
+              <span>
+                <strong>So far:</strong> volunteers gave {formatDuration(stats.hours)} over {countOf(stats.attended, 'shift')}.
+              </span>
+            </div>
+          )}
         </>
       )}
     </section>

@@ -15,7 +15,7 @@ export const LABELS = {
   transport: { walk: 'Walking', bike: 'Bike', bus: 'Bus', car: 'Car' },
   recurrence: { weekly: 'Every week', fortnightly: 'Every 2 weeks', monthly: 'Every month' },
   category: {
-    environment: 'Nature and outdoors', food: 'Food', elderly: 'Older people', kids: 'Children',
+    environment: 'Outdoors', food: 'Food', elderly: 'Older people', kids: 'Children',
     animals: 'Animals', community: 'Community', events: 'Events',
   },
 };

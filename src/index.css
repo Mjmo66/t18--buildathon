@@ -212,6 +212,7 @@ svg.lucide { flex-shrink: 0; }
   gap: 12px;
   min-height: 60px;
   padding: 8px 12px 8px 8px;
+  background: var(--surface);
   border-radius: var(--radius-sm);
   border: 2px solid var(--border);
   color: var(--text);
@@ -223,7 +224,10 @@ svg.lucide { flex-shrink: 0; }
 .account-button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .account-button.active svg { color: var(--accent); }
 .account-button.active .avatar { background: var(--accent); color: #fff; }
+.account-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .account-button .sidebar-user { white-space: normal; line-height: 1.25; overflow-wrap: anywhere; }
+.account-sub { font-size: 0.9rem; font-weight: 500; color: var(--muted); }
+.account-button.active .account-sub { color: var(--accent); }
 .avatar {
   width: 40px;
   height: 40px;

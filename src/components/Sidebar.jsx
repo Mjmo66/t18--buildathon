@@ -45,7 +45,10 @@ export default function Sidebar({ links }) {
                 aria-label={`${name}, account and settings`}
               >
                 <span className="avatar" aria-hidden="true">{name.trim().charAt(0).toUpperCase() || '?'}</span>
-                <span className="sidebar-user">{name}</span>
+                <span className="account-text">
+                  <span className="sidebar-user">{name}</span>
+                  <span className="account-sub">Account</span>
+                </span>
                 <Icon name="settings" size={22} />
               </NavLink>
             </Tooltip>

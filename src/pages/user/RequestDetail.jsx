@@ -39,6 +39,7 @@ export default function RequestDetail() {
   const [request, setRequest] = useState(undefined);
   const [mySignups, setMySignups] = useState([]);
   const [shift, setShift] = useState('');
+  const [allDates, setAllDates] = useState(false);
   const [busy, setBusy] = useState(null); // 'signup' | 'chat' | 'cancel'
   const [error, setError] = useState(null);
   const [justSignedUp, setJustSignedUp] = useState(null); // ISO shift time signed up for on this visit
@@ -72,6 +73,8 @@ export default function RequestDetail() {
   const preferred = match?.shiftAt && freeShifts.find((d) => d.getTime() === match.shiftAt.getTime());
   const selected = freeShifts.some((d) => d.toISOString() === shift) ? shift
     : (preferred ?? freeShifts[0])?.toISOString() ?? '';
+  // Show 3 dates; all of them once asked, or when the chosen one is further out.
+  const showAllDates = allDates || freeShifts.findIndex((d) => d.toISOString() === selected) >= 3;
 
   if (request === undefined) return <div className="v-page"><Loading /></div>;
   if (!request) {
@@ -146,10 +149,10 @@ export default function RequestDetail() {
       <header className="v-detail-head">
         <h1>{request.title}</h1>
         <p className="v-detail-org">
-          {request.charities?.verified_at && (
-            <span className="v-verified"><Check size={18} strokeWidth={2.5} aria-hidden="true" /><span className="sr-only">Verified charity: </span></span>
-          )}
           {request.charities?.org_name ?? 'Charity'}
+          {request.charities?.verified_at && (
+            <span className="v-verified"><Check size={18} strokeWidth={2.5} aria-hidden="true" />Verified charity</span>
+          )}
         </p>
       </header>
 
@@ -203,6 +206,24 @@ export default function RequestDetail() {
         </ul>
       </section>
 
+      {!justSignedUp && freeShifts.length > 1 && !blockReason && (
+        <fieldset className="v-card v-choices">
+          <legend>Pick a date</legend>
+          {(showAllDates ? freeShifts : freeShifts.slice(0, 3)).map((d) => {
+            const iso = d.toISOString();
+            return (
+              <label key={iso} className="v-choice">
+                <input type="radio" name="v-shift" value={iso} checked={selected === iso} onChange={() => setShift(iso)} />
+                <span>{formatShiftRange(d, request.duration_hours)}</span>
+              </label>
+            );
+          })}
+          {freeShifts.length > 3 && !showAllDates && (
+            <Button variant="secondary" block onClick={() => setAllDates(true)}>More dates</Button>
+          )}
+        </fieldset>
+      )}
+
       {otherSignups.length > 0 && (
         <section className="v-card">
           <h2>Your places</h2>
@@ -224,20 +245,6 @@ export default function RequestDetail() {
         </section>
       )}
 
-      {!justSignedUp && freeShifts.length > 1 && !blockReason && (
-        <fieldset className="v-card v-choices">
-          <legend>Choose a date</legend>
-          {freeShifts.map((d) => {
-            const iso = d.toISOString();
-            return (
-              <label key={iso} className="v-choice">
-                <input type="radio" name="v-shift" value={iso} checked={selected === iso} onChange={() => setShift(iso)} />
-                <span>{formatShiftRange(d, request.duration_hours)}</span>
-              </label>
-            );
-          })}
-        </fieldset>
-      )}
 
       {user && (
         <Button variant="secondary" block loading={busy === 'chat'} onClick={message}
