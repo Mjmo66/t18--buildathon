@@ -10,3 +10,4 @@ export { default as Alert } from './Alert.jsx';
 export { ToastProvider, useToast } from './Toast.jsx';
 export { default as Tooltip } from './Tooltip.jsx';
 export { default as ConfirmDialog } from './ConfirmDialog.jsx';
+export { default as IconButton } from './IconButton.jsx';

@@ -1,48 +1,35 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { BadgeCheck, LogOut } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth/AuthContext.jsx';
 import { homePathFor } from './RequireAuth.jsx';
 import Logo from './brand/Logo.jsx';
 
-// Top bar: phones in the app, every size on public pages (desktop app pages use the sidebar).
-export default function Header({ space }) {
-  const { user, profile, charity, signOut } = useAuth();
-  const navigate = useNavigate();
+const DETAIL_TITLES = [
+  [/^\/user\/requests\//, 'Shift details'],
+  [/^\/user\/preferences/, 'My choices'],
+  [/^\/charity\/requests\/new/, 'Ask for volunteers'],
+  [/^\/charity\/requests\//, 'Request'],
+  [/^\/chat\/.+/, 'Messages'],
+];
 
-  async function handleSignOut() {
-    await signOut();
-    navigate('/', { replace: true });
-  }
+/** Page title for the phone header: the matching nav link, else a detail-page name. */
+function titleFor(pathname, links = []) {
+  const exact = links.find((l) => l.to === pathname);
+  if (exact) return exact.label;
+  const detail = DETAIL_TITLES.find(([re]) => re.test(pathname));
+  return detail?.[1] ?? '';
+}
 
+// Top bar: phones in the app (logo + page title), every size on public pages (logo only).
+export default function Header({ links }) {
+  const { user, profile, charity } = useAuth();
+  const { pathname } = useLocation();
+  const title = links ? titleFor(pathname, links) : '';
   return (
     <header className="header">
       <Link to={user && profile ? homePathFor(profile, charity) : '/'} className="logo" aria-label="Kindred home">
-        <Logo size={28} />
+        <Logo size={30} />
       </Link>
-      {space && <span className="space-badge">{space}</span>}
-      <div className="header-actions">
-        {user ? (
-          <>
-            {profile && (
-              <span className="header-user" title={profile.display_name}>
-                <span className="header-user-name">{profile.display_name}</span>
-                {profile.verified && (
-                  <span className="header-verified" title="Verified">
-                    <BadgeCheck size={16} strokeWidth={2} aria-label="Verified" />
-                  </span>
-                )}
-              </span>
-            )}
-            <button type="button" className="icon-button" onClick={handleSignOut} aria-label="Sign out" title="Sign out">
-              <LogOut size={18} strokeWidth={1.75} />
-            </button>
-          </>
-        ) : (
-          <Link to="/login" className="btn btn-secondary btn-sm">
-            Sign in
-          </Link>
-        )}
-      </div>
+      {title && <span className="header-title">{title}</span>}
     </header>
   );
 }
