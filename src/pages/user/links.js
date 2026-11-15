@@ -1,6 +1,6 @@
-// Sidebar links for the user space
+// Navigation links for the volunteer space
 export const userLinks = [
-  { to: '/user', label: 'Dashboard' },
-  { to: '/user/charities', label: 'Find Charities' },
-  { to: '/user/profile', label: 'My Profile' },
+  { to: '/user', label: 'For you' },
+  { to: '/user/shifts', label: 'My shifts' },
+  { to: '/user/profile', label: 'Profile' },
 ];
