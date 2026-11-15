@@ -817,9 +817,12 @@ button.chip-selected:hover { border-color: var(--accent-hover); }
 .text-size-option:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
 .text-size-option input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
 .text-size-sample { font-weight: 700; line-height: 1; }
-.text-size-label { font-size: 0.9rem; font-weight: 600; overflow-wrap: anywhere; }
-@media (max-width: 420px) {
+.text-size-label { font-size: 0.9rem; font-weight: 600; overflow-wrap: normal; hyphens: manual; }
+/* Container query: inside the phone frame the window is wide (iPad) but the card is narrow. */
+.text-size { container-type: inline-size; }
+@container (max-width: 30rem) {
   .text-size-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .text-size-option { min-height: max(48px, 3.4rem); flex-direction: row; justify-content: center; align-items: center; gap: 8px; }
 }
 
 /* Landing: one-tap demo sign-in (presentation) */
