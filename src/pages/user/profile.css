@@ -1,0 +1,33 @@
+/* Volunteer Profile in the Lovable design (IMG_0451). Builds on lovable.css; everything scoped under .lv .lv-profile. */
+.lv .lv-profile { background: var(--lv-card); min-height: 100%; }
+.lv .lv-profile .text-xs { font-size: 12px; }
+.lv .lv-profile .profile-top .avatar-large { width: 80px; height: 80px; font-size: 26px; font-family: var(--lv-font-display); font-weight: 500; }
+.lv .lv-profile .profile-top .status svg { width: 12px; height: 12px; }
+
+/* shadcn-like switch: 52×30 track, green when on */
+.lv .lv-switch {
+  position: relative; flex-shrink: 0; width: 52px; height: 30px; padding: 2px; border: 0; border-radius: 999px;
+  background: var(--lv-border); cursor: pointer; transition: background-color .2s;
+}
+.lv .lv-switch[aria-checked='true'] { background: var(--lv-success); }
+.lv .lv-switch > span {
+  display: block; width: 26px; height: 26px; border-radius: 50%; background: var(--lv-card);
+  box-shadow: 0 1px 3px rgb(0 0 0 / .18); transition: translate .2s;
+}
+.lv .lv-switch[aria-checked='true'] > span { translate: 22px 0; }
+@media (prefers-reduced-motion: reduce) { .lv .lv-switch, .lv .lv-switch > span { transition: none; } }
+
+.lv .lv-profile .profile-section h3 { font-size: 19px; }
+.lv .lv-profile .detail-row { font-size: 14px; }
+.lv .lv-profile .detail-row > span:last-child { overflow-wrap: anywhere; }
+.lv .lv-profile-label { margin: 4px 0 10px; }
+.lv .lv-profile .tag-list .task-tag { font-size: 12px; padding: 6px 10px; }
+.lv .lv-profile-note { font-size: 14px; color: var(--lv-muted-foreground); }
+.lv .lv-profile-button { margin-top: 18px; }
+.lv .lv-profile .btn-with-help { margin-top: 18px; }
+
+/* Badges + certificate (RewardsSummary) and the text-size fieldset, in the Lovable type */
+.lv .lv-profile-rewards .att-rewards { font-size: 14px; }
+.lv .lv-profile .text-size legend { font-family: var(--lv-font-display); font-size: 19px; font-weight: 550; margin-bottom: 4px; }
+.lv .lv-profile-signout { padding-bottom: 8px; }
+.lv .lv-profile .detail-row > span:first-child { white-space: nowrap; }
