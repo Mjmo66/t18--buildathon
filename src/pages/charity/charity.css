@@ -252,12 +252,14 @@ a.ch-stat:hover { border-color: var(--border-strong); background: var(--surface-
 
 /* Forms */
 .ch-form { display: flex; flex-direction: column; gap: 18px; }
-.ch-form fieldset { display: flex; flex-direction: column; gap: 16px; }
+/* Block, not flex: WebKit drops float on flex children, which puts the legend back on the card border. */
+.ch-form fieldset { display: block; }
+.ch-form fieldset > :not(legend) + :not(legend) { margin-top: 16px; }
 .ch-form legend {
   float: left;
   width: 100%;
   padding: 0;
-  margin: 0 0 4px;
+  margin: 0 0 20px;
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--text);

@@ -67,8 +67,11 @@
 .v-places li + li { border-top: 1px solid var(--border); }
 .v-place-when { font-weight: 650; flex: 1 1 100%; }
 
-.v-choices { margin: 0; gap: 10px; }
-.v-choices legend { float: left; width: 100%; padding: 0; margin-bottom: 4px; font-size: 1.2rem; font-weight: 700; }
+/* Block, not flex: WebKit drops float on flex children, which puts the legend back on the card border. */
+.v-choices { margin: 0; display: block; }
+.v-choices > :not(legend) + :not(legend) { margin-top: 10px; }
+.v-choices legend { float: left; width: 100%; padding: 0; margin-bottom: 14px; font-size: 1.2rem; font-weight: 700; }
+.v-choices legend + * { clear: both; }
 .v-choice {
   display: flex;
   align-items: center;
