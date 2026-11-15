@@ -16,6 +16,8 @@ function Profile() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const verified = Boolean(charity.verified_at);
+  // Shared demo account: a changed number or email would break it for everyone presenting.
+  const isDemo = (user.email ?? '').endsWith('@demo.kindred.uk');
 
   const normalised = normaliseCharityNumber(number);
   const register = detectRegister(normalised);
@@ -91,6 +93,7 @@ function Profile() {
             placeholder="SC012345"
             autoCapitalize="characters"
             autoComplete="off"
+            readOnly={isDemo}
           />
           <small className={register ? 'ch-muted' : 'ch-error'}>
             {register ? REGISTER_LABELS[register] : 'We don’t recognise this number yet'}
@@ -107,6 +110,7 @@ function Profile() {
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
             autoCapitalize="none"
+            readOnly={isDemo}
           />
           {user.new_email && (
             <small className="ch-muted">Waiting for you to confirm {user.new_email}</small>

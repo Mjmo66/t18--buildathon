@@ -62,7 +62,7 @@
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
 }
-html { font-size: 112.5%; } /* 18px base */
+html { font-size: 112.5%; overflow-x: clip; } /* 18px base; clip: hidden tooltips must not widen the page */
 
 * { box-sizing: border-box; }
 

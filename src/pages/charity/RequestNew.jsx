@@ -36,7 +36,7 @@ function validate(f, loc) {
   if (!f.date || !f.time || Number.isNaN(start.getTime())) e.date = 'Choose a date and a start time.';
   else if (start <= new Date()) e.date = 'Choose a time that is still to come.';
   const dur = Number(f.duration_hours);
-  if (!(dur > 0 && dur <= 24)) e.duration_hours = 'Choose between half an hour and 24 hours.';
+  if (!(dur > 0 && dur <= 12)) e.duration_hours = 'Choose between half an hour and 12 hours.';
   const slots = Number(f.slots);
   if (!(Number.isInteger(slots) && slots >= 1 && slots <= 500)) e.slots = 'Ask for at least 1 volunteer.';
   if (f.schedule_type === 'recurring') {
@@ -263,7 +263,7 @@ function Form() {
               onChange={setVal('duration_hours')}
               step={0.5}
               min={0.5}
-              max={24}
+              max={12}
               lessLabel="Half an hour less"
               moreLabel="Half an hour more"
               error={err('duration_hours')}
