@@ -1,0 +1,13 @@
+import { HeartHandshake, Check, Clock3, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { Button } from '@/components/ui/button';
+import type { VerificationStatus, Snapshot, Request } from '@/api/types';
+export function Brand({ compact = false }: { compact?: boolean }) { return <Link to="/" className={`brand ${compact ? 'brand-compact' : ''}`} aria-label="Kindred home"><span className="brand-mark"><HeartHandshake strokeWidth={1.8} /></span><span>kindred<span className="brand-dot">.</span></span></Link>; }
+export function Status({ status }: { status: VerificationStatus | 'open' | 'completed' | 'closed' }) { return <span className={`status status-${status}`}>{status === 'verified' ? <Check size={12}/> : status === 'pending' ? <Clock3 size={12}/> : null}{status.charAt(0).toUpperCase()+status.slice(1)}</span>; }
+export function DemoLabel() { return <span className="demo-label"><span/> Prototype</span>; }
+export function RouteError() { return <div className="empty-state"><AlertCircle/><h2>This view couldn’t load</h2><Button asChild variant="outline"><Link to="/">Return to role selection</Link></Button></div>; }
+export function Missing() { return <div className="empty-state"><h2>Nothing here yet</h2><Button asChild variant="outline"><Link to="/">Choose a view</Link></Button></div>; }
+export function BackToRoles() { return <Button asChild variant="ghost" size="sm"><Link to="/"><ArrowLeft/> Switch role</Link></Button>; }
+export function pageHead(title: string, description: string) { return { meta: [{ title: `${title} · Kindred` }, { name: 'description', content: description }, { property: 'og:title', content: `${title} · Kindred` }, { property: 'og:description', content: description }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }; }
+export function filledSpots(data: Snapshot, request: Request) { return data.commitments.filter(c => request.occurrenceIds.includes(c.occurrenceId) && c.status === 'accepted').length; }
+export function requestDate(data: Snapshot, request: Request) { const occurrence = data.occurrences.find(o => o.id === request.occurrenceIds[0]); if (!occurrence) return { date: 'To be arranged', time: '', duration: '' }; const start = new Date(occurrence.start); const end = new Date(occurrence.end); return { date: start.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Europe/London' }), time: `${start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London' })} – ${end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London' })}`, duration: `${(end.getTime()-start.getTime())/3600000} hrs` }; }
