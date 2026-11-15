@@ -1,0 +1,53 @@
+/* My commitments and Thank-you notes (Lovable design, scoped under .lv). */
+.lv .commitment-card { margin-bottom: 12px; }
+.lv .commitment-link { display: block; color: inherit; }
+.lv .commitment-link:hover h3 { color: var(--lv-primary); }
+.lv .commitment-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.lv .commitment-card .status { font-size: 10px; padding: 4px 7px; }
+.lv .commitment-card .opportunity-details { grid-template-columns: 1fr; gap: 6px; }
+.lv .commitment-actions { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--lv-border); }
+.lv .commitment-cancel {
+  width: 100%; min-height: 40px; border-radius: 6px; border: 1px solid var(--lv-border);
+  background: var(--lv-card); color: var(--lv-raspberry); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.lv .commitment-cancel:hover { border-color: var(--lv-raspberry); background: var(--lv-raspberry-soft); }
+.lv .commitment-cancel:disabled { opacity: .6; cursor: default; }
+.lv .commitment-checkin {
+  width: 100%; min-height: 44px; border-radius: 6px; border: 0; background: var(--lv-primary);
+  color: var(--lv-primary-foreground); font-size: 14px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+}
+.lv .commitment-checkin svg { width: 18px; height: 18px; }
+.lv .commitment-checkin-top { margin-bottom: 16px; }
+.lv .commitment-help { font-size: 11px; color: var(--lv-muted-foreground); margin-top: 6px; text-align: center; }
+.lv .commitment-alert {
+  font-size: 12px; line-height: 1.5; border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;
+  color: var(--lv-warning); background: var(--lv-warning-soft);
+}
+.lv .commitment-alert.is-danger { color: var(--lv-raspberry); background: var(--lv-raspberry-soft); }
+.lv .commitment-note { margin: 4px 0 8px; }
+.lv .commitment-past { margin-top: 22px; }
+.lv .commitment-past .opportunity { background: var(--lv-background); }
+.lv .commitment-none { font-size: 12px; color: var(--lv-muted-foreground); }
+.lv .empty-state svg { width: 30px; height: 30px; }
+.lv .empty-state p { font-size: 13px; color: var(--lv-muted-foreground); max-width: 260px; line-height: 1.5; }
+.lv .empty-state .commitment-find {
+  display: inline-flex; align-items: center; border: 1px solid var(--lv-border); border-radius: 6px;
+  padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--lv-primary); background: var(--lv-card);
+}
+
+/* Thank-you notes */
+.lv .thanks-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.lv .thanks-head h2 { font-size: 25px; }
+.lv .thanks-head > svg { width: 28px; height: 28px; color: var(--lv-raspberry); }
+.lv .thanks-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.lv .thanks-note {
+  display: flex; gap: 12px; background: var(--lv-raspberry-soft); border-left: 4px solid var(--lv-raspberry);
+  border-radius: 7px; padding: 15px 15px 15px 13px;
+}
+.lv .thanks-note > svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--lv-raspberry); margin-top: 2px; }
+.lv .thanks-text { font-size: 14px; line-height: 1.55; margin-bottom: 10px; }
+.lv .thanks-meta { font-size: 12px; line-height: 1.5; display: grid; gap: 1px; }
+.lv .thanks-meta strong { font-weight: 650; }
+.lv .thanks-meta span { color: var(--lv-muted-foreground); }
+.lv .empty-state .thanks-empty-icon { color: var(--lv-raspberry); }
