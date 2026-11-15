@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
@@ -13,6 +13,7 @@ import {
 import { LABELS, Loading } from './ui.jsx';
 import { useAvailability } from './availability.js';
 import StAndrewsMap from '../../components/map/StAndrewsMap.jsx';
+import OpportunitySheet from './OpportunitySheet.jsx';
 import photo from '../../assets/community-volunteers.jpg';
 import './board.css';
 
@@ -35,13 +36,13 @@ function pinLabel(shiftAt) {
   return `${day} ${format(d, d.getMinutes() ? 'h:mmaaa' : 'haaa')}`;
 }
 
-/** One open request as a Lovable opportunity card; the whole card links to the request. */
-export function RequestCard({ request, match, transport, other = false, selected = false }) {
+/** One open request as a Lovable opportunity card: the card links to the request, the button opens the quick look. */
+export function RequestCard({ request, match, transport, other = false, selected = false, onMore }) {
   const where = match.distanceKm != null ? formatDistance(match.distanceKm, transport) : request.address;
   const category = LABELS.category[request.category] ?? 'Volunteering';
   return (
-    <Link to={`/user/requests/${request.id}`} id={`request-${request.id}`}
-      className={`opportunity-link board-card${selected ? ' is-selected' : ''}`}>
+    <div id={`request-${request.id}`} className={`board-card${selected ? ' is-selected' : ''}`}>
+    <Link to={`/user/requests/${request.id}`} className="opportunity-link">
       <article className="opportunity">
         <div className="opportunity-top">
           <span className={`task-tag task-tag-${request.category ?? 'other'}`}>{category}</span>
@@ -59,6 +60,12 @@ export function RequestCard({ request, match, transport, other = false, selected
         {other && match.blockers.length > 0 && <p className="board-why">{plainBlocker(match.blockers)}</p>}
       </article>
     </Link>
+    {onMore && (
+      <button type="button" className="board-info" onClick={() => onMore({ request, match })}>
+        More information
+      </button>
+    )}
+    </div>
   );
 }
 
@@ -86,6 +93,10 @@ function PointsCard({ points, badges }) {
       <span className="points-card-text">
         <strong>{points} points · {badges} {badges === 1 ? 'badge' : 'badges'}</strong>
         <span>{toNext} more for your next reward</span>
+        <span className="points-card-bar" role="progressbar" aria-label="Progress towards your next reward"
+          aria-valuemin={0} aria-valuemax={50} aria-valuenow={50 - toNext}>
+          <span style={{ width: `${((50 - toNext) / 50) * 100}%` }} />
+        </span>
       </span>
       <ChevronRight aria-hidden="true" />
     </Link>
@@ -100,6 +111,8 @@ export default function Discover() {
   const [badges, setBadges] = useState(0);
   const [error, setError] = useState(null);
   const [showAll, setShowAll] = useState(false);
+  const [sheetItem, setSheetItem] = useState(null);
+  const closeSheet = useCallback(() => setSheetItem(null), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -218,7 +231,7 @@ export default function Discover() {
             {requests == null ? <Loading /> : (
               <div className="board-list">
                 {matching.map(({ request, match }) => (
-                  <RequestCard key={request.id} request={request} match={match} transport={transport} selected={request.id === selectedId} />
+                  <RequestCard key={request.id} request={request} match={match} transport={transport} selected={request.id === selectedId} onMore={setSheetItem} />
                 ))}
 
                 {matching.length === 0 && !showAll && (
@@ -246,7 +259,7 @@ export default function Discover() {
                       <span>{other.length}</span>
                     </div>
                     {other.map(({ request, match }) => (
-                      <RequestCard key={request.id} request={request} match={match} transport={transport} other selected={request.id === selectedId} />
+                      <RequestCard key={request.id} request={request} match={match} transport={transport} other selected={request.id === selectedId} onMore={setSheetItem} />
                     ))}
                   </>
                 )}
@@ -255,6 +268,7 @@ export default function Discover() {
           </>
         )}
       </div>
+      <OpportunitySheet item={sheetItem} onClose={closeSheet} />
     </div>
   );
 }
