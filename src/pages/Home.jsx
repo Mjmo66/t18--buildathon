@@ -1,5 +1,5 @@
 import { Button } from '../components/ui/index.js';
-import DemoCharityButton from './auth/DemoCharityButton.jsx';
+import DemoButtons from './auth/DemoButtons.jsx';
 
 export default function Home() {
   return (
@@ -20,7 +20,7 @@ export default function Home() {
           <Button to="/login" variant="secondary" block>
             I already have an account
           </Button>
-          <DemoCharityButton />
+          <DemoButtons />
         </div>
       </div>
     </section>
