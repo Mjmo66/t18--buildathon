@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase';
 import { RewardsSummary, WarningsBanner } from '../../features/attendance/index.jsx';
 import { formatKm } from '../../features/matching/index.js';
 import { usePrefs } from './data.js';
+import { BadgeCheck, ChevronRight, LogOut, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { LABELS, Loading } from './ui.jsx';
 
 export default function Profile() {
@@ -28,18 +29,29 @@ export default function Profile() {
 
   return (
     <div className="v-page">
-      <div className="v-field" style={{ gap: 4 }}>
-        <h1>{profile.display_name}</h1>
-        {user?.email && <span className="v-muted v-small">{user.email}</span>}
+      <div className="v-row" style={{ gap: 14, flexWrap: 'nowrap' }}>
+        <span className="avatar" style={{ width: 52, height: 52, fontSize: '1.25rem' }} aria-hidden="true">
+          {profile.display_name?.trim().charAt(0).toUpperCase() || '?'}
+        </span>
+        <div className="v-field" style={{ gap: 2, minWidth: 0 }}>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {profile.display_name}
+            {profile.verified && <BadgeCheck size={20} strokeWidth={2} style={{ color: 'var(--accent)' }} aria-label="Verified" />}
+          </h1>
+          {user?.email && <span className="v-mono" style={{ overflowWrap: 'anywhere' }}>{user.email}</span>}
+        </div>
       </div>
 
       <WarningsBanner profile={profile} />
 
       <section className="v-card">
         <div className="v-between">
-          <h2 style={{ margin: 0 }}>Verification</h2>
+          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ShieldCheck size={18} strokeWidth={1.75} style={{ color: 'var(--subtle)' }} aria-hidden="true" />
+            Verification
+          </h2>
           {profile.verified
-            ? <span className="v-chip">✓ Verified</span>
+            ? <span className="v-chip"><BadgeCheck size={14} strokeWidth={2} aria-hidden="true" />Verified</span>
             : <span className="v-chip v-chip-plain">Not verified</span>}
         </div>
         {!profile.verified && profile.role === 'volunteer' && (
@@ -50,24 +62,29 @@ export default function Profile() {
         {error && <p className="v-error" role="alert">{error}</p>}
       </section>
 
-      <section className="v-card">
-        <h2>Rewards</h2>
+      <section className="v-field" style={{ gap: 10 }}>
+        <h2 className="v-section-label" style={{ margin: 0 }}>Rewards</h2>
         <RewardsSummary profile={profile} />
       </section>
 
       <Link to="/user/preferences" className="v-card">
         <div className="v-between">
-          <h2 style={{ margin: 0 }}>Preferences</h2>
-          <span aria-hidden="true">›</span>
+          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <SlidersHorizontal size={18} strokeWidth={1.75} style={{ color: 'var(--subtle)' }} aria-hidden="true" />
+            Preferences
+          </h2>
+          <ChevronRight size={18} strokeWidth={1.75} style={{ color: 'var(--subtle)' }} aria-hidden="true" />
         </div>
-        <span className="v-muted v-small">
+        <span className="v-mono">
           {prefs
             ? `${LABELS.transport[prefs.transport]} · up to ${formatKm(Number(prefs.max_km))} · ${slotCount ? `${slotCount} time slots` : 'any time'}`
             : 'Not set yet'}
         </span>
       </Link>
 
-      <button type="button" className="v-btn v-btn-secondary" onClick={() => signOut()}>Sign out</button>
+      <button type="button" className="v-btn v-btn-secondary" onClick={() => signOut()}>
+        <LogOut size={18} strokeWidth={1.75} aria-hidden="true" />Sign out
+      </button>
     </div>
   );
 }

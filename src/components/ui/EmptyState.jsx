@@ -1,4 +1,4 @@
-// Shown when a list is empty. icon: emoji or element; action: e.g. a <Button>.
+// Shown when a list is empty. icon: a lucide element, e.g. <Inbox size={22} />; action: e.g. a <Button>.
 export default function EmptyState({ icon, title, children, action }) {
   return (
     <div className="empty-state">

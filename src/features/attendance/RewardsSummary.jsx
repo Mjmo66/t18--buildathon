@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Clock, Download, ListChecks, Lock, Star } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { BADGES, formatDate, formatHours } from './shared';
 import './attendance.css';
@@ -49,10 +50,25 @@ export function RewardsSummary({ profile }) {
 
   return (
     <div className="att-rewards">
-      <div className="att-stats">
-        <div className="att-stat"><strong>{formatHours(hours)}</strong><span>verified hours</span></div>
-        <div className="att-stat"><strong>{points}</strong><span>points</span></div>
-        <div className="att-stat"><strong>{shifts.length}</strong><span>shifts</span></div>
+      <div className="stat-grid att-stat-grid">
+        <div className="stat-card">
+          <span className="micro-label">Hours</span>
+          <Clock className="stat-icon" size={16} strokeWidth={1.75} aria-hidden="true" />
+          <span className="stat-value">{formatHours(hours)}</span>
+          <span className="stat-sub is-success">verified</span>
+        </div>
+        <div className="stat-card">
+          <span className="micro-label">Points</span>
+          <Star className="stat-icon" size={16} strokeWidth={1.75} aria-hidden="true" />
+          <span className="stat-value">{points}</span>
+          <span className="stat-sub is-accent">10 per hour</span>
+        </div>
+        <div className="stat-card">
+          <span className="micro-label">Shifts</span>
+          <ListChecks className="stat-icon" size={16} strokeWidth={1.75} aria-hidden="true" />
+          <span className="stat-value">{shifts.length}</span>
+          <span className="stat-sub">attended</span>
+        </div>
       </div>
 
       <h3 className="att-h">Badges</h3>
@@ -60,12 +76,13 @@ export function RewardsSummary({ profile }) {
         {BADGES.map((b) => {
           const at = earned.get(b.code);
           const [have, need, unit] = b.progress(progress);
+          const BadgeIcon = at ? b.icon : Lock;
           return (
             <li key={b.code} className={`att-badge ${at ? 'att-badge-earned' : 'att-badge-locked'}`}
                 aria-label={`${b.label}: ${at ? 'earned' : 'locked'}`}>
-              <span className="att-badge-icon" aria-hidden="true">{at ? b.icon : '🔒'}</span>
+              <span className="att-badge-icon" aria-hidden="true"><BadgeIcon size={20} strokeWidth={1.75} /></span>
               <span className="att-badge-label">{b.label}</span>
-              <span className="att-small att-muted">
+              <span className="att-badge-meta">
                 {at ? formatDate(at) : `${Math.min(Math.round(have * 10) / 10, need)} / ${need} ${unit}`}
               </span>
             </li>
@@ -74,6 +91,7 @@ export function RewardsSummary({ profile }) {
       </ul>
 
       <button type="button" className="att-btn att-block" onClick={printCertificate} disabled={hours <= 0}>
+        <Download size={18} strokeWidth={1.75} aria-hidden="true" />
         Download certificate
       </button>
 

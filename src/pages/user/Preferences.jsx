@@ -8,11 +8,16 @@ import {
 } from '../../features/matching/index.js';
 import { PLACES } from '../../features/matching/places.js';
 import { usePrefs, setSkippedPrefs } from './data.js';
+import { Check, LocateFixed, Moon, Sun, Sunset } from 'lucide-react';
 import { LABELS, Loading, capital } from './ui.jsx';
 
 const DAY_SHORT = { mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun' };
 const SLOT_SHORT = { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' };
-const SLOT_ICON = { morning: '☀︎', afternoon: '◐', evening: '☾' };
+const SLOT_ICON = { morning: Sun, afternoon: Sunset, evening: Moon };
+function SlotIcon({ slot, size = 18 }) {
+  const I = SLOT_ICON[slot];
+  return <I size={size} strokeWidth={1.75} aria-hidden="true" />;
+}
 const MAX_KM_LIMIT = 50;
 
 const tick = () => { try { navigator.vibrate?.(8); } catch { /* not supported */ } };
@@ -86,6 +91,7 @@ export function AvailabilityGrid({ value, onChange }) {
         {SLOTS.map((s) => (
           <button key={s} type="button" className="v-grid-head" onClick={() => toggleSlot(s)}
             aria-label={`Toggle every ${s}`}>
+            <SlotIcon slot={s} size={15} />
             {SLOT_SHORT[s]}
           </button>
         ))}
@@ -114,7 +120,7 @@ function Row({ d, has, toggle, toggleDay }) {
       {SLOTS.map((s) => (
         <button key={s} type="button" className="v-cell" aria-pressed={has(d, s)}
           aria-label={`${DAY_SHORT[d]} ${s}`} onClick={() => toggle(d, s)}>
-          {has(d, s) ? SLOT_ICON[s] : ''}
+          {has(d, s) ? <SlotIcon slot={s} /> : null}
         </button>
       ))}
     </>
@@ -210,10 +216,11 @@ export default function Preferences() {
         <h2>Location</h2>
         <div className="v-between">
           <span>{locLabel}</span>
-          {form.lat != null && <span className="v-chip v-chip-plain">✓</span>}
+          {form.lat != null && <span className="v-chip" aria-label="Location set"><Check size={14} strokeWidth={2.25} aria-hidden="true" /></span>}
         </div>
         <button type="button" className="v-btn v-btn-secondary" onClick={useMyLocation} disabled={locating}>
-          {locating ? 'Locating…' : '📍 Use my location'}
+          <LocateFixed size={18} strokeWidth={1.75} aria-hidden="true" />
+          {locating ? 'Locating…' : 'Use my location'}
         </button>
         <select className="v-select" value={placeValue} onChange={(e) => pickPlace(e.target.value)} aria-label="Pick a place in St Andrews">
           <option value="">Or pick a place in St Andrews…</option>
@@ -228,7 +235,7 @@ export default function Preferences() {
         <div className="v-field">
           <div className="v-between">
             <label className="v-label" htmlFor="v-maxkm">Max distance</label>
-            <strong>{formatKm(Number(form.max_km))}</strong>
+            <strong className="v-mono" style={{ color: 'var(--text)', fontSize: '0.85rem' }}>{formatKm(Number(form.max_km))}</strong>
           </div>
           <input id="v-maxkm" className="v-range" type="range" min="0.5" max={MAX_KM_LIMIT} step="0.5"
             value={form.max_km} onChange={(e) => update({ max_km: Number(e.target.value) })} />
@@ -258,7 +265,7 @@ export default function Preferences() {
       {error && <p className="v-error" role="alert">{error}</p>}
       <div className="v-sticky-save">
         <button type="submit" className="v-btn v-btn-block" disabled={saving}>
-          {saving ? 'Saving…' : saved ? 'Saved ✓' : welcome ? 'Save and find shifts' : 'Save'}
+          {saving ? 'Saving…' : saved ? <><Check size={18} strokeWidth={2} aria-hidden="true" />Saved</> : welcome ? 'Save and find shifts' : 'Save'}
         </button>
       </div>
     </form>

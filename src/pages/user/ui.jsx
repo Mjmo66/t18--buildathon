@@ -6,8 +6,19 @@ export function Loading() {
   return <div className="v-loading" role="status" aria-label="Loading"><div className="v-spinner" /></div>;
 }
 
-export function Empty({ children, action }) {
-  return <div className="v-card v-empty"><div>{children}</div>{action}</div>;
+export function Empty({ icon, children, action }) {
+  return (
+    <div className="v-card v-empty">
+      {icon && <span className="v-empty-icon" aria-hidden="true">{icon}</span>}
+      <div>{children}</div>
+      {action}
+    </div>
+  );
+}
+
+/** Small mono metadata item with a leading icon. */
+export function Meta({ icon: I, children }) {
+  return <span className="v-meta-item">{I && <I size={14} strokeWidth={1.75} aria-hidden="true" />}{children}</span>;
 }
 
 export function Chips({ yes = [], no = [], plain = [] }) {

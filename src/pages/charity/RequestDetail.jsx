@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, BadgeCheck, MessageSquare, QrCode } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { getOrCreateConversation } from '../../lib/chat';
@@ -83,10 +84,10 @@ function Detail() {
   const upcoming = nextShifts(request, 3);
 
   return (
-    <section className="ch-page">
-      <Link className="ch-back" to="/charity/requests">← Requests</Link>
+    <section className="ch-page ch-page-wide">
+      <Link className="back-link" to="/charity/requests"><ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />Requests</Link>
       <header className="ch-head">
-        <div>
+        <div className="ch-title">
           <h1>{request.title}</h1>
           <div className="ch-row">
             <StatusPill status={request.status} />
@@ -97,78 +98,85 @@ function Detail() {
 
       <ErrorNote error={error} />
 
-      <div className="ch-card ch-details">
-        {request.description && <p className="ch-desc">{request.description}</p>}
-        <dl>
-          <dt>Schedule</dt><dd>{scheduleSummary(request)}</dd>
-          <dt>{request.schedule_type === 'recurring' ? 'Next shifts' : 'Shift'}</dt>
-          <dd>
-            {upcoming.length ? (
-              <ul className="ch-plain">{upcoming.map((d) => <li key={d.toISOString()}>{fmtShift(d)}</li>)}</ul>
-            ) : 'No upcoming shifts'}
-          </dd>
-          <dt>Duration</dt><dd>{fmtHours(request.duration_hours)} h</dd>
-          <dt>Volunteers</dt><dd>{confirmed}/{request.slots} confirmed</dd>
-          <dt>Physical</dt><dd>{labelOf(PHYSICAL_LEVELS, request.physical_level)}</dd>
-          <dt>Experience</dt>
-          <dd>
-            {labelOf(EXPERIENCE_LEVELS, request.experience)}
-            {request.experience_notes && <span className="ch-muted"> · {request.experience_notes}</span>}
-          </dd>
-          <dt>Location</dt><dd>{request.address || '—'}</dd>
-        </dl>
-      </div>
+      <div className="ch-detail-grid">
+        <div className="ch-col">
+          <div className="ch-card ch-details">
+            {request.description && <p className="ch-desc">{request.description}</p>}
+            <dl>
+              <dt>Schedule</dt><dd>{scheduleSummary(request)}</dd>
+              <dt>{request.schedule_type === 'recurring' ? 'Next shifts' : 'Shift'}</dt>
+              <dd>
+                {upcoming.length ? (
+                  <ul className="ch-plain">{upcoming.map((d) => <li key={d.toISOString()}>{fmtShift(d)}</li>)}</ul>
+                ) : 'No upcoming shifts'}
+              </dd>
+              <dt>Duration</dt><dd>{fmtHours(request.duration_hours)} h</dd>
+              <dt>Volunteers</dt><dd>{confirmed}/{request.slots} confirmed</dd>
+              <dt>Physical</dt><dd>{labelOf(PHYSICAL_LEVELS, request.physical_level)}</dd>
+              <dt>Experience</dt>
+              <dd>
+                {labelOf(EXPERIENCE_LEVELS, request.experience)}
+                {request.experience_notes && <span className="ch-muted"> · {request.experience_notes}</span>}
+              </dd>
+              <dt>Location</dt><dd>{request.address || '—'}</dd>
+            </dl>
+          </div>
 
-      <div className="ch-actions">
-        {request.status === 'open' ? (
-          <>
-            <button type="button" className="ch-btn-secondary" disabled={busy} onClick={() => setStatus('filled')}>Mark filled</button>
-            <button type="button" className="ch-btn-danger" disabled={busy} onClick={() => setStatus('closed')}>Close request</button>
-          </>
-        ) : (
-          <button type="button" className="button" disabled={busy} onClick={() => setStatus('open')}>Reopen</button>
-        )}
-        <button type="button" className="ch-btn-secondary" onClick={() => setShowQR((v) => !v)}>
-          {showQR ? 'Hide check-in QR' : 'Show check-in QR'}
-        </button>
-      </div>
+          <div className="ch-actions">
+            {request.status === 'open' ? (
+              <>
+                <button type="button" className="ch-btn-secondary" disabled={busy} onClick={() => setStatus('filled')}>Mark filled</button>
+                <button type="button" className="ch-btn-danger" disabled={busy} onClick={() => setStatus('closed')}>Close request</button>
+              </>
+            ) : (
+              <button type="button" className="button" disabled={busy} onClick={() => setStatus('open')}>Reopen</button>
+            )}
+            <button type="button" className="ch-btn-secondary" onClick={() => setShowQR((v) => !v)}>
+              <QrCode size={16} strokeWidth={1.75} aria-hidden="true" />
+              {showQR ? 'Hide check-in QR' : 'Show check-in QR'}
+            </button>
+          </div>
 
-      {showQR && (
-        <div className="ch-card ch-qr">
-          <CheckinQR request={request} />
+          <h2>Applicants</h2>
+          {applicants.length === 0 ? (
+            <Empty><p>No applicants yet.</p></Empty>
+          ) : (
+            <ul className="ch-list">
+              {applicants.map((a) => (
+                <li key={a.volunteerId} className="ch-card ch-row ch-between ch-applicant">
+                  <div className="ch-applicant-main">
+                    <strong className="ch-name">{a.name}{a.verified && <BadgeCheck className="ch-verified" size={15} strokeWidth={2} aria-label="Verified" />}</strong>
+                    <div className="ch-row ch-small">
+                      {[...new Set(a.statuses)].map((st) => <StatusPill key={st} status={st} />)}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="ch-btn-secondary"
+                    disabled={messaging === a.volunteerId}
+                    onClick={() => message(a.volunteerId)}
+                  >
+                    <MessageSquare size={16} strokeWidth={1.75} aria-hidden="true" />
+                    {messaging === a.volunteerId ? 'Opening…' : 'Message'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-      )}
 
-      <h2>Signups</h2>
-      <div className="ch-card">
-        <AttendancePanel request={request} onChange={reload} />
+        <div className="ch-col">
+          {showQR && (
+            <div className="ch-card ch-qr">
+              <CheckinQR request={request} />
+            </div>
+          )}
+          <h2>Signups</h2>
+          <div className="ch-card">
+            <AttendancePanel request={request} onChange={reload} />
+          </div>
+        </div>
       </div>
-
-      <h2>Applicants</h2>
-      {applicants.length === 0 ? (
-        <Empty><p>No applicants yet.</p></Empty>
-      ) : (
-        <ul className="ch-list">
-          {applicants.map((a) => (
-            <li key={a.volunteerId} className="ch-card ch-row ch-between">
-              <div>
-                <strong>{a.name}</strong>{a.verified && <span className="ch-ok" title="Verified"> ✓</span>}
-                <div className="ch-row ch-small">
-                  {[...new Set(a.statuses)].map((st) => <StatusPill key={st} status={st} />)}
-                </div>
-              </div>
-              <button
-                type="button"
-                className="ch-btn-secondary"
-                disabled={messaging === a.volunteerId}
-                onClick={() => message(a.volunteerId)}
-              >
-                {messaging === a.volunteerId ? 'Opening…' : '💬 Message'}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }

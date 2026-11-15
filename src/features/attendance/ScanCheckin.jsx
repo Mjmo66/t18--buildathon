@@ -1,4 +1,5 @@
 import { lazy, Suspense, useRef, useState } from 'react';
+import { PartyPopper } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { badgeByCode, currentUserId, formatHours, pointsFor } from './shared';
 import './attendance.css';
@@ -122,18 +123,18 @@ export function ScanCheckin({ onCheckedIn }) {
     const hrs = result.signup.hours_credited;
     return (
       <div className="att-card att-celebrate" role="status">
-        <div className="att-celebrate-icon" aria-hidden="true">🎉</div>
+        <div className="att-celebrate-icon" aria-hidden="true"><PartyPopper size={34} strokeWidth={1.75} /></div>
         <h3 className="att-h">You're checked in!</h3>
         {result.title && <div className="att-muted">{result.title}</div>}
         <div className="att-stats">
-          <div className="att-stat"><strong>+{formatHours(hrs)}</strong><span>verified</span></div>
-          <div className="att-stat"><strong>+{pointsFor(hrs)}</strong><span>points</span></div>
+          <div className="att-stat"><span className="micro-label">Hours</span><strong>+{formatHours(hrs)}</strong></div>
+          <div className="att-stat"><span className="micro-label">Points</span><strong>+{pointsFor(hrs)}</strong></div>
         </div>
         {result.newBadges.length > 0 && (
           <div className="att-new-badges">
             {result.newBadges.map((b) => (
               <div key={b.code} className="att-badge att-badge-earned att-badge-new">
-                <span className="att-badge-icon" aria-hidden="true">{b.icon}</span>
+                <span className="att-badge-icon" aria-hidden="true"><b.icon size={20} strokeWidth={1.75} /></span>
                 <span>New badge: {b.label}</span>
               </div>
             ))}

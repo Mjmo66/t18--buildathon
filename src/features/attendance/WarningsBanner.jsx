@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ShieldAlert, TriangleAlert } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { formatDate, MAX_WARNINGS } from './shared';
 import './attendance.css';
@@ -24,6 +25,9 @@ export function WarningsBanner({ profile }) {
   return (
     <div className={`att-warnings ${suspended ? 'att-warnings-suspended' : ''}`} role="alert">
       <div className="att-warnings-title">
+        {suspended
+          ? <ShieldAlert size={18} strokeWidth={2} aria-hidden="true" />
+          : <TriangleAlert size={18} strokeWidth={2} aria-hidden="true" />}
         {suspended ? 'Account suspended' : `${count} of ${MAX_WARNINGS} warnings`}
       </div>
       {suspended && (

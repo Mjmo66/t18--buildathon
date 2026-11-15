@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { CircleCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { formatHours, formatShift } from './shared';
 import './attendance.css';
@@ -83,7 +84,7 @@ export function AttendancePanel({ request, onChange }) {
           const before = signupsRef.current.find((s) => s.id === row?.id);
           if (row?.status === 'attended' && before && before.status !== 'attended'
               && !ownChanges.current.has(row.id)) {
-            setFlash(`✓ ${before.volunteer?.display_name ?? 'A volunteer'} checked in`);
+            setFlash(`${before.volunteer?.display_name ?? 'A volunteer'} checked in`);
           }
           load();
           onChangeRef.current?.();
@@ -130,7 +131,7 @@ export function AttendancePanel({ request, onChange }) {
         <span className="att-chip">{taken} / {request.slots ?? '–'} places</span>
       </div>
 
-      {flash && <div className="att-flash" role="status">{flash}</div>}
+      {flash && <div className="att-flash" role="status"><CircleCheck size={18} strokeWidth={2} aria-hidden="true" />{flash}</div>}
       {error && <div className="att-error" role="alert">{error}</div>}
       {loading && <div className="att-muted">Loading…</div>}
       {!loading && signups.length === 0 && <div className="att-empty">No signups yet</div>}

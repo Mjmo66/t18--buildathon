@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { signInWithPasskey } from '../../lib/auth/passkey';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
+import { Fingerprint, KeyRound } from 'lucide-react';
 import { Alert, Button, Card, Field } from '../../components/ui/index.js';
 import { usePasskeySupport, errorMessage } from './usePasskeySupport.js';
 
@@ -65,6 +66,7 @@ export default function Login() {
             <Button type="submit" block loading={busy}>Sign in</Button>
             {passkeys && (
               <button type="button" className="link-button" onClick={() => setUsePassword(false)}>
+                <Fingerprint size={16} strokeWidth={1.75} aria-hidden="true" />
                 Use a passkey instead
               </button>
             )}
@@ -72,9 +74,11 @@ export default function Login() {
         ) : (
           <div className="stack">
             <Button block loading={busy || passkeys === null} onClick={handlePasskey}>
+              <Fingerprint size={18} strokeWidth={2} aria-hidden="true" />
               Sign in with passkey
             </Button>
             <button type="button" className="link-button" onClick={() => setUsePassword(true)}>
+              <KeyRound size={16} strokeWidth={1.75} aria-hidden="true" />
               Use a password instead
             </button>
           </div>

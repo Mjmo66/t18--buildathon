@@ -1,6 +1,7 @@
 // Small building blocks for the charity pages (plain elements; shell UI can replace them at merge).
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { BadgeCheck, CircleAlert, LocateFixed, MapPin } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { PLACES, REGISTER_LABELS, detectRegister, normaliseCharityNumber } from './shared.js';
@@ -21,8 +22,8 @@ export function ErrorNote({ error }) {
 
 export function VerifiedBadge({ verified }) {
   return verified
-    ? <span className="ch-badge ch-badge-ok">✓ Verified charity</span>
-    : <span className="ch-badge ch-badge-warn">Not verified yet</span>;
+    ? <span className="ch-badge ch-badge-ok"><BadgeCheck size={14} strokeWidth={2} aria-hidden="true" />Verified charity</span>
+    : <span className="ch-badge ch-badge-warn"><CircleAlert size={14} strokeWidth={2} aria-hidden="true" />Not verified yet</span>;
 }
 
 export function StatusPill({ status }) {
@@ -104,7 +105,9 @@ export function PlacePicker({ value, onChange, idPrefix = 'place' }) {
           {PLACES.map((p) => <option key={p.name} value={p.name}>{p.name}</option>)}
         </select>
       </label>
-      <button type="button" className="ch-btn-secondary" onClick={useMyLocation}>📍 Use my location</button>
+      <button type="button" className="ch-btn-secondary" onClick={useMyLocation}>
+        <LocateFixed size={16} strokeWidth={1.75} aria-hidden="true" />Use my location
+      </button>
       {geoState && <span className="ch-muted">{geoState}</span>}
       <label className="ch-field">
         <span>Address</span>
@@ -117,7 +120,7 @@ export function PlacePicker({ value, onChange, idPrefix = 'place' }) {
         />
       </label>
       {value.lat != null && (
-        <span className="ch-muted ch-small">📌 {value.lat.toFixed(4)}, {value.lng.toFixed(4)}</span>
+        <span className="ch-muted ch-coords"><MapPin size={14} strokeWidth={1.75} aria-hidden="true" />{value.lat.toFixed(4)}, {value.lng.toFixed(4)}</span>
       )}
     </div>
   );

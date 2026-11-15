@@ -5,8 +5,24 @@ import { supabase } from '../../lib/supabase';
 import { getOrCreateConversation } from '../../lib/chat';
 import { formatKm, matchRequest, nextShifts } from '../../features/matching/index.js';
 import { REQUEST_SELECT, usePrefs } from './data.js';
+import {
+  ArrowLeft, BadgeCheck, CalendarDays, Dumbbell, GraduationCap, Hourglass, Lock, MapPin, Tag, Users,
+} from 'lucide-react';
 import { Chips, LABELS, Loading, capital, formatHours, formatWhen } from './ui.jsx';
 
+function Fact({ icon: I, label, children }) {
+  return (
+    <li>
+      <I size={18} strokeWidth={1.75} aria-hidden="true" />
+      <span className="v-fact-body">
+        <span className="v-fact-label">{label}</span>
+        <span className="v-fact-value">{children}</span>
+      </span>
+    </li>
+  );
+}
+
+const STATUS_TONE = { applied: 'v-chip-no', accepted: '', attended: '', declined: 'v-chip-plain', cancelled: 'v-chip-plain', no_show: 'v-chip-danger' };
 const STATUS_LABEL = { applied: 'Applied', accepted: 'Accepted', declined: 'Declined', cancelled: 'Cancelled', attended: 'Attended', no_show: 'No-show' };
 
 export default function RequestDetail() {
@@ -50,7 +66,7 @@ export default function RequestDetail() {
       <div className="v-page">
         <h1>Not found</h1>
         {error && <p className="v-error">{error}</p>}
-        <Link to="/user" className="v-btn v-btn-secondary">Back to requests</Link>
+        <Link to="/user" className="v-btn v-btn-secondary"><ArrowLeft size={16} strokeWidth={2} aria-hidden="true" />Back to requests</Link>
       </div>
     );
   }
@@ -98,32 +114,45 @@ export default function RequestDetail() {
 
   return (
     <div className="v-page">
-      <Link to="/user" className="v-muted v-small" style={{ textDecoration: 'none' }}>← All requests</Link>
-      <div className="v-field" style={{ gap: 4 }}>
+      <Link to="/user" className="back-link"><ArrowLeft size={16} strokeWidth={2} aria-hidden="true" />All requests</Link>
+      <div className="v-field" style={{ gap: 6 }}>
         <h1>{request.title}</h1>
-        <span className="v-muted">
-          {request.charities?.org_name ?? 'Charity'}{request.charities?.verified_at ? ' · ✓ Verified charity' : ''}
+        <span className="v-card-org" style={{ fontSize: '0.95rem' }}>
+          {request.charities?.org_name ?? 'Charity'}
+          {request.charities?.verified_at && (
+            <span className="v-chip v-chip-accent"><BadgeCheck size={14} strokeWidth={2} aria-hidden="true" />Verified charity</span>
+          )}
         </span>
       </div>
 
       {match && <Chips yes={match.reasons} no={match.blockers} />}
 
-      <section className="v-card">
-        <dl className="v-dl">
-          <dt>When</dt>
-          <dd>
+      <section className="v-card" style={{ gap: 4 }}>
+        <ul className="v-facts">
+          <Fact icon={CalendarDays} label="When">
             {shifts[0] ? formatWhen(shifts[0]) : 'No upcoming shifts'}
             {request.schedule_type === 'recurring' && request.recurrence ? ` · ${LABELS.recurrence[request.recurrence]}` : ''}
             {request.ends_on ? ` until ${request.ends_on}` : ''}
-          </dd>
-          <dt>Duration</dt><dd>{formatHours(request.duration_hours)}</dd>
-          {request.address && (<><dt>Where</dt><dd>{request.address}{match?.distanceKm != null ? ` · ${formatKm(match.distanceKm)}` : ''}</dd></>)}
-          <dt>Physical</dt><dd>{LABELS.physical[request.physical_level]}</dd>
-          <dt>Experience</dt><dd>{LABELS.experience[request.experience]}{request.experience_notes ? ` · ${request.experience_notes}` : ''}</dd>
-          <dt>Volunteers</dt><dd>{request.slots}</dd>
-          {request.category && (<><dt>Category</dt><dd>{capital(request.category)}</dd></>)}
-        </dl>
-        {request.description && <p style={{ margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>{request.description}</p>}
+          </Fact>
+          <Fact icon={Hourglass} label="Duration">{formatHours(request.duration_hours)}</Fact>
+          {request.address && (
+            <Fact icon={MapPin} label="Where">
+              {request.address}
+              {match?.distanceKm != null && <span className="v-mono"> · {formatKm(match.distanceKm)}</span>}
+            </Fact>
+          )}
+          <Fact icon={Dumbbell} label="Physical">{LABELS.physical[request.physical_level]}</Fact>
+          <Fact icon={GraduationCap} label="Experience">
+            {LABELS.experience[request.experience]}{request.experience_notes ? ` · ${request.experience_notes}` : ''}
+          </Fact>
+          <Fact icon={Users} label="Volunteers">{request.slots}</Fact>
+          {request.category && <Fact icon={Tag} label="Category">{capital(request.category)}</Fact>}
+        </ul>
+        {request.description && (
+          <p style={{ margin: '8px 0 0', paddingTop: 12, borderTop: '1px solid var(--border)', whiteSpace: 'pre-wrap' }}>
+            {request.description}
+          </p>
+        )}
       </section>
 
       {mySignups.length > 0 && (
@@ -131,8 +160,8 @@ export default function RequestDetail() {
           <h2>Your signups</h2>
           {mySignups.map((s) => (
             <div key={s.id} className="v-between v-small">
-              <span>{formatWhen(s.shift_at)}</span>
-              <span className="v-chip v-chip-plain">{STATUS_LABEL[s.status]}</span>
+              <span className="v-mono" style={{ color: 'var(--text)' }}>{formatWhen(s.shift_at)}</span>
+              <span className={`v-chip ${STATUS_TONE[s.status] ?? 'v-chip-plain'}`}>{STATUS_LABEL[s.status]}</span>
             </div>
           ))}
         </section>
@@ -151,10 +180,10 @@ export default function RequestDetail() {
           {busy === 'signup' ? 'Signing up…' : 'Sign up'}
         </button>
         {blockReason && <span className="v-muted v-small">{blockReason}</span>}
-        {notice && <span className="v-notice">{notice}</span>}
+        {notice && <span className="v-notice v-notice-ok">{notice}</span>}
         {user && (
           <button type="button" className="v-btn v-btn-secondary v-btn-block" onClick={message} disabled={busy === 'chat'}>
-            {busy === 'chat' ? 'Opening chat…' : '🔒 Message charity'}
+            {busy === 'chat' ? 'Opening chat…' : <><Lock size={16} strokeWidth={2} aria-hidden="true" />Message charity</>}
           </button>
         )}
         {profile && profile.role === 'volunteer' && !profile.verified && (

@@ -1,11 +1,21 @@
 import { Link } from 'react-router-dom';
+import { CalendarClock, LockKeyhole, MapPin, ShieldCheck } from 'lucide-react';
 import { Button } from '../components/ui/index.js';
+import { LogoIcon } from '../components/brand/Logo.jsx';
+
+const POINTS = [
+  { icon: MapPin, label: 'Shifts near you' },
+  { icon: CalendarClock, label: 'Around your timetable' },
+  { icon: ShieldCheck, label: 'Verified hours' },
+  { icon: LockKeyhole, label: 'Encrypted chat' },
+];
 
 export default function Home() {
   return (
     <section className="landing">
       <div className="landing-hero">
-        <p className="landing-kicker">St Andrews</p>
+        <LogoIcon size={52} />
+        <p className="landing-kicker">St Andrews · Volunteering</p>
         <h1 className="landing-title">
           Give an hour.
           <br />
@@ -24,10 +34,12 @@ export default function Home() {
         </p>
       </div>
       <ul className="landing-points" aria-label="Highlights">
-        <li><span aria-hidden="true">📍</span> Shifts near you</li>
-        <li><span aria-hidden="true">🗓️</span> Around your timetable</li>
-        <li><span aria-hidden="true">⭐</span> Verified hours</li>
-        <li><span aria-hidden="true">🔒</span> Encrypted chat</li>
+        {POINTS.map(({ icon: PointIcon, label }) => (
+          <li key={label}>
+            <PointIcon size={20} strokeWidth={1.75} aria-hidden="true" />
+            {label}
+          </li>
+        ))}
       </ul>
     </section>
   );

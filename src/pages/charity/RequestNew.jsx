@@ -114,7 +114,7 @@ function Form() {
 
   return (
     <section className="ch-page">
-      <header className="ch-head">
+      <header className="page-head">
         <h1>New request</h1>
         <Link className="ch-btn-secondary" to="/charity/requests">Cancel</Link>
       </header>
@@ -179,7 +179,7 @@ function Form() {
           {recurring && preview.length > 0 && (
             <div className="ch-small">
               <span className="ch-muted">Next shifts: </span>
-              {preview.map(fmtShift).join(' · ')}
+              <span className="mono">{preview.map(fmtShift).join(' · ')}</span>
             </div>
           )}
           <div className="ch-grid2">
