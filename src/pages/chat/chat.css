@@ -75,7 +75,7 @@
 
 .chat-list-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .chat-list-row { display: flex; align-items: baseline; gap: 8px; }
-.chat-list-name { flex: 1; min-width: 0; font-weight: 650; overflow-wrap: anywhere; }
+.chat-list-name { flex: 1; min-width: 0; font-size: 0.94rem; font-weight: 650; line-height: 1.25; overflow-wrap: anywhere; }
 .chat-list-time { flex-shrink: 0; font-size: 0.9rem; color: var(--muted); }
 .chat-list-sub { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 0; min-width: 0; font-size: 0.95rem; color: var(--muted); }
 
