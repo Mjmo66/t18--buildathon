@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { isToday } from 'date-fns';
 import { MessagesSquare } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { listConversations } from '../../lib/chat';
+import { Button, EmptyState } from '../../components/ui/index.js';
+import { formatDay, formatTime } from '../../components/format.js';
 import Avatar from './Avatar.jsx';
 import './chat.css';
 
@@ -13,6 +15,11 @@ function useMinuteTick() {
     const id = setInterval(() => setTick((t) => t + 1), 60_000);
     return () => clearInterval(id);
   }, []);
+}
+
+/** "2:30pm" today, otherwise "Yesterday" / "Thursday 19 November". */
+function lastLabel(date) {
+  return isToday(date) ? formatTime(date) : formatDay(date);
 }
 
 export default function ConversationList() {
@@ -46,31 +53,27 @@ export default function ConversationList() {
   if (!user) {
     return (
       <div className="chat-page">
-        <h1 className="chat-title">Chats</h1>
-                <Link className="button" to="/">Sign in</Link>
+        <h1 className="chat-title">Messages</h1>
+        <Button to="/login">Sign in</Button>
       </div>
     );
   }
 
   return (
     <div className="chat-page">
-      <h1 className="chat-title">Chats</h1>
+      <h1 className="chat-title">Messages</h1>
 
       {error && (
         <div className="chat-alert" role="alert">
           <span>{error}</span>
-          <button type="button" className="chat-link-button" onClick={load}>Retry</button>
+          <Button variant="secondary" onClick={load}>Try again</Button>
         </div>
       )}
 
       {!conversations && !error && <p className="chat-muted">Loading…</p>}
 
       {conversations && conversations.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-icon" aria-hidden="true"><MessagesSquare size={22} strokeWidth={1.75} /></div>
-          <p className="empty-title">No chats yet</p>
-          <div className="empty-body">Chats start when you sign up for a request or a volunteer contacts you.</div>
-        </div>
+        <EmptyState icon={<MessagesSquare size={22} strokeWidth={1.75} />} title="No messages yet." />
       )}
 
       {conversations && conversations.length > 0 && (
@@ -85,14 +88,12 @@ export default function ConversationList() {
                     <span className="chat-list-row">
                       <span className="chat-list-name">{c.peerName}</span>
                       <time className="chat-list-time" dateTime={last}>
-                        {c.lastMessageAt
-                          ? formatDistanceToNowStrict(new Date(last), { addSuffix: true })
-                          : 'New'}
+                        {c.lastMessageAt ? lastLabel(new Date(last)) : 'New'}
                       </time>
                     </span>
                     <span className="chat-list-sub">
                       {c.requestTitle ?? 'General'}
-                      {!c.peerHasKey && <span className="chat-pill">Not on the app yet</span>}
+                      {!c.peerHasKey && <span className="chat-pill">Hasn't opened Kindred yet</span>}
                     </span>
                   </span>
                 </Link>

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Building2, HandHeart } from 'lucide-react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Building2, Fingerprint, HandHeart } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { signUpWithPasskey } from '../../lib/auth/passkey';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { Alert, Button, Card, Chip, Field } from '../../components/ui/index.js';
 import { usePasskeySupport, errorMessage } from './usePasskeySupport.js';
+import PasswordField from './PasswordField.jsx';
 
 const ROLES = ['volunteer', 'charity'];
 
@@ -93,10 +94,12 @@ export default function Signup() {
       <h1>{isCharity ? 'Register your charity' : role ? 'Join as a volunteer' : 'Create an account'}</h1>
       <Card>
         <form className="stack" onSubmit={showPassword ? handlePassword : handlePasskey}>
-          <div className="role-picker" role="group" aria-label="I am">
-            <Chip selected={role === 'volunteer'} onClick={() => pickRole('volunteer')}><HandHeart size={18} strokeWidth={1.75} aria-hidden="true" /> Volunteer</Chip>
-            <Chip selected={role === 'charity'} onClick={() => pickRole('charity')}><Building2 size={18} strokeWidth={1.75} aria-hidden="true" /> Charity</Chip>
-          </div>
+          {!queryRole && (
+            <div className="role-picker" role="group" aria-label="I am">
+              <Chip selected={role === 'volunteer'} onClick={() => pickRole('volunteer')}><HandHeart size={18} strokeWidth={1.75} aria-hidden="true" /> Volunteer</Chip>
+              <Chip selected={role === 'charity'} onClick={() => pickRole('charity')}><Building2 size={18} strokeWidth={1.75} aria-hidden="true" /> Charity</Chip>
+            </div>
+          )}
           {error && <Alert tone="danger">{error}</Alert>}
           <Field
             label={isCharity ? 'Organisation name' : 'Your name'}
@@ -108,22 +111,36 @@ export default function Signup() {
           <Field label="Email" type="email" autoComplete="email" required value={email}
             onChange={(e) => setEmail(e.target.value)} />
           {showPassword && (
-            <Field label="Password" type="password" autoComplete="new-password" required minLength={6}
+            <PasswordField label="Password" autoComplete="new-password" required minLength={6}
               value={password} onChange={(e) => setPassword(e.target.value)} />
           )}
-          <Button type="submit" block loading={busy || (!showPassword && passkeys === null)} disabled={!role}>
-            {showPassword ? 'Create account' : 'Continue with passkey'}
+          <Button
+            type="submit"
+            size="lg"
+            block
+            loading={busy || (!showPassword && passkeys === null)}
+            disabled={!role}
+            hint={!role ? 'Choose volunteer or charity first' : undefined}
+            help={!showPassword ? "Your phone checks it's you. No password to remember." : undefined}
+            icon={!showPassword ? <Fingerprint size={20} strokeWidth={2} aria-hidden="true" /> : undefined}
+          >
+            {showPassword ? 'Create account' : 'Sign up with Face ID or fingerprint'}
           </Button>
           {passkeys && (
-            <button type="button" className="link-button" onClick={() => setUsePassword((v) => !v)}>
-              {showPassword ? 'Use a passkey instead' : 'Use a password instead'}
-            </button>
+            <Button variant="secondary" block onClick={() => setUsePassword((v) => !v)}>
+              {showPassword ? 'Use Face ID instead' : 'Use a password instead'}
+            </Button>
           )}
         </form>
       </Card>
-      <p className="auth-switch">
-        Already have an account? <Link to="/login">Sign in</Link>
-      </p>
+      <div className="auth-switch">
+        <Button to="/login" variant="secondary" block>I already have an account</Button>
+        {queryRole && (
+          <Button variant="secondary" block onClick={() => pickRole(isCharity ? 'volunteer' : 'charity')}>
+            {isCharity ? "I'm volunteering instead" : "I'm signing up a charity"}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

@@ -5,13 +5,12 @@ import { userLinks } from '../pages/user/links.js';
 import Header from './Header.jsx';
 import Sidebar from './Sidebar.jsx';
 import BottomNav from './BottomNav.jsx';
-import CommandPalette from './CommandPalette.jsx';
 
-/** Nav links for the signed-in user's space (area links + Chats, placed before the Account group). */
+/** Nav links for the signed-in user's space: area links with Messages before the profile link. */
 export function linksFor(role) {
   const own = role === 'charity' ? charityLinks : userLinks;
-  const chatLink = { to: '/chat', label: 'Chats', icon: 'chat', section: role === 'charity' ? 'Requests' : 'My work' };
-  const at = own.findIndex((l) => l.section === 'Account');
+  const chatLink = { to: '/chat', label: 'Messages', icon: 'chat' };
+  const at = own.findIndex((l) => /profile/.test(l.to));
   return at < 0 ? [...own, chatLink] : [...own.slice(0, at), chatLink, ...own.slice(at)];
 }
 
@@ -19,18 +18,16 @@ export function linksFor(role) {
 export default function Layout() {
   const { profile } = useAuth();
   const links = linksFor(profile?.role);
-  const space = profile?.role === 'charity' ? 'Charity' : 'Volunteer';
   return (
     <div className="layout layout-app">
-      <Header space={space} />
+      <Header />
       <div className="layout-body">
-        <Sidebar links={links} space={space} />
+        <Sidebar links={links} />
         <main className="content">
           <Outlet />
         </main>
       </div>
       <BottomNav links={links} />
-      <CommandPalette links={links} />
     </div>
   );
 }

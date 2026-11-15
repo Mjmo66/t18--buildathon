@@ -1,42 +1,52 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
 import { getOrCreateConversation } from '../../lib/chat';
-import { formatKm, matchRequest, nextShifts } from '../../features/matching/index.js';
+import { matchRequest, nextShifts } from '../../features/matching/index.js';
+import { Alert, Badge, Button, ConfirmDialog, useToast } from '../../components/ui/index.js';
+import { formatDayTime, formatShiftRange } from '../../components/format.js';
 import { REQUEST_SELECT, usePrefs } from './data.js';
 import {
-  ArrowLeft, BadgeCheck, CalendarDays, Dumbbell, ExternalLink, GraduationCap, Hourglass, Lock, MapPin, Tag, Users,
+  ArrowLeft, CalendarDays, CalendarCheck, Check, CircleCheck, Dumbbell, ExternalLink, GraduationCap, MapPin, MessageCircle, Navigation, Repeat,
 } from 'lucide-react';
-import { Chips, LABELS, Loading, capital, formatHours, formatWhen } from './ui.jsx';
+import { LABELS, Loading, SIGNUP_STATUS } from './ui.jsx';
 import { displayWebsite, safeWebsite } from '../../lib/website.js';
 
-function Fact({ icon: I, label, children }) {
+const SIGN_UP_HELP = "Tell the charity you'd like to come. They'll confirm by message.";
+const CANCEL_HELP = "Let the charity know you can't come. You can sign up again later.";
+const LONG_DESCRIPTION = 240;
+
+function Fact({ icon: I, children }) {
   return (
     <li>
-      <I size={18} strokeWidth={1.75} aria-hidden="true" />
-      <span className="v-fact-body">
-        <span className="v-fact-label">{label}</span>
-        <span className="v-fact-value">{children}</span>
-      </span>
+      <I size={22} strokeWidth={1.75} aria-hidden="true" />
+      <div className="v-fact-body">{children}</div>
     </li>
   );
 }
 
-const STATUS_TONE = { applied: 'v-chip-no', accepted: '', attended: '', declined: 'v-chip-plain', cancelled: 'v-chip-plain', no_show: 'v-chip-danger' };
-const STATUS_LABEL = { applied: 'Applied', accepted: 'Accepted', declined: 'Declined', cancelled: 'Cancelled', attended: 'Attended', no_show: 'No-show' };
+function mapsUrl(request) {
+  const q = request.lat != null && request.lng != null ? `${request.lat},${request.lng}` : request.address;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
 
 export default function RequestDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile } = useAuth();
   const { prefs } = usePrefs(user?.id);
+  const toast = useToast();
   const [request, setRequest] = useState(undefined);
   const [mySignups, setMySignups] = useState([]);
   const [shift, setShift] = useState('');
-  const [busy, setBusy] = useState(null); // 'signup' | 'chat' | 'verify'
+  const [busy, setBusy] = useState(null); // 'signup' | 'chat' | 'cancel'
   const [error, setError] = useState(null);
-  const [notice, setNotice] = useState(null);
+  const [justSignedUp, setJustSignedUp] = useState(null); // ISO shift time signed up for on this visit
+  const [cancelling, setCancelling] = useState(null); // signup row to cancel (dialog open)
+  const [readMore, setReadMore] = useState(false);
+  const successRef = useRef(null);
+  const closeCancel = useCallback(() => setCancelling(null), []);
 
   const load = useCallback(async () => {
     const { data, error: err } = await supabase.from('requests').select(REQUEST_SELECT).eq('id', id).maybeSingle();
@@ -49,11 +59,14 @@ export default function RequestDetail() {
   }, [id, user]);
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (justSignedUp) successRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [justSignedUp]);
+
   const shifts = useMemo(() => (request ? nextShifts(request, new Date(), 6) : []), [request]);
   const match = useMemo(() => (request ? matchRequest(prefs, request) : null), [prefs, request]);
-  const activeShiftTimes = new Set(mySignups
-    .filter((s) => ['applied', 'accepted'].includes(s.status))
-    .map((s) => new Date(s.shift_at).getTime()));
+  const activeSignups = mySignups.filter((s) => ['applied', 'accepted'].includes(s.status));
+  const activeShiftTimes = new Set(activeSignups.map((s) => new Date(s.shift_at).getTime()));
   const freeShifts = shifts.filter((d) => !activeShiftTimes.has(d.getTime()));
 
   // Selected shift: the user's pick if still free, else the matched shift, else the next free one.
@@ -65,32 +78,46 @@ export default function RequestDetail() {
   if (!request) {
     return (
       <div className="v-page">
-        <h1>Not found</h1>
-        {error && <p className="v-error">{error}</p>}
-        <Link to="/user" className="v-btn v-btn-secondary"><ArrowLeft size={16} strokeWidth={2} aria-hidden="true" />Back to requests</Link>
+        <h1>Shift not found</h1>
+        {error && <Alert tone="danger">{error}</Alert>}
+        <Button to="/user" variant="secondary" icon={<ArrowLeft size={20} aria-hidden="true" />}>Back to all shifts</Button>
       </div>
     );
   }
 
   let blockReason = null;
-  if (!user) blockReason = 'Sign in to sign up';
-  else if (profile && profile.role !== 'volunteer') blockReason = 'Only volunteer accounts can sign up';
-  else if (profile?.suspended) blockReason = 'Your account is suspended after 3 no-shows';
-  else if (request.status !== 'open') blockReason = request.status === 'filled' ? 'This request is filled' : 'This request is closed';
-  else if (!freeShifts.length) blockReason = shifts.length ? 'You are signed up for every upcoming shift' : 'No upcoming shifts';
+  if (!user) blockReason = 'Sign in to sign up.';
+  else if (profile && profile.role !== 'volunteer') blockReason = 'Only volunteer accounts can sign up.';
+  else if (profile?.suspended) blockReason = "You can't sign up after 3 missed shifts.";
+  else if (request.status !== 'open') blockReason = request.status === 'filled' ? 'This shift has enough volunteers.' : 'This shift has been cancelled.';
+  else if (!freeShifts.length) blockReason = shifts.length ? "You're signed up for every date." : 'There are no dates coming up.';
 
   const signUp = async () => {
     if (!selected) return;
-    setBusy('signup'); setError(null); setNotice(null);
+    setBusy('signup'); setError(null);
     const { error: err } = await supabase.from('signups').insert({
       request_id: request.id, volunteer_id: user.id, shift_at: selected,
     });
     setBusy(null);
     if (err) {
-      setError(err.code === '23505' ? 'You already signed up for this shift' : `Could not sign up: ${err.message}`);
+      setError(err.code === '23505' ? "You're already signed up for this date." : `Could not sign up: ${err.message}`);
       return;
     }
-    setNotice(`Signed up for ${formatWhen(selected)}. The charity will confirm.`);
+    setJustSignedUp(selected);
+    toast("You're signed up.", 'success');
+    load();
+  };
+
+  const cancelPlace = async () => {
+    const s = cancelling;
+    if (!s) return;
+    setBusy('cancel'); setError(null);
+    const { error: err } = await supabase.from('signups').update({ status: 'cancelled' }).eq('id', s.id);
+    setBusy(null);
+    setCancelling(null);
+    if (err) { setError(`Could not cancel: ${err.message}`); return; }
+    if (justSignedUp && new Date(justSignedUp).getTime() === new Date(s.shift_at).getTime()) setJustSignedUp(null);
+    toast('Your place is cancelled.', 'success');
     load();
   };
 
@@ -105,59 +132,80 @@ export default function RequestDetail() {
     }
   };
 
-  const verify = async () => {
-    setBusy('verify'); setError(null);
-    const { error: err } = await supabase.rpc('demo_verify_volunteer');
-    if (err) setError(`Could not verify: ${err.message}`);
-    else await refreshProfile();
-    setBusy(null);
-  };
+  const justSignup = justSignedUp
+    && activeSignups.find((s) => new Date(s.shift_at).getTime() === new Date(justSignedUp).getTime());
+  const otherSignups = mySignups.filter((s) => s !== justSignup);
+  const first = selected ? new Date(selected) : shifts[0];
+  const description = request.description?.trim() ?? '';
+  const longDescription = description.length > LONG_DESCRIPTION || description.split('\n').length > 3;
+  const recurring = request.schedule_type === 'recurring' && request.recurrence;
 
   return (
     <div className="v-page">
-      <Link to="/user" className="back-link"><ArrowLeft size={16} strokeWidth={2} aria-hidden="true" />All requests</Link>
-      <div className="v-field" style={{ gap: 6 }}>
+      <Link to="/user" className="back-link"><ArrowLeft size={20} strokeWidth={2} aria-hidden="true" />Back to all shifts</Link>
+
+      <header className="v-detail-head">
         <h1>{request.title}</h1>
-        <span className="v-card-org" style={{ fontSize: '0.95rem' }}>
-          {request.charities?.org_name ?? 'Charity'}
+        <p className="v-detail-org">
           {request.charities?.verified_at && (
-            <span className="v-chip v-chip-accent"><BadgeCheck size={14} strokeWidth={2} aria-hidden="true" />Verified charity</span>
+            <span className="v-verified"><Check size={18} strokeWidth={2.5} aria-hidden="true" /><span className="sr-only">Verified charity: </span></span>
           )}
-        </span>
-      </div>
+          {request.charities?.org_name ?? 'Charity'}
+        </p>
+      </header>
 
-      {match && <Chips yes={match.reasons} no={match.blockers} />}
+      {description && (
+        <div className="v-description">
+          <p className={longDescription && !readMore ? 'v-clamp' : undefined}>{description}</p>
+          {longDescription && (
+            <Button variant="secondary" onClick={() => setReadMore((v) => !v)} aria-expanded={readMore}>
+              {readMore ? 'Show less' : 'Read more'}
+            </Button>
+          )}
+        </div>
+      )}
 
-      <section className="v-card" style={{ gap: 4 }}>
+      {justSignedUp && (
+        <section className="v-success" ref={successRef} role="status">
+          <h2><CircleCheck size={26} strokeWidth={2} aria-hidden="true" />You're signed up</h2>
+          <p>{formatShiftRange(justSignedUp, request.duration_hours)}. They'll confirm by message.</p>
+          <Button to="/user/shifts" size="lg" block icon={<CalendarCheck size={22} aria-hidden="true" />}>Go to My shifts</Button>
+          {justSignup && (
+            <Button variant="secondary" block hint={CANCEL_HELP} onClick={() => setCancelling(justSignup)}>
+              Cancel my place
+            </Button>
+          )}
+        </section>
+      )}
+
+      <section className="v-card">
         <ul className="v-facts">
-          <Fact icon={CalendarDays} label="When">
-            {shifts[0] ? formatWhen(shifts[0]) : 'No upcoming shifts'}
-            {request.schedule_type === 'recurring' && request.recurrence ? ` · ${LABELS.recurrence[request.recurrence]}` : ''}
-            {request.ends_on ? ` until ${request.ends_on}` : ''}
+          <Fact icon={CalendarDays}>
+            <span>{first ? formatShiftRange(first, request.duration_hours) : 'No dates coming up'}</span>
           </Fact>
-          <Fact icon={Hourglass} label="Duration">{formatHours(request.duration_hours)}</Fact>
-          {request.address && (
-            <Fact icon={MapPin} label="Where">
-              {request.address}
-              {match?.distanceKm != null && <span className="v-mono"> · {formatKm(match.distanceKm)}</span>}
+          {recurring && (
+            <Fact icon={Repeat}>
+              <span>{LABELS.recurrence[request.recurrence]}</span>
             </Fact>
           )}
-          <Fact icon={Dumbbell} label="Physical">{LABELS.physical[request.physical_level]}</Fact>
-          <Fact icon={GraduationCap} label="Experience">
-            {LABELS.experience[request.experience]}{request.experience_notes ? ` · ${request.experience_notes}` : ''}
-          </Fact>
-          <Fact icon={Users} label="Volunteers">{request.slots}</Fact>
-          {request.category && <Fact icon={Tag} label="Category">{capital(request.category)}</Fact>}
+          {request.address && (
+            <Fact icon={MapPin}>
+              <span>{request.address}</span>
+              <Button href={mapsUrl(request)} target="_blank" rel="noopener noreferrer" variant="secondary"
+                icon={<Navigation size={20} aria-hidden="true" />} hint="Open the address in your maps app.">
+                Open in Maps
+              </Button>
+            </Fact>
+          )}
+          {request.physical_level && <Fact icon={Dumbbell}><span>{LABELS.physical[request.physical_level]}</span></Fact>}
+          {!recurring && request.experience && request.experience !== 'none' && (
+            <Fact icon={GraduationCap}><span>{LABELS.experience[request.experience]}</span></Fact>
+          )}
         </ul>
-        {request.description && (
-          <p style={{ margin: '8px 0 0', paddingTop: 12, borderTop: '1px solid var(--border)', whiteSpace: 'pre-wrap' }}>
-            {request.description}
-          </p>
-        )}
       </section>
 
       {(request.charities?.description || safeWebsite(request.charities?.website)) && (
-        <section className="v-card" style={{ gap: 8 }}>
+        <section className="v-card" style={{ gap: 10 }}>
           <h2>About {request.charities.org_name}</h2>
           {request.charities.description && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{request.charities.description}</p>}
           {safeWebsite(request.charities.website) && (
@@ -165,53 +213,82 @@ export default function RequestDetail() {
               href={safeWebsite(request.charities.website)}
               target="_blank"
               rel="noopener noreferrer nofollow"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, overflowWrap: 'anywhere' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, overflowWrap: 'anywhere' }}
             >
-              <ExternalLink size={16} strokeWidth={2} aria-hidden="true" />
+              <ExternalLink size={20} strokeWidth={2} aria-hidden="true" />
               {displayWebsite(safeWebsite(request.charities.website))}
             </a>
           )}
         </section>
       )}
 
-      {mySignups.length > 0 && (
+      {otherSignups.length > 0 && (
         <section className="v-card">
-          <h2>Your signups</h2>
-          {mySignups.map((s) => (
-            <div key={s.id} className="v-between v-small">
-              <span className="v-mono" style={{ color: 'var(--text)' }}>{formatWhen(s.shift_at)}</span>
-              <span className={`v-chip ${STATUS_TONE[s.status] ?? 'v-chip-plain'}`}>{STATUS_LABEL[s.status]}</span>
-            </div>
-          ))}
+          <h2>Your places</h2>
+          <ul className="v-places">
+            {otherSignups.map((s) => {
+              const st = SIGNUP_STATUS[s.status] ?? { label: s.status, tone: 'neutral' };
+              const active = ['applied', 'accepted'].includes(s.status);
+              return (
+                <li key={s.id}>
+                  <span className="v-place-when">{formatDayTime(s.shift_at)}</span>
+                  <Badge tone={st.tone}>{st.label}</Badge>
+                  {active && (
+                    <Button variant="secondary" hint={CANCEL_HELP} onClick={() => setCancelling(s)}>Cancel my place</Button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </section>
       )}
 
-      <section className="v-card">
-        {freeShifts.length > 1 && (
-          <div className="v-field">
-            <label className="v-label" htmlFor="v-shift">Shift</label>
-            <select id="v-shift" className="v-select" value={selected} onChange={(e) => setShift(e.target.value)}>
-              {freeShifts.map((d) => <option key={d.toISOString()} value={d.toISOString()}>{formatWhen(d)}</option>)}
-            </select>
-          </div>
-        )}
-        <button type="button" className="v-btn v-btn-block" onClick={signUp} disabled={!!blockReason || busy === 'signup' || !selected}>
-          {busy === 'signup' ? 'Signing up…' : 'Sign up'}
-        </button>
-        {blockReason && <span className="v-muted v-small">{blockReason}</span>}
-        {notice && <span className="v-notice v-notice-ok">{notice}</span>}
-        {user && (
-          <button type="button" className="v-btn v-btn-secondary v-btn-block" onClick={message} disabled={busy === 'chat'}>
-            {busy === 'chat' ? 'Opening chat…' : <><Lock size={16} strokeWidth={2} aria-hidden="true" />Message charity</>}
-          </button>
-        )}
-        {profile && profile.role === 'volunteer' && !profile.verified && (
-          <button type="button" className="v-btn v-btn-secondary v-btn-block" onClick={verify} disabled={busy === 'verify'}>
-            {busy === 'verify' ? 'Verifying…' : 'Verify me'}
-          </button>
-        )}
-        {error && <p className="v-error" role="alert">{error}</p>}
-      </section>
+      {!justSignedUp && freeShifts.length > 1 && !blockReason && (
+        <fieldset className="v-card v-choices">
+          <legend>Choose a date</legend>
+          {freeShifts.map((d) => {
+            const iso = d.toISOString();
+            return (
+              <label key={iso} className="v-choice">
+                <input type="radio" name="v-shift" value={iso} checked={selected === iso} onChange={() => setShift(iso)} />
+                <span>{formatShiftRange(d, request.duration_hours)}</span>
+              </label>
+            );
+          })}
+        </fieldset>
+      )}
+
+      {user && (
+        <Button variant="secondary" block loading={busy === 'chat'} onClick={message}
+          icon={<MessageCircle size={20} aria-hidden="true" />} hint="Open a private chat with the charity.">
+          {busy === 'chat' ? 'Opening…' : 'Ask a question'}
+        </Button>
+      )}
+
+      {error && <Alert tone="danger">{error}</Alert>}
+
+      {!justSignedUp && (
+        <div className="v-action-bar">
+          <Button size="lg" block onClick={signUp} loading={busy === 'signup'}
+            disabled={!!blockReason || !selected} hint={blockReason ?? SIGN_UP_HELP}
+            help={blockReason ?? undefined}>
+            {busy === 'signup' ? 'Signing you up…' : selected && !blockReason ? `Sign up for ${formatDayTime(selected).replace(/^(Today|Tomorrow)/, (w) => w.toLowerCase())}` : 'Sign up to help'}
+          </Button>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={!!cancelling}
+        title="Cancel your place?"
+        confirmLabel="Yes, cancel my place"
+        cancelLabel="No, keep it"
+        tone="danger"
+        busy={busy === 'cancel'}
+        onConfirm={cancelPlace}
+        onCancel={closeCancel}
+      >
+        {cancelling && `${request.title}, ${formatDayTime(cancelling.shift_at)}`}
+      </ConfirmDialog>
     </div>
   );
 }

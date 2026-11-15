@@ -4,6 +4,7 @@ import { Icon, iconFor } from './icons.jsx';
 const exactPaths = ['/user', '/charity'];
 
 // Phone tab bar (hidden on desktop). Links marked `tab: false` stay sidebar-only; at most 5 tabs.
+// Every tab shows its text label; the active tab is bold with a bar on top (not colour alone).
 export default function BottomNav({ links }) {
   const tabs = links.filter((l) => l.tab !== false).slice(0, 5);
   return (
@@ -15,7 +16,7 @@ export default function BottomNav({ links }) {
           end={exactPaths.includes(link.to)}
           className={({ isActive }) => `tab ${isActive ? 'active' : ''}`}
         >
-          <Icon name={iconFor(link)} size={22} />
+          <Icon name={iconFor(link)} size={26} strokeWidth={2} />
           <span className="tab-label">{link.label}</span>
         </NavLink>
       ))}

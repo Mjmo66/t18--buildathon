@@ -118,12 +118,18 @@ export default function AddressField({ value, onChange, label = 'Address', requi
         <p className="field-hint">Pick your address from the list, or use your location.</p>
       )}
       <div className="row-wrap">
-        <Button variant="secondary" size="sm" loading={locating} onClick={useMyLocation}>
-          <LocateFixed size={16} strokeWidth={1.75} aria-hidden="true" /> Use my location
+        <Button
+          variant="secondary"
+          loading={locating}
+          onClick={useMyLocation}
+          hint="Fill in the address of the building you are in now."
+          icon={<LocateFixed size={20} strokeWidth={1.75} aria-hidden="true" />}
+        >
+          Use my location
         </Button>
         {value.lat != null && value.lng != null && (
           <a className="addr-pin" href={mapLink(value)} target="_blank" rel="noopener noreferrer">
-            <MapPin size={14} strokeWidth={2} aria-hidden="true" />
+            <MapPin size={18} strokeWidth={2} aria-hidden="true" />
             {pinned && pinned !== value.address ? `Pinned at ${pinned}` : 'Check the pin on a map'}
           </a>
         )}

@@ -2,36 +2,40 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
-import { formatKm, rankRequests } from '../../features/matching/index.js';
+import { rankRequests } from '../../features/matching/index.js';
+import { Alert, Button, EmptyState } from '../../components/ui/index.js';
+import { formatDayTime, formatDistance, formatDuration } from '../../components/format.js';
 import { REQUEST_SELECT, skippedPrefs, usePrefs } from './data.js';
-import { BadgeCheck, CalendarDays, ChevronRight, Hourglass, MapPin, MapPinned, Repeat, SearchX, SlidersHorizontal } from 'lucide-react';
-import { Chips, Empty, Loading, Meta, formatHours, formatWhen } from './ui.jsx';
+import { CalendarClock, ChevronRight, Clock, MapPin, SearchX } from 'lucide-react';
+import { Loading } from './ui.jsx';
 
-export function RequestCard({ request, match, dim = false }) {
-  // Distance is shown in the meta row, so drop it from the reason chips.
-  const reasons = match.reasons.filter((r) => !/ away$/.test(r));
+/** Why a shift is outside the volunteer's choices, in plain words (one line). */
+function plainBlocker(blockers) {
+  const b = blockers[0] ?? '';
+  if (/km away/.test(b)) return 'Further than you want to travel';
+  if (/^Not free|^Outside/.test(b)) return 'Not in your free times';
+  if (/physical work$/.test(b)) return 'Heavier work than you chose';
+  if (/experience/i.test(b)) return b;
+  if (b === 'Filled') return 'Has enough volunteers';
+  return b;
+}
+
+export function RequestCard({ request, match, transport, other = false }) {
+  const where = match.distanceKm != null ? formatDistance(match.distanceKm, transport) : request.address;
+  const line = [
+    match.shiftAt ? formatDayTime(match.shiftAt).replace(', ', ' ') : 'No dates yet',
+    request.duration_hours ? formatDuration(request.duration_hours) : null,
+    where,
+  ].filter(Boolean).join(' · ');
   return (
-    <Link to={`/user/requests/${request.id}`} className={`v-card${dim ? ' v-dim' : ''}`}>
-      <div className="v-between" style={{ alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
-          <h3>{request.title}</h3>
-          <span className="v-card-org">
-            {request.charities?.org_name ?? 'Charity'}
-            {request.charities?.verified_at && (
-              <BadgeCheck className="v-verified" size={15} strokeWidth={2} aria-label="Verified charity" />
-            )}
-          </span>
-        </div>
-        {request.category && <span className="v-chip v-chip-plain">{request.category}</span>}
+    <Link to={`/user/requests/${request.id}`} className="v-card v-request v-card-link">
+      <div className="v-request-head">
+        <h2 className="v-request-title">{request.title}</h2>
+        <p className="v-request-org">{request.charities?.org_name ?? 'Charity'}</p>
+        <p className="v-request-line">{line}</p>
+        {other && match.blockers.length > 0 && <p className="v-request-why">{plainBlocker(match.blockers)}</p>}
       </div>
-      <div className="v-meta">
-        <Meta icon={CalendarDays}>{match.shiftAt ? formatWhen(match.shiftAt) : 'No upcoming shifts'}</Meta>
-        <Meta icon={Hourglass}>{formatHours(request.duration_hours)}</Meta>
-        {match.distanceKm != null && <Meta icon={MapPin}>{formatKm(match.distanceKm)}</Meta>}
-        {match.distanceKm == null && request.address && <Meta icon={MapPin}>{request.address}</Meta>}
-        {request.schedule_type === 'recurring' && <Meta icon={Repeat}>recurring</Meta>}
-      </div>
-      <Chips yes={reasons} no={dim ? match.blockers : []} />
+      <ChevronRight className="v-chevron" size={24} aria-hidden="true" />
     </Link>
   );
 }
@@ -57,50 +61,67 @@ export default function Discover() {
   const ranked = useMemo(() => (requests ? rankRequests(prefs, requests) : []), [prefs, requests]);
   const matching = ranked.filter((x) => x.match.eligible);
   const other = ranked.filter((x) => !x.match.eligible && x.match.shiftAt);
+  const transport = prefs?.transport;
 
   if (authLoading || prefsLoading) return <div className="v-page"><Loading /></div>;
   if (user && !prefs && !skippedPrefs()) return <Navigate to="/user/preferences?welcome=1" replace />;
 
+  const showAllButton = (
+    <Button variant="primary" block icon={<SearchX size={20} aria-hidden="true" />} onClick={() => setShowAll(true)}
+      hint="Also show shifts that don't match your choices.">
+      Show all shifts
+    </Button>
+  );
+  const changeTimesButton = (
+    <Button to="/user/preferences" variant="secondary" block icon={<CalendarClock size={20} aria-hidden="true" />}
+      hint="Choose where you are, how far you can go and when you're free.">
+      Change my times
+    </Button>
+  );
+
   return (
     <div className="v-page">
-      <div className="v-between">
-        <h1>For you</h1>
-        <div className="v-row" style={{ gap: 4, flexWrap: 'nowrap' }}>
-          <label className="v-switch">
-            <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} />
-            Show all
-          </label>
-          <Link to="/user/preferences" className="v-btn v-btn-ghost v-btn-sm" aria-label="Preferences" title="Preferences">
-            <SlidersHorizontal size={18} strokeWidth={1.75} aria-hidden="true" />
-          </Link>
-        </div>
-      </div>
+      <h1>Shifts for you</h1>
 
       {!prefs && (
-        <Link to="/user/preferences" className="v-notice">
-          <MapPinned size={18} strokeWidth={1.75} aria-hidden="true" />
-          <span>Set your location and free times to see what fits</span>
-          <ChevronRight size={18} strokeWidth={1.75} aria-hidden="true" />
-        </Link>
+        <Button to="/user/preferences" variant="secondary" block icon={<MapPin size={20} aria-hidden="true" />}
+          hint="Choose where you are and when you're free, so we can show shifts that suit you.">
+          Tell us where and when
+        </Button>
       )}
-      {error && <p className="v-error" role="alert">Could not load requests: {error}</p>}
+      {error && <Alert tone="danger" title="Could not load shifts">{error}</Alert>}
 
       {requests == null ? <Loading /> : (
         <div className="v-list">
-          {matching.map(({ request, match }) => <RequestCard key={request.id} request={request} match={match} />)}
+          {matching.map(({ request, match }) => (
+            <RequestCard key={request.id} request={request} match={match} transport={transport} />
+          ))}
+
           {matching.length === 0 && !showAll && (
-            <Empty icon={<SearchX size={22} strokeWidth={1.75} />} action={other.length > 0 && (
-              <button type="button" className="v-btn v-btn-secondary" onClick={() => setShowAll(true)}>
-                Show {other.length} other {other.length === 1 ? 'request' : 'requests'}
-              </button>
-            )}>
-              {requests.length === 0 ? 'No open requests yet.' : 'Nothing fits your preferences right now.'}
-            </Empty>
+            requests.length === 0 ? (
+              <EmptyState icon={<Clock size={26} aria-hidden="true" />} title="No shifts yet." />
+            ) : (
+              <EmptyState
+                icon={<SearchX size={26} aria-hidden="true" />}
+                title="No shifts match your times yet."
+                action={<>{other.length > 0 && showAllButton}{changeTimesButton}</>}
+              />
+            )
           )}
+
+          {matching.length > 0 && !showAll && other.length > 0 && (
+            <Button variant="secondary" block onClick={() => setShowAll(true)}
+              hint="Also show shifts that don't match your choices.">
+              Show all shifts
+            </Button>
+          )}
+
           {showAll && other.length > 0 && (
             <>
-              <h2 className="v-section-label">Doesn't fit</h2>
-              {other.map(({ request, match }) => <RequestCard key={request.id} request={request} match={match} dim />)}
+              <h2 className="v-section-title">Other shifts</h2>
+              {other.map(({ request, match }) => (
+                <RequestCard key={request.id} request={request} match={match} transport={transport} other />
+              ))}
             </>
           )}
         </div>

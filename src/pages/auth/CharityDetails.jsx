@@ -27,6 +27,13 @@ export default function CharityDetails() {
   const numberError = number && !register ? 'Use SC + 6 digits (Scotland), 6–7 digits (England & Wales) or NIC + 6 digits (Northern Ireland).' : '';
   const entry = register === 'OSCR' && lookup.number === normalised ? lookup.entry : undefined;
   const nameMismatch = entry && orgName.trim() && !matchesRegistry(orgName, entry);
+  const submitBlocker = !register
+    ? 'Fill in a valid charity number first'
+    : !orgName.trim()
+      ? 'Fill in your organisation name first'
+      : loc.lat == null
+        ? 'Choose your address from the list first'
+        : '';
 
   // Scottish numbers: look the charity up in the register as soon as the number is complete.
   useEffect(() => {
@@ -91,18 +98,18 @@ export default function CharityDetails() {
         <h1>{orgName}</h1>
         <Card className="stack">
           {result === 'verified' ? (
-            <Alert tone="success" title="Verified charity">
+            <Alert tone="success" title="Your charity is checked">
               {normalised} · {REGISTER_NAMES[register ?? 'OSCR']}
             </Alert>
           ) : (
             <Alert tone="warning" title={
-              register !== 'OSCR' ? 'We can check Scottish charities only for now'
+              register !== 'OSCR' ? 'We can only check Scottish charities for now'
                 : entry ? 'The name does not match the register' : 'We couldn\'t find this number in the register'
             }>
-              You can look around, but you can post requests only once your charity is verified.
+              You can look around, but you can ask for volunteers only once we have checked your charity.
             </Alert>
           )}
-          <Button block onClick={() => navigate('/charity', { replace: true })}>Continue</Button>
+          <Button size="lg" block onClick={() => navigate('/charity', { replace: true })}>Continue</Button>
         </Card>
       </div>
     );
@@ -131,7 +138,7 @@ export default function CharityDetails() {
             <Alert tone="warning">{normalised} is not on the Scottish Charity Register.</Alert>
           )}
           {register && register !== 'OSCR' && (
-            <Alert tone="info">{REGISTER_NAMES[register]}: we can check Scottish charities only for now.</Alert>
+            <Alert tone="info">{REGISTER_NAMES[register]}: we can only check Scottish charities for now.</Alert>
           )}
           <Field
             label="Organisation name"
@@ -142,7 +149,7 @@ export default function CharityDetails() {
           />
           {nameMismatch && (
             <div className="row-wrap">
-              <Button variant="secondary" size="sm" onClick={() => setOrgName(entry.org_name)}>Use the registered name</Button>
+              <Button variant="secondary" onClick={() => setOrgName(entry.org_name)}>Use the registered name</Button>
             </div>
           )}
           <AddressField value={loc} onChange={setLoc} required />
@@ -165,8 +172,15 @@ export default function CharityDetails() {
             onChange={(e) => { setWebsite(e.target.value); setWebsiteError(''); }}
             error={websiteError}
           />
-          <Button type="submit" block loading={busy} disabled={!register || loc.lat == null || !orgName.trim()}>
-            Verify and continue
+          <Button
+            type="submit"
+            size="lg"
+            block
+            loading={busy}
+            disabled={Boolean(submitBlocker)}
+            hint={submitBlocker || undefined}
+          >
+            Check and continue
           </Button>
         </form>
       </Card>

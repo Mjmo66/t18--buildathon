@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CalendarClock, Plus, Users } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Plus, Users } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { supabase } from '../../lib/supabase';
+import { Button } from '../../components/ui/index.js';
+import { formatShiftRange } from '../../components/format.js';
 import { CharityGate, Empty, ErrorNote, Loading, StatusPill } from './components.jsx';
-import { CATEGORIES, REQUEST_STATUSES, fmtShift, labelOf, nextShifts, scheduleSummary } from './shared.js';
+import { REQUEST_STATUSES, nextShifts } from './shared.js';
+
+const ICON = { size: 20, strokeWidth: 1.75, 'aria-hidden': true };
 
 function List() {
   const { user } = useAuth();
-  const [params, setParams] = useSearchParams();
-  const status = REQUEST_STATUSES.some((s) => s.value === params.get('status')) ? params.get('status') : 'open';
+  const [params] = useSearchParams();
+  // Open requests by default; "finished" (filled + closed) behind one link. Old ?status= links still work.
+  const legacy = params.get('status');
+  const finished = params.get('show') === 'finished' || (legacy && legacy !== 'open' && REQUEST_STATUSES.some((s) => s.value === legacy));
+  const statuses = finished ? ['filled', 'closed'] : ['open'];
   const [rows, setRows] = useState(null);
   const [error, setError] = useState(null);
 
@@ -20,45 +27,44 @@ function List() {
     supabase.from('requests')
       .select('*, signups(status)')
       .eq('charity_id', user.id)
-      .eq('status', status)
+      .in('status', statuses)
       .order('starts_at', { ascending: true })
       .then(({ data, error: err }) => {
         if (cancelled) return;
         if (err) setError(err); else setRows(data ?? []);
       });
     return () => { cancelled = true; };
-  }, [user.id, status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id, finished]);
 
   return (
     <section className="ch-page">
-      <header className="page-head">
-        <h1>Requests</h1>
-        <Link className="btn btn-primary" to="/charity/requests/new">
-          <Plus size={18} strokeWidth={2} aria-hidden="true" />New request
+      {finished && (
+        <Link className="back-link" to="/charity/requests">
+          <ArrowLeft size={20} strokeWidth={2} aria-hidden="true" />Back to open requests
         </Link>
+      )}
+      <header className="page-head">
+        <h1>{finished ? 'Finished requests' : 'My requests'}</h1>
       </header>
 
-      <div className="ch-tabs" role="tablist" aria-label="Status">
-        {REQUEST_STATUSES.map((s) => (
-          <button
-            key={s.value}
-            type="button"
-            role="tab"
-            aria-selected={status === s.value}
-            className={`ch-tab ${status === s.value ? 'is-active' : ''}`}
-            onClick={() => setParams({ status: s.value }, { replace: true })}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
+      {!finished && (
+        <Button
+          to="/charity/requests/new"
+          size="lg"
+          className="ch-main-action"
+          icon={<Plus size={22} strokeWidth={2.25} aria-hidden="true" />}
+          hint="Ask for volunteers for a task, a date and a place."
+        >
+          Ask for volunteers
+        </Button>
+      )}
 
       <ErrorNote error={error} />
       {!rows && !error && <Loading />}
       {rows && rows.length === 0 && (
         <Empty>
-          <p>No {status} requests.</p>
-          {status === 'open' && <Link className="button" to="/charity/requests/new">Post your first request</Link>}
+          <p>{finished ? 'No finished requests yet.' : 'You have no open requests.'}</p>
         </Empty>
       )}
       {rows && rows.length > 0 && (
@@ -70,29 +76,30 @@ function List() {
             return (
               <li key={r.id}>
                 <Link className="ch-card ch-request-card" to={`/charity/requests/${r.id}`}>
-                  <div className="ch-row ch-between">
-                    <strong>{r.title}</strong>
-                    <StatusPill status={r.status} />
+                  <div className="ch-row ch-between ch-request-top">
+                    <strong className="ch-request-title">{r.title}</strong>
+                    {finished && <StatusPill status={r.status} />}
                   </div>
-                  <div className="ch-muted ch-small">
-                    {labelOf(CATEGORIES, r.category)} · {scheduleSummary(r)}
-                  </div>
-                  <div className="ch-row ch-meta">
-                    <span className="ch-meta-item">
-                      <CalendarClock size={14} strokeWidth={1.75} aria-hidden="true" />
-                      {next ? fmtShift(next) : 'No upcoming shifts'}
-                    </span>
-                    <span className="ch-meta-item">
-                      <Users size={14} strokeWidth={1.75} aria-hidden="true" />
-                      {accepted}/{r.slots}
-                    </span>
-                    {pending > 0 && <span className="ch-badge ch-badge-warn">{pending} pending</span>}
-                  </div>
+                  <span className="ch-meta-item">
+                    <CalendarDays {...ICON} />
+                    {next ? formatShiftRange(next, r.duration_hours) : 'No shifts coming up'}
+                  </span>
+                  <span className="ch-meta-item">
+                    <Users {...ICON} />
+                    {accepted} of {r.slots} filled
+                  </span>
+                  {pending > 0 && (
+                    <span className="ch-badge ch-badge-warn">{pending} waiting</span>
+                  )}
                 </Link>
               </li>
             );
           })}
         </ul>
+      )}
+
+      {!finished && (
+        <Link className="ch-text-link" to="/charity/requests?show=finished">See finished requests</Link>
       )}
     </section>
   );
