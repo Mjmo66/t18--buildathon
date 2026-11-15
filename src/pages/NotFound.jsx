@@ -1,10 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Button, EmptyState } from '../components/ui/index.js';
 
 export default function NotFound() {
   return (
-    <section>
-      <h1>Page not found</h1>
-      <Link to="/">Go home</Link>
-    </section>
+    <EmptyState icon="🧭" title="Page not found" action={<Button to="/">Go home</Button>} />
   );
 }

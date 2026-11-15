@@ -1,11 +1,13 @@
 import { NavLink } from 'react-router-dom';
+import { Icon, iconFor } from './icons.jsx';
 
 // Links whose path is the root of a space should only be active on an exact match
 const exactPaths = ['/', '/user', '/charity'];
 
-export default function Sidebar({ links, open, onNavigate }) {
+// Desktop navigation (hidden on phones, where BottomNav takes over).
+export default function Sidebar({ links }) {
   return (
-    <aside className={`sidebar ${open ? 'sidebar-open' : ''}`}>
+    <aside className="sidebar">
       <nav>
         {links.map((link) => (
           <NavLink
@@ -13,8 +15,8 @@ export default function Sidebar({ links, open, onNavigate }) {
             to={link.to}
             end={exactPaths.includes(link.to)}
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            onClick={onNavigate}
           >
+            <Icon name={iconFor(link)} size={20} />
             {link.label}
           </NavLink>
         ))}
