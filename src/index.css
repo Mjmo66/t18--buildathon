@@ -199,12 +199,31 @@ svg.lucide { flex-shrink: 0; }
 .nav-link.active svg { color: var(--accent); }
 .sidebar-foot {
   margin-top: auto;
-  padding: 14px 6px 0;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
+  display: flex;
+}
+.sidebar-foot .tooltip-wrap { display: flex; flex: 1; min-width: 0; }
+.account-button {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 12px;
+  min-height: 60px;
+  padding: 8px 12px 8px 8px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  color: var(--text);
+  text-decoration: none;
 }
+.account-button svg { color: var(--subtle); flex-shrink: 0; }
+.account-button:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.account-button:hover svg { color: var(--text); }
+.account-button.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.account-button.active svg { color: var(--accent); }
+.account-button.active .avatar { background: var(--accent); color: #fff; }
+.account-button .sidebar-user { white-space: normal; line-height: 1.25; overflow-wrap: anywhere; }
 .avatar {
   width: 40px;
   height: 40px;

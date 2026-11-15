@@ -8,10 +8,12 @@ import Tooltip from './ui/Tooltip.jsx';
 // Links whose path is the root of a space should only be active on an exact match
 const exactPaths = ['/', '/user', '/charity', '/charity/requests'];
 
-// Desktop navigation (hidden on phones, where BottomNav takes over). One flat list of links.
+// Desktop navigation (hidden on phones, where BottomNav takes over). One flat list of links,
+// with the account link as a button at the foot (avatar, name, gear).
 export default function Sidebar({ links }) {
   const { profile, charity } = useAuth();
   const name = profile?.display_name ?? '';
+  const account = links.find((l) => l.account);
   return (
     <aside className="sidebar">
       <div className="sidebar-inner">
@@ -19,7 +21,7 @@ export default function Sidebar({ links }) {
           <Logo size={32} />
         </Link>
         <nav aria-label="Main">
-          {links.map((link) => {
+          {links.filter((l) => !l.account).map((link) => {
             const el = (
               <NavLink
                 key={link.to}
@@ -34,10 +36,19 @@ export default function Sidebar({ links }) {
             return link.hint ? <Tooltip key={link.to} hint={link.hint} block>{el}</Tooltip> : el;
           })}
         </nav>
-        {profile && (
+        {profile && account && (
           <div className="sidebar-foot">
-            <span className="avatar" aria-hidden="true">{name.trim().charAt(0).toUpperCase() || '?'}</span>
-            <span className="sidebar-user">{name}</span>
+            <Tooltip hint="Account and settings" block>
+              <NavLink
+                to={account.to}
+                className={({ isActive }) => `account-button ${isActive ? 'active' : ''}`}
+                aria-label={`${name}, account and settings`}
+              >
+                <span className="avatar" aria-hidden="true">{name.trim().charAt(0).toUpperCase() || '?'}</span>
+                <span className="sidebar-user">{name}</span>
+                <Icon name="settings" size={22} />
+              </NavLink>
+            </Tooltip>
           </div>
         )}
       </div>
