@@ -7,3 +7,4 @@ dist/
 .DS_Store
 supabase/.temp/
 .scratch/
+.env.seed
