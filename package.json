@@ -7,6 +7,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "seed": "node --env-file=.env.seed scripts/seed.mjs",
+    "import:oscr": "node --env-file=.env.seed scripts/import-oscr.mjs",
     "deploy": "vite build && wrangler deploy"
   },
   "private": true,

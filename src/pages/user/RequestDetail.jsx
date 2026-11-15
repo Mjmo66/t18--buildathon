@@ -8,9 +8,10 @@ import { Alert, Badge, Button, ConfirmDialog, useToast } from '../../components/
 import { formatDayTime, formatShiftRange } from '../../components/format.js';
 import { REQUEST_SELECT, usePrefs } from './data.js';
 import {
-  ArrowLeft, CalendarDays, CalendarCheck, Check, CircleCheck, Dumbbell, GraduationCap, MapPin, MessageCircle, Navigation, Repeat,
+  ArrowLeft, CalendarDays, CalendarCheck, Check, CircleCheck, Dumbbell, ExternalLink, GraduationCap, MapPin, MessageCircle, Navigation, Repeat,
 } from 'lucide-react';
 import { LABELS, Loading, SIGNUP_STATUS } from './ui.jsx';
+import { displayWebsite, safeWebsite } from '../../lib/website.js';
 
 const SIGN_UP_HELP = "Tell the charity you'd like to come. They'll confirm by message.";
 const CANCEL_HELP = "Let the charity know you can't come. You can sign up again later.";
@@ -222,6 +223,24 @@ export default function RequestDetail() {
             <Button variant="secondary" block onClick={() => setAllDates(true)}>More dates</Button>
           )}
         </fieldset>
+      )}
+
+      {(request.charities?.description || safeWebsite(request.charities?.website)) && (
+        <section className="v-card" style={{ gap: 10 }}>
+          <h2>About {request.charities.org_name}</h2>
+          {request.charities.description && <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{request.charities.description}</p>}
+          {safeWebsite(request.charities.website) && (
+            <a
+              href={safeWebsite(request.charities.website)}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, overflowWrap: 'anywhere' }}
+            >
+              <ExternalLink size={20} strokeWidth={2} aria-hidden="true" />
+              {displayWebsite(safeWebsite(request.charities.website))}
+            </a>
+          )}
+        </section>
       )}
 
       {otherSignups.length > 0 && (
