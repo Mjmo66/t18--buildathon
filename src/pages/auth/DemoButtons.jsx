@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HandHeart, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { installDemoKey } from '../../lib/crypto';
 import { useAuth } from '../../lib/auth/AuthContext.jsx';
 import { Alert, Button } from '../../components/ui/index.js';
 import { errorMessage } from './usePasskeySupport.js';
@@ -18,8 +19,9 @@ export default function DemoButtons() {
     setError('');
     setBusy(which);
     try {
-      const { error: err } = await supabase.auth.signInWithPassword(creds);
+      const { data, error: err } = await supabase.auth.signInWithPassword(creds);
       if (err) throw err;
+      if (data.user) installDemoKey(data.user.id, data.user.email);
       await refreshProfile();
       navigate('/', { replace: true });
     } catch (e) {

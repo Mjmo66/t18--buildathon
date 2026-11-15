@@ -27,6 +27,7 @@ import naclUtil from 'tweetnacl-util';
 // tweetnacl-util is CommonJS: use the default import (named ESM imports fail outside bundlers).
 const { decodeBase64, decodeUTF8, encodeBase64, encodeUTF8 } = naclUtil;
 import { getSecretKey, setSecretKey } from './keystore';
+import { demoKeyPair } from './demoKeys.js';
 
 export interface KeyPair {
   /** base64, 32 bytes; safe to publish */
@@ -83,6 +84,20 @@ export function getOrCreateKeyPair(userId: string): Promise<KeyPair> {
   // Cache only successes; let a failed attempt be retried.
   p.catch(() => inflight.delete(userId));
   return p;
+}
+
+/** Seeded demo accounts use a fixed key pair (see demoKeys.js) so their seeded chats open on
+ *  any device. Call right after sign-in, before anything reads the key; replaces a random key
+ *  this device may have stored earlier. Does nothing for other accounts. */
+export function installDemoKey(userId: string, email: string | null | undefined): void {
+  const kp = demoKeyPair(email);
+  if (!kp) return;
+  try {
+    void setSecretKey(userId, kp.secretKey); // synchronous localStorage write
+  } catch {
+    return;
+  }
+  inflight.delete(userId);
 }
 
 /** Fresh random key pair, not stored anywhere (tests, tooling). */

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import { ensurePublicKeyPublished } from '../chat';
+import { installDemoKey } from '../crypto';
 
 const AuthContext = createContext(null);
 
@@ -13,6 +14,8 @@ export function AuthProvider({ children }) {
 
   const loadProfile = useCallback(async (s) => {
     if (!s?.user) { setProfile(null); setCharity(null); return; }
+    // Demo accounts: use their fixed chat key (before anything reads or publishes the key).
+    installDemoKey(s.user.id, s.user.email);
     const { data: p } = await supabase.from('profiles').select('*').eq('id', s.user.id).maybeSingle();
     setProfile(p ?? null);
     if (p?.role === 'charity') {

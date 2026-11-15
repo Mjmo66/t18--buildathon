@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, HeartHandshake } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { installDemoKey } from '../lib/crypto';
 import { Alert, Button } from '../components/ui/index.js';
 
 // Demo accounts from scripts/seed.mjs, for the presentation: one tap signs in as a seeded user.
@@ -19,9 +20,10 @@ export default function Home() {
   const tryDemo = async (role) => {
     setBusy(role);
     setError(null);
-    const { error: err } = await supabase.auth.signInWithPassword({ email: DEMO[role].email, password: DEMO_PASSWORD });
+    const { data, error: err } = await supabase.auth.signInWithPassword({ email: DEMO[role].email, password: DEMO_PASSWORD });
     setBusy(null);
     if (err) { setError(err.message); return; }
+    if (data.user) installDemoKey(data.user.id, data.user.email);
     navigate(DEMO[role].to, { replace: true });
   };
 

@@ -2,6 +2,9 @@
 //   npm run seed        (reads SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from .env.seed)
 // All charities and people are fictional; places are real St Andrews locations.
 import { createClient } from '@supabase/supabase-js';
+import nacl from 'tweetnacl';
+import naclUtil from 'tweetnacl-util';
+import { demoKeyPair, DEMO_CHARITY_LOCALS, DEMO_VOLUNTEER_LOCALS } from '../src/lib/crypto/demoKeys.js';
 
 const url = process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -199,6 +202,90 @@ const SIGNUPS = [
   ['Dog walking at the shelter', 'jamie', 'attended', -7],
 ];
 
+// Demo chats (E2E encrypted with the demo accounts' fixed keys, src/lib/crypto/demoKeys.js).
+// [charity key, volunteer key, request title, messages]; each message is [minutes ago, 'c' | 'v', text].
+const H = 60;
+const D = 24 * H;
+const CHATS = [
+  ['beach', 'sofia', 'Beach clean at East Sands', [
+    [2 * D, 'c', 'Hi Sofia, thanks for signing up for the beach clean. We meet by the East Sands slipway at 10.'],
+    [2 * D - 20, 'v', 'Great, thanks! Should I bring my own gloves?'],
+    [2 * D - 35, 'c', "No need, we've got gloves, bags and pickers for everyone."],
+    [4, 'v', "Brilliant. Is it okay if my flatmate comes along too? She hasn't signed up yet."],
+  ]],
+  ['beach', 'ewan', 'West Sands dune planting', [
+    [D + 3 * H, 'v', "Hi, I've applied for the dune planting. I'm fine with heavy work. Anything I should know?"],
+    [D + 2 * H, 'c', "Thanks Ewan! It's mostly digging and carrying bundles of marram grass. Bring water and a warm layer, it gets windy by the dunes."],
+    [50, 'v', "Sounds good. I can cycle down with a spade if you're short."],
+    [35, 'c', "That would really help, thank you. I'll confirm your place today."],
+  ]],
+  ['beach', 'isla', 'Beach clean at East Sands', [
+    [3 * H, 'v', "Hello! I've never done a beach clean before. Is it okay for a complete beginner?"],
+    [2 * H + 50, 'c', "Absolutely, most people are first-timers. We'll give a quick safety talk at the start."],
+    [2 * H + 45, 'v', 'Perfect, see you there!'],
+    [H, 'c', 'Lovely. Would you like us to pair you with one of our regulars on the day?'],
+  ]],
+  ['beach', 'tom', 'Harbour rockpool survey', [
+    [3 * D + 5 * H, 'v', 'Hi, is the rockpool survey suitable if I only know the common species?'],
+    [3 * D + 4 * H, 'c', 'Yes! We bring ID guides, and there is someone experienced in every group.'],
+    [3 * D + 3 * H, 'v', "Great, I'll sign up then. When is low tide?"],
+    [2 * D + 6 * H, 'c', 'Around quarter past two, so we start at 2 sharp by the harbour wall.'],
+  ]],
+  ['beach', 'jamie', 'Early litter walk on West Sands', [
+    [6 * H, 'v', "Morning! Is the early litter walk every week? I'd like to make it a regular thing."],
+    [5 * H, 'c', "It is, every week at 8. We'd love to have you."],
+    [25, 'v', 'Do you meet at the car park end or further up the beach?'],
+  ]],
+  ['beach', 'hannah', 'Beach clean at East Sands', [
+    [5 * D + 2 * H, 'c', "Hi Hannah, we saw you've helped with children's groups before. Would you like to lead a small group of families at the beach clean?"],
+    [5 * D + H, 'v', "I'd be happy to! How many children usually come?"],
+    [4 * D + 7 * H, 'c', "Usually six to eight, with their parents. We'll send you our safety sheet."],
+    [4 * D + 6 * H, 'v', 'Thanks, got it. See you there.'],
+  ]],
+  ['beach', 'leo', 'West Sands dune planting', [
+    [2 * D + 4 * H, 'v', 'Hi, I have a car and could bring tools from your store if that helps.'],
+    [2 * D + 3 * H, 'c', 'That would save us a lot of carrying! Could you pick them up at 9?'],
+    [D + 9 * H, 'v', "Yes, 9 works. Where's the key kept?"],
+    [D + 8 * H, 'c', "Ask at the harbour office, they'll have it under our name."],
+    [D + 8 * H - 10, 'v', 'Will do, thanks.'],
+  ]],
+  ['beach', 'priya', 'Early litter walk on West Sands', [
+    [7 * D, 'v', "Hello, I can't manage heavy work but would like to help on the beach. Is the litter walk gentle?"],
+    [7 * D - 90, 'c', "Yes, it's a slow walk on flat sand, and you can stop whenever you like."],
+    [6 * D + 5 * H, 'v', "Lovely, thank you. I'll join the next one."],
+  ]],
+  ['food', 'isla', 'Food bank sorting shift', [
+    [6 * D + 3 * H, 'c', 'Thanks so much for your help at the sorting shift last week, Isla. We packed 64 parcels!'],
+    [6 * D + 2 * H, 'v', 'It was really fun, happy to come back.'],
+    [12, 'c', "We're a bit short for tomorrow's shift. Could you come in from 1 till 4?"],
+  ]],
+  ['paws', 'isla', 'Dog walking at the shelter', [
+    [D + 4 * H, 'v', "Hi! I'd love to try dog walking. Do I need any experience?"],
+    [D + 3 * H, 'c', 'Not at all. We pair new walkers with our calmest dogs first.'],
+    [20 * H, 'v', 'Great. Is it okay if I come straight from a lecture? I might be ten minutes late.'],
+    [19 * H, 'c', "That's fine, just let us know at reception."],
+    [2 * H, 'c', 'Bramble, our spaniel, will be your walking buddy. Any allergies we should know about?'],
+  ]],
+  ['companions', 'isla', 'Afternoon tea with older neighbours', [
+    [4 * D + 3 * H, 'c', "Hi Isla, you're just round the corner from us. Would you like to help at our afternoon tea at Kinburn House?"],
+    [4 * D + 2 * H, 'v', 'Yes please! What do volunteers usually do?'],
+    [3 * D + 6 * H, 'c', 'Serving tea, chatting and maybe a round of cards. No experience needed.'],
+    [3 * D + 5 * H, 'v', "Sounds lovely, I'll sign up."],
+  ]],
+  ['reading', 'isla', 'Book sale volunteers', [
+    [2 * D + 2 * H, 'v', "Hi, I'm interested in the book sale. Do you still need people?"],
+    [2 * D + H, 'c', 'We do! We meet by the Cathedral at half nine to set up the tables.'],
+    [D + 5 * H, 'v', "Great, I'll be there."],
+  ]],
+  ['warm', 'isla', 'Warm space host', [
+    [5 * H, 'c', "Hello Isla, we're looking for an extra host tomorrow evening. Would you be free?"],
+    [4 * H, 'v', 'I could do from half five. What would I be doing?'],
+    [3 * H + 20, 'c', "Making tea and soup and chatting with visitors. We'll show you everything when you arrive."],
+    [3 * H, 'v', 'Okay, count me in!'],
+    [40, 'c', 'Wonderful, thank you. Do you have any dietary needs? We all eat together at the end.'],
+  ]],
+];
+
 function check(label, { error }) {
   if (error) throw new Error(`${label}: ${error.message}`);
 }
@@ -345,6 +432,51 @@ async function main() {
     }
   }
   console.log(`signups: ${SIGNUPS.length}${attendanceSkipped ? ` (${attendanceSkipped} without attendance outcome)` : ''}`);
+
+  // Fixed chat keys for the demo accounts, so their seeded chats open on any device.
+  const demoIds = { charity: [], volunteer: [] };
+  const pub = {};
+  for (const [role, locals] of [['charity', DEMO_CHARITY_LOCALS], ['volunteer', DEMO_VOLUNTEER_LOCALS]]) {
+    for (const local of locals) {
+      const email = `${local}@${DOMAIN}`;
+      const user = [...charities, ...volunteers].find((u) => u.email === email);
+      if (!user) throw new Error(`demo key list names ${email}, which the seed does not create`);
+      const id = ids[user.key];
+      pub[user.key] = demoKeyPair(email);
+      demoIds[role].push(id);
+      check(`key ${email}`, await db.from('profiles').update({ public_key: naclUtil.encodeBase64(pub[user.key].publicKey) }).eq('id', id));
+    }
+  }
+
+  // Demo chats: drop every conversation between two demo accounts and write them again.
+  const { data: oldConvs, error: convErr } = await db.from('conversations').select('id')
+    .in('charity_id', demoIds.charity).in('volunteer_id', demoIds.volunteer);
+  if (convErr) throw convErr;
+  if (oldConvs.length) check('drop demo chats', await db.from('conversations').delete().in('id', oldConvs.map((c) => c.id)));
+  let messageCount = 0;
+  const now = Date.now();
+  for (const [cKey, vKey, title, msgs] of CHATS) {
+    if (!requestIds[title]) throw new Error(`chat: unknown request ${title}`);
+    const { data: conv, error } = await db.from('conversations').insert({
+      request_id: requestIds[title], charity_id: ids[cKey], volunteer_id: ids[vKey],
+      created_at: iso(new Date(now - (msgs[0][0] + 5) * 60_000)),
+    }).select('id').single();
+    if (error) throw new Error(`chat ${cKey}/${vKey}: ${error.message}`);
+    // box(peer public, own secret) is symmetric, so sealing with charity secret + volunteer public
+    // gives the same shared key the app uses in both directions (lib/crypto encryptFor/decryptFrom).
+    const rows = msgs.map(([minsAgo, from, text]) => {
+      const nonce = nacl.randomBytes(nacl.box.nonceLength);
+      const box = nacl.box(naclUtil.decodeUTF8(text), nonce, pub[vKey].publicKey, pub[cKey].secretKey);
+      return {
+        conversation_id: conv.id, sender_id: from === 'c' ? ids[cKey] : ids[vKey],
+        ciphertext: naclUtil.encodeBase64(box), nonce: naclUtil.encodeBase64(nonce),
+        created_at: iso(new Date(now - minsAgo * 60_000)),
+      };
+    });
+    check(`messages ${cKey}/${vKey}`, await db.from('messages').insert(rows));
+    messageCount += rows.length;
+  }
+  console.log(`chats: ${CHATS.length} conversations, ${messageCount} messages (replaced ${oldConvs.length})`);
 
   console.log(`\nDone. Sign in with any of these (password ${PASSWORD}):`);
   for (const c of charities) console.log(`  charity    ${c.email.padEnd(34)} ${c.name}`);
