@@ -1,5 +1,12 @@
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { cancelCommitment, redeemReward, setAvailable, updatePreferences } from "@/api/mock-api";
+import {
+  acceptRequest,
+  cancelCommitment,
+  redeemReward,
+  setAvailable,
+  submitCredential,
+  updatePreferences,
+} from "@/api/mock-api";
 import { DEMO_VOLUNTEER_ID, snapshotQuery } from "@/api/queries";
 import type { VolunteerPreferences } from "@/api/types";
 
@@ -54,6 +61,23 @@ export function useCancelCommitment() {
         ...(reasonId ? { reasonId } : {}),
         ...(note ? { note } : {}),
       }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: snapshotQuery.queryKey }),
+  });
+}
+
+export function useSubmitCredential() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Parameters<typeof submitCredential>[1]) =>
+      submitCredential(DEMO_VOLUNTEER_ID, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: snapshotQuery.queryKey }),
+  });
+}
+
+export function useAcceptRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (occurrenceId: string) => acceptRequest(DEMO_VOLUNTEER_ID, occurrenceId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: snapshotQuery.queryKey }),
   });
 }

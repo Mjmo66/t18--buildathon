@@ -51,7 +51,8 @@ describe("checkEligibility", () => {
     const data = clone();
     const v = isla(data);
     expect(codes(check(data, "r2", { ...v, hasCar: false }).blockers)).toContain("needs-car");
-    expect(codes(check(data, "r3", { ...v, dbs: false }).blockers)).toContain("needs-dbs");
+    const noDbs = { ...data, credentials: data.credentials.filter((c) => c.type !== "dbs") };
+    expect(codes(check(noDbs, "r3", v).blockers)).toContain("credential-dbs");
     expect(codes(check(data, "r1", { ...v, age: 17 }).blockers)).toContain("too-young");
     expect(codes(check(data, "r6", { ...v, physicalWork: false }).blockers)).toContain("physical");
     expect(codes(check(data, "r6", v).blockers)).toContain("task-excluded"); // heavy lifting
@@ -81,8 +82,8 @@ describe("checkEligibility", () => {
 
   it("warns, but still allows, things that only go against her preferences", () => {
     const data = clone();
-    // r2 is about 0.3 miles from Isla's home.
-    const result = check(data, "r2", { ...isla(data), maxDistanceMiles: 0.1 });
+    // r3 (befriending) is about 0.6 miles from Isla's home.
+    const result = check(data, "r3", { ...isla(data), maxDistanceMiles: 0.1 });
     expect(result.canAccept).toBe(true);
     expect(codes(result.notes)).toContain("too-far");
     // r2 is Thursday 19 Nov 13:00–15:00; Isla is free Tuesdays and Thursdays 9am–5pm.

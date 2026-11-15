@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Ban, CalendarCheck2, Check, HeartHandshake, Loader2 } from "lucide-react";
 import { acceptRequest } from "@/api/mock-api";
@@ -8,21 +8,18 @@ import { Button } from "@/components/ui/button";
 import { CANCELLATION_NOTICE_HOURS } from "@/lib/cancellation";
 import { checkEligibility, spotsLeft, upcomingOccurrences } from "@/lib/eligibility";
 import { formatSession } from "./commitments";
-import { useVolunteer } from "./hooks";
+import { useAcceptRequest, useVolunteer } from "./hooks";
 import { TaskTag } from "./screens";
-
-function useAcceptRequest() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (occurrenceId: string) => acceptRequest(DEMO_VOLUNTEER_ID, occurrenceId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: snapshotQuery.queryKey }),
-  });
-}
+import { CancelForm } from "./commitment-screens";
+import { Sheet } from "./sheet";
+import { MapLink } from "@/components/shared/map-link";
 
 export function OpportunityScreen({ requestId }: { requestId: string }) {
   const { data, volunteer } = useVolunteer();
   const navigate = useNavigate();
   const accept = useAcceptRequest();
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const closeCancel = useCallback(() => setCancelOpen(false), []);
   const request = data.requests.find((r) => r.id === requestId);
   const sessions = request ? upcomingOccurrences(data, request) : [];
   // Default to the first session that still has room.
@@ -109,7 +106,7 @@ export function OpportunityScreen({ requestId }: { requestId: string }) {
           <div className="detail-row">
             <span>Where</span>
             <span>
-              {request.location}, {request.postcode}
+              <MapLink location={request.location} postcode={request.postcode} />
               {eligibility && (
                 <>
                   <br />
@@ -172,14 +169,24 @@ export function OpportunityScreen({ requestId }: { requestId: string }) {
               <span>
                 <CalendarCheck2 aria-hidden="true" /> You’re going
               </span>
-              <Button asChild variant="outline" size="sm">
-                <Link
-                  to="/volunteer/commitments/$commitmentId"
-                  params={{ commitmentId: goingCommitment.id }}
+              <span className="going-actions">
+                <Button asChild variant="outline" size="sm">
+                  <Link
+                    to="/volunteer/commitments/$commitmentId"
+                    params={{ commitmentId: goingCommitment.id }}
+                  >
+                    Manage
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="cancel-button"
+                  onClick={() => setCancelOpen(true)}
                 >
-                  Manage
-                </Link>
-              </Button>
+                  Cancel
+                </Button>
+              </span>
             </div>
           ) : (
             <>
@@ -201,6 +208,17 @@ export function OpportunityScreen({ requestId }: { requestId: string }) {
             </>
           )}
         </div>
+      )}
+      {goingCommitment && occurrence && (
+        <Sheet open={cancelOpen} onClose={closeCancel} title="Cancel this commitment?">
+          <CancelForm
+            item={{ commitment: goingCommitment, occurrence, request }}
+            onClose={closeCancel}
+            onDone={() =>
+              navigate({ to: "/volunteer/commitments", search: { cancelled: goingCommitment.id } })
+            }
+          />
+        </Sheet>
       )}
     </div>
   );

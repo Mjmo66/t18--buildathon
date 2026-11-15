@@ -35,9 +35,22 @@ export interface Charity {
   registrationNumber: string;
   verification: VerificationStatus;
   description: string;
+  phone?: string | undefined;
 }
+
+/** Charity details the charity can edit on its Profile. */
+export type CharityDetails = Pick<
+  Charity,
+  "contactName" | "email" | "phone" | "address" | "postcode" | "description"
+>;
 /** Drafts are saved by the charity but not shown to volunteers. */
-export type RequestStatus = "draft" | "open" | "completed" | "closed";
+export type RequestStatus = "draft" | "open" | "completed" | "closed" | "cancelled";
+/** Why a charity cancelled a request. Shown to the volunteers who had signed up. */
+export interface RequestCancellation {
+  cancelledAt: string;
+  reasonId: string;
+  message?: string;
+}
 export interface Request {
   id: string;
   charityId: string;
@@ -51,6 +64,7 @@ export interface Request {
   requirements: { dbs: boolean; minimumAge: number; physicalWork: boolean };
   volunteersNeeded: number;
   status: RequestStatus;
+  cancellation?: RequestCancellation;
   schedule: "one-off" | "weekly";
   occurrenceIds: string[];
   distanceMiles: number;
@@ -79,6 +93,8 @@ export interface Commitment {
     note?: string;
     /** Late with no accepted reason: costs points. */
     penalised: boolean;
+    /** The charity cancelled the whole request; never a penalty for the volunteer. */
+    byCharity?: boolean;
   };
 }
 export interface Verification {
@@ -121,6 +137,35 @@ export interface Snapshot {
   commitments: Commitment[];
   verifications: Verification[];
   redemptions: Redemption[];
+  credentials: Credential[];
+}
+
+/** Checks and certificates Kindred verifies on the charity's behalf. */
+export type CredentialType =
+  | "identity"
+  | "address"
+  | "references"
+  | "dbs"
+  | "driving-licence"
+  | "car-insurance"
+  | "food-hygiene"
+  | "manual-handling"
+  | "first-aid";
+
+export interface Credential {
+  id: string;
+  volunteerId: string;
+  type: CredentialType;
+  /** Expiry is worked out from expiresAt, so it isn't stored here. */
+  status: "pending" | "verified" | "rejected";
+  submittedAt: string;
+  reviewedAt?: string;
+  /** "YYYY-MM-DD", for documents that expire. */
+  expiresAt?: string;
+  /** What the volunteer gave us, e.g. the last digits of a certificate number. */
+  reference: string;
+  fileName?: string;
+  rejectionReason?: string;
 }
 
 /** A reward a volunteer has swapped points for. */

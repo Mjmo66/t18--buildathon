@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cancelReasonLabel } from "@/lib/charity";
 import {
   CANCEL_REASONS,
   CANCELLATION_NOTICE_HOURS,
@@ -30,6 +31,7 @@ import {
 import { useCancelCommitment, useVolunteer } from "./hooks";
 import { TaskTag } from "./screens";
 import { Sheet } from "./sheet";
+import { MapLink } from "@/components/shared/map-link";
 
 function CancelNotice({ item }: { item: CommitmentItem }) {
   const window = cancelWindow(item.occurrence.start);
@@ -155,7 +157,16 @@ export function CommitmentsScreen() {
                   <strong>{item.request.title}</strong>
                   {formatSession(item.occurrence)}
                 </span>
-                {item.commitment.cancellation?.penalised ? (
+                {item.commitment.cancellation?.byCharity ? (
+                  <span className="by-charity">
+                    Cancelled by {data.charity.name}
+                    {item.request.cancellation &&
+                      `: ${cancelReasonLabel(item.request.cancellation.reasonId)}`}
+                    {item.request.cancellation?.message && (
+                      <em>“{item.request.cancellation.message}”</em>
+                    )}
+                  </span>
+                ) : item.commitment.cancellation?.penalised ? (
                   <span className="ledger-points ledger-penalty">−{LATE_CANCEL_PENALTY} pts</span>
                 ) : (
                   <span className="muted text-xs">No penalty</span>
@@ -169,7 +180,7 @@ export function CommitmentsScreen() {
   );
 }
 
-function CancelForm({
+export function CancelForm({
   item,
   onDone,
   onClose,
@@ -325,9 +336,7 @@ export function CommitmentDetailScreen({ commitmentId }: { commitmentId: string 
         <div className="detail-row">
           <span>Where</span>
           <span>
-            {request.location}
-            <br />
-            {request.postcode}
+            <MapLink location={request.location} postcode={request.postcode} />
           </span>
         </div>
         <div className="detail-row">

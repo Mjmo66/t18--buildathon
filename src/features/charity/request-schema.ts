@@ -1,6 +1,18 @@
 import { z } from "zod";
-import { TASK_TYPES, type NewRequest, type TaskType } from "@/api/types";
-import { addDays, londonTimeNow, londonToUtcIso, londonToday } from "@/lib/london-time";
+import {
+  TASK_TYPES,
+  type NewRequest,
+  type Request,
+  type Snapshot,
+  type TaskType,
+} from "@/api/types";
+import {
+  addDays,
+  londonTimeNow,
+  londonToUtcIso,
+  londonToday,
+  utcToLondon,
+} from "@/lib/london-time";
 import { coordinatesForPostcode, normalisePostcode } from "@/lib/postcodes";
 import { TIME_PATTERN, edinburghPostcode } from "@/lib/validation";
 
@@ -8,7 +20,15 @@ import { TIME_PATTERN, edinburghPostcode } from "@/lib/validation";
 export const MAX_WEEKLY_SESSIONS = 26;
 
 /** Built from a function so tests can fix "now". Dates and times are UK local time. */
-export function createRequestSchema(now = new Date()) {
+export interface RequestSchemaOptions {
+  /** When editing: the most volunteers already signed up to one session. */
+  minVolunteers?: number;
+  /** When editing a request people have signed up to: dates can't change, so don't check them. */
+  lockSchedule?: boolean;
+}
+
+export function createRequestSchema(now = new Date(), options: RequestSchemaOptions = {}) {
+  const { minVolunteers = 0, lockSchedule = false } = options;
   return z
     .object({
       title: z
@@ -54,6 +74,14 @@ export function createRequestSchema(now = new Date()) {
         .max(100, "Enter a valid age"),
     })
     .superRefine((v, ctx) => {
+      if (minVolunteers > 1 && v.volunteersNeeded < minVolunteers) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["volunteersNeeded"],
+          message: `${minVolunteers} volunteers have already signed up, so you need at least ${minVolunteers}`,
+        });
+      }
+      if (lockSchedule) return;
       const today = londonToday(now);
       if (v.date && v.date < today) {
         ctx.addIssue({ code: "custom", path: ["date"], message: "Choose today or a later date" });
@@ -156,5 +184,35 @@ export function toNewRequest(v: RequestFormValues, status: NewRequest["status"])
       const start = londonToUtcIso(date, v.startTime);
       return { start, end: new Date(new Date(start).getTime() + durationMs).toISOString() };
     }),
+  };
+}
+
+/** An existing request → form values, so the same form can edit it. Times are shown in UK time. */
+export function requestToFormValues(data: Snapshot, request: Request): RequestFormValues {
+  const sessions = data.occurrences
+    .filter((o) => o.requestId === request.id)
+    .sort((a, b) => a.start.localeCompare(b.start));
+  const first = sessions[0];
+  const last = sessions.at(-1);
+  const start = first ? utcToLondon(first.start) : { date: "", time: "10:00" };
+  const durationHours = first
+    ? (new Date(first.end).getTime() - new Date(first.start).getTime()) / 3_600_000
+    : 2;
+  return {
+    title: request.title,
+    taskType: request.taskType,
+    volunteersNeeded: request.volunteersNeeded,
+    description: request.description,
+    date: start.date,
+    startTime: start.time,
+    durationHours,
+    schedule: request.schedule,
+    repeatUntil: request.schedule === "weekly" && last ? utcToLondon(last.start).date : "",
+    location: request.location,
+    postcode: request.postcode,
+    carNeeded: request.carNeeded,
+    dbs: request.requirements.dbs,
+    physicalWork: request.requirements.physicalWork,
+    minimumAge: request.requirements.minimumAge,
   };
 }

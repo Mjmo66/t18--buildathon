@@ -49,3 +49,13 @@ export function addDays(date: string, days: number): string {
   const [y = 0, m = 1, d = 1] = date.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
 }
+
+/** UTC ISO string → London { date: "YYYY-MM-DD", time: "HH:mm" }. */
+export function utcToLondon(iso: string): { date: string; time: string } {
+  const p = londonParts(new Date(iso));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return {
+    date: `${p.year}-${pad(p.month)}-${pad(p.day)}`,
+    time: `${pad(p.hour)}:${pad(p.minute)}`,
+  };
+}

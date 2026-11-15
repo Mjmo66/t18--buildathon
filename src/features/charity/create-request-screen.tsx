@@ -3,10 +3,11 @@ import { Controller, FormProvider, useForm, useFormContext, useWatch } from "rea
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, CalendarRange, Loader2, Plus } from "lucide-react";
-import { createRequest } from "@/api/mock-api";
+import { AlertCircle, CalendarRange, Check, Loader2, Lock, Plus } from "lucide-react";
+import { createRequest, updateRequest } from "@/api/mock-api";
 import { snapshotQuery } from "@/api/queries";
-import { TASK_TYPES, type NewRequest } from "@/api/types";
+import { TASK_TYPES, type NewRequest, type Request } from "@/api/types";
+import { summariseRequest } from "@/lib/charity";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { londonToday } from "@/lib/london-time";
@@ -15,6 +16,7 @@ import {
   MAX_WEEKLY_SESSIONS,
   createRequestSchema,
   emptyRequestForm,
+  requestToFormValues,
   sessionDates,
   toNewRequest,
   type RequestFormValues,
@@ -154,38 +156,76 @@ function SessionSummary() {
 }
 
 export function CreateRequestScreen() {
+  return <RequestFormScreen />;
+}
+
+/** One form for creating and editing. With `request`, it edits that request. */
+export function RequestFormScreen({ request }: { request?: Request }) {
   const { data } = useSuspenseQuery(snapshotQuery);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [intent, setIntent] = useState<NewRequest["status"]>("open");
-  const schema = useMemo(() => createRequestSchema(), []);
+  const summary = request ? summariseRequest(data, request) : null;
+  // Once anyone has signed up, the dates stay as they are so volunteers' plans don't change.
+  const lockSchedule = Boolean(summary && summary.sessions.some((s) => s.filled > 0));
+  const minVolunteers = summary ? Math.max(0, ...summary.sessions.map((s) => s.filled)) : 0;
+  const schema = useMemo(
+    () => createRequestSchema(new Date(), { minVolunteers, lockSchedule }),
+    [minVolunteers, lockSchedule],
+  );
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(schema),
-    defaultValues: emptyRequestForm(data.charity.postcode),
+    defaultValues: request
+      ? requestToFormValues(data, request)
+      : emptyRequestForm(data.charity.postcode),
     mode: "onTouched",
   });
   const { control, handleSubmit, formState } = form;
   const schedule = useWatch({ control, name: "schedule" });
   const errorCount = Object.keys(formState.errors).length;
+  const isDraft = !request || request.status === "draft";
 
   const save = useMutation({
-    mutationFn: createRequest,
+    mutationFn: ({
+      values,
+      status,
+    }: {
+      values: RequestFormValues;
+      status: NewRequest["status"];
+    }): Promise<Request> =>
+      request
+        ? updateRequest(request.id, toNewRequest(values, status), {
+            replaceSessions: !lockSchedule,
+          })
+        : createRequest(toNewRequest(values, status)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: snapshotQuery.queryKey }),
   });
 
   const submit = (status: NewRequest["status"]) => {
     setIntent(status);
-    return handleSubmit(async (values) => {
-      const created = await save.mutateAsync(toNewRequest(values, status));
-      navigate({ to: "/charity/requests", search: { created: created.id } });
-    })();
+    return handleSubmit((values) =>
+      save.mutate(
+        { values, status },
+        {
+          onSuccess: (saved) =>
+            navigate({
+              to: "/charity/requests",
+              search: request ? { updated: saved.id } : { created: saved.id },
+            }),
+        },
+      ),
+    )();
   };
 
   return (
     <>
       <PageHeading
-        title="Create a request"
-        description="A helping hand starts with a simple request."
+        title={request ? "Edit request" : "Create a request"}
+        description={
+          request
+            ? `Changes go live straight away for volunteers.`
+            : "A helping hand starts with a simple request."
+        }
       />
       <FormProvider {...form}>
         <form
@@ -208,7 +248,11 @@ export function CreateRequestScreen() {
           {save.isError && (
             <div className="pref-alert" role="alert">
               <AlertCircle aria-hidden="true" />
-              <span>Couldn’t save the request. Please try again.</span>
+              <span>
+                {save.error instanceof Error
+                  ? save.error.message
+                  : "Couldn’t save the request. Please try again."}
+              </span>
             </div>
           )}
 
@@ -244,40 +288,48 @@ export function CreateRequestScreen() {
           <div className="form-section">
             <h2>When and where?</h2>
             <div className="form-grid">
-              <Field name="schedule" label="Schedule" wide>
-                <ScheduleChoice />
-              </Field>
-              <Field name="date" label={schedule === "weekly" ? "First session" : "Date"}>
-                <TextInput name="date" type="date" min={londonToday()} />
-              </Field>
-              {schedule === "weekly" && (
-                <Field
-                  name="repeatUntil"
-                  label="Repeat until"
-                  hint={`Up to ${MAX_WEEKLY_SESSIONS} weeks.`}
-                >
-                  <TextInput name="repeatUntil" hint type="date" min={londonToday()} />
-                </Field>
+              {lockSchedule && (
+                <p className="locked-note wide">
+                  <Lock aria-hidden="true" /> Volunteers have signed up, so the dates and times
+                  can’t change. To move it, cancel this request and create a new one.
+                </p>
               )}
-              <Field name="startTime" label="Start time">
-                <TextInput name="startTime" type="time" />
-              </Field>
-              <Field
-                name="durationHours"
-                label="Duration (hours)"
-                hint="Half-hour steps, like 1.5."
-              >
-                <TextInput
+              <fieldset disabled={lockSchedule} className="contents-fieldset">
+                <Field name="schedule" label="Schedule" wide>
+                  <ScheduleChoice />
+                </Field>
+                <Field name="date" label={schedule === "weekly" ? "First session" : "Date"}>
+                  <TextInput name="date" type="date" min={londonToday()} />
+                </Field>
+                {schedule === "weekly" && (
+                  <Field
+                    name="repeatUntil"
+                    label="Repeat until"
+                    hint={`Up to ${MAX_WEEKLY_SESSIONS} weeks.`}
+                  >
+                    <TextInput name="repeatUntil" hint type="date" min={londonToday()} />
+                  </Field>
+                )}
+                <Field name="startTime" label="Start time">
+                  <TextInput name="startTime" type="time" />
+                </Field>
+                <Field
                   name="durationHours"
-                  hint
-                  type="number"
-                  min={0.5}
-                  max={12}
-                  step={0.5}
-                  inputMode="decimal"
-                />
-              </Field>
-              <SessionSummary />
+                  label="Duration (hours)"
+                  hint="Half-hour steps, like 1.5."
+                >
+                  <TextInput
+                    name="durationHours"
+                    hint
+                    type="number"
+                    min={0.5}
+                    max={12}
+                    step={0.5}
+                    inputMode="decimal"
+                  />
+                </Field>
+                <SessionSummary />
+              </fieldset>
               <Field name="location" label="Location">
                 <TextInput name="location" placeholder="Community hall, office…" maxLength={80} />
               </Field>
@@ -302,7 +354,7 @@ export function CreateRequestScreen() {
               <RequirementSwitch
                 name="dbs"
                 label="DBS check needed"
-                description="Only volunteers with a DBS check will see it."
+                description="Only volunteers whose DBS check Kindred has verified can accept it."
               />
               <RequirementSwitch
                 name="physicalWork"
@@ -324,24 +376,28 @@ export function CreateRequestScreen() {
 
           <div className="form-actions">
             <Button asChild variant="ghost">
-              <Link to="/charity/requests">Cancel</Link>
+              <Link to="/charity/requests">{request ? "Discard changes" : "Cancel"}</Link>
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={save.isPending}
-              onClick={() => void submit("draft")}
-            >
-              {save.isPending && intent === "draft" ? <Loader2 className="animate-spin" /> : null}
-              Save draft
-            </Button>
+            {isDraft && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={save.isPending}
+                onClick={() => void submit("draft")}
+              >
+                {save.isPending && intent === "draft" ? <Loader2 className="animate-spin" /> : null}
+                Save draft
+              </Button>
+            )}
             <Button type="submit" disabled={save.isPending}>
               {save.isPending && intent === "open" ? (
                 <Loader2 className="animate-spin" />
+              ) : request && !isDraft ? (
+                <Check />
               ) : (
                 <Plus />
               )}
-              Publish request
+              {request && !isDraft ? "Save changes" : "Publish request"}
             </Button>
           </div>
         </form>

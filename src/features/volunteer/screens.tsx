@@ -14,6 +14,9 @@ import {
   Moon,
   CheckCircle2,
   SlidersHorizontal,
+  ShieldCheck,
+  LogOut,
+  ArrowRight,
 } from "lucide-react";
 import { DEMO_VOLUNTEER_ID, snapshotQuery } from "@/api/queries";
 import type { Snapshot, Request } from "@/api/types";
@@ -26,6 +29,8 @@ import { useVolunteer } from "./hooks";
 import { ReliabilitySection, StandingBanner } from "./reliability";
 import { PointsCard } from "./points-card";
 import { OpportunityPreview } from "./opportunity-preview";
+import { milesBetween } from "@/lib/postcodes";
+import { VerificationSummary } from "./verification-screen";
 export function TaskTag({ task }: { task: string }) {
   return (
     <span className={`task-tag task-tag-${task.toLowerCase().replace(" ", "-")}`}>{task}</span>
@@ -36,11 +41,17 @@ function Opportunity({
   data,
   commitment = false,
   going = false,
+  distanceMiles,
+  onMore,
 }: {
   request: Request;
   data: Snapshot;
   commitment?: boolean;
   going?: boolean;
+  /** Distance from the volunteer's home; falls back to the stored figure. */
+  distanceMiles?: number;
+  /** Shows a "More information" button that calls this. */
+  onMore?: () => void;
 }) {
   const when = requestDate(data, request);
   const left = request.volunteersNeeded - filledSpots(data, request);
@@ -73,13 +84,29 @@ function Opportunity({
         </span>
         <span>
           <MapPin />
-          {request.distanceMiles} miles away
+          {distanceMiles ?? request.distanceMiles} miles away
         </span>
         <span>
-          {request.carNeeded ? <Car /> : <Clock3 />}
-          {request.carNeeded ? "Car needed" : when.time}
+          <Clock3 />
+          {when.time}
         </span>
+        {request.carNeeded && (
+          <span>
+            <Car />
+            Car needed
+          </span>
+        )}
       </div>
+      {onMore && (
+        <Button
+          size="lg"
+          className="w-full more-info"
+          onClick={onMore}
+          aria-label={`More information about ${request.title}`}
+        >
+          More information <ArrowRight />
+        </Button>
+      )}
       {commitment && (
         <>
           <p className="opportunity-description">
@@ -145,32 +172,21 @@ export function BoardScreen() {
             comes next
           </p>
           {opportunities.map((r) => (
-            // A div with button behaviour, because a real <button> can't contain the card's headings.
-            <div
+            <Opportunity
               key={r.id}
-              role="button"
-              tabIndex={0}
-              className="opportunity-link"
-              aria-label={`${r.title}, show details`}
-              onClick={() => setPreviewId(r.id)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setPreviewId(r.id);
-                }
-              }}
-            >
-              <Opportunity
-                request={r}
-                data={data}
-                going={data.commitments.some(
-                  (c) =>
-                    c.volunteerId === volunteer.id &&
-                    c.status === "accepted" &&
-                    r.occurrenceIds.includes(c.occurrenceId),
-                )}
-              />
-            </div>
+              request={r}
+              data={data}
+              distanceMiles={
+                Math.round(milesBetween(volunteer.coordinates, r.coordinates) * 10) / 10
+              }
+              going={data.commitments.some(
+                (c) =>
+                  c.volunteerId === volunteer.id &&
+                  c.status === "accepted" &&
+                  r.occurrenceIds.includes(c.occurrenceId),
+              )}
+              onMore={() => setPreviewId(r.id)}
+            />
           ))}
           <p className="readonly-note mt-4">More good things are just around the corner.</p>
         </>
@@ -185,6 +201,7 @@ export function BoardScreen() {
         </div>
       )}
       <OpportunityPreview
+        key={previewId ?? "none"}
         request={data.requests.find((r) => r.id === previewId) ?? null}
         data={data}
         volunteer={volunteer}
@@ -220,18 +237,6 @@ export function ProfileScreen() {
         <div className="detail-row">
           <span>Age</span>
           <span>{v.age}</span>
-        </div>
-        <div className="detail-row">
-          <span>DBS check</span>
-          <span>
-            {v.dbs ? (
-              <span className="text-primary">
-                <Check size={12} className="inline" /> Yes
-              </span>
-            ) : (
-              "Not provided"
-            )}
-          </span>
         </div>
         <div className="detail-row">
           <span>Physical work</span>
@@ -270,6 +275,19 @@ export function ProfileScreen() {
         )}
       </div>
       <PointsCard data={data} volunteerId={v.id} />
+      <div className="profile-section">
+        <h3>Verification</h3>
+        <VerificationSummary data={data} volunteerId={v.id} canDo={v.canDo} />
+        <p className="muted text-xs mb-3">
+          We check your ID, background and certificates so charities don’t have to. Some tasks need
+          a verified certificate.
+        </p>
+        <Button asChild variant="outline" className="w-full">
+          <Link to="/volunteer/verification">
+            <ShieldCheck /> Manage verification
+          </Link>
+        </Button>
+      </div>
       <ReliabilitySection data={data} volunteer={v} />
       <div className="profile-section">
         <h3>Availability</h3>
@@ -301,6 +319,11 @@ export function ProfileScreen() {
       <Button asChild variant="outline" className="w-full">
         <Link to="/volunteer/preferences">
           <SlidersHorizontal /> Edit preferences
+        </Link>
+      </Button>
+      <Button asChild variant="ghost" className="w-full mt-3">
+        <Link to="/volunteer/login">
+          <LogOut /> Sign out
         </Link>
       </Button>
     </div>

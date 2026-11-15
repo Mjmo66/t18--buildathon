@@ -25,24 +25,27 @@ export function VolunteerShell() {
           ? "Preferences"
           : path.includes("rewards")
             ? "Rewards"
-            : path.includes("profile")
-              ? "Profile"
-              : "Board";
+            : path.includes("verification")
+              ? "Verification"
+              : path.includes("profile")
+                ? "Profile"
+                : "Board";
   const backTo =
-    title === "Preferences"
+    title === "Preferences" || title === "Verification"
       ? "/volunteer/profile"
       : isCommitmentDetail
         ? "/volunteer/commitments"
         : "/volunteer";
   // Sub-screens of Profile keep the Profile tab highlighted.
   const activeTab =
-    path.includes("preferences") || path.includes("rewards")
+    path.includes("preferences") || path.includes("rewards") || path.includes("verification")
       ? "/volunteer/profile"
       : isCommitmentDetail
         ? "/volunteer/commitments"
         : isOpportunity
           ? "/volunteer"
           : path.replace(/\/$/, "");
+  const isLogin = path.startsWith("/volunteer/login");
   return (
     <main className="phone-stage">
       <div className="phone-exterior">
@@ -58,72 +61,76 @@ export function VolunteerShell() {
             <BatteryFull />
           </span>
         </div>
-        <header className="phone-header">
-          <div className="phone-header-left">
-            {title !== "Board" && (
+        {!isLogin && (
+          <header className="phone-header">
+            <div className="phone-header-left">
+              {title !== "Board" && (
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon"
+                  aria-label={
+                    title === "Preferences" || title === "Verification"
+                      ? "Back to Profile"
+                      : isCommitmentDetail
+                        ? "Back to My commitments"
+                        : "Back to Board"
+                  }
+                >
+                  <Link to={backTo}>
+                    <ArrowLeft />
+                  </Link>
+                </Button>
+              )}
+              {title === "Board" ? <Brand compact /> : <h1>{title}</h1>}
+            </div>
+            <div className="phone-header-actions">
               <Button
                 asChild
                 variant="ghost"
                 size="icon"
-                aria-label={
-                  title === "Preferences"
-                    ? "Back to Profile"
-                    : isCommitmentDetail
-                      ? "Back to My commitments"
-                      : "Back to Board"
-                }
+                aria-label="Preferences"
+                title="Preferences"
               >
-                <Link to={backTo}>
+                <Link
+                  to="/volunteer/preferences"
+                  className={path.includes("preferences") ? "header-active" : undefined}
+                >
+                  <SlidersHorizontal />
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="icon" aria-label="Switch role">
+                <Link to="/">
                   <ArrowLeft />
                 </Link>
               </Button>
-            )}
-            {title === "Board" ? <Brand compact /> : <h1>{title}</h1>}
-          </div>
-          <div className="phone-header-actions">
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              aria-label="Preferences"
-              title="Preferences"
-            >
-              <Link
-                to="/volunteer/preferences"
-                className={path.includes("preferences") ? "header-active" : undefined}
-              >
-                <SlidersHorizontal />
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" size="icon" aria-label="Switch role">
-              <Link to="/">
-                <ArrowLeft />
-              </Link>
-            </Button>
-          </div>
-        </header>
+            </div>
+          </header>
+        )}
         <div className="phone-body">
           <Outlet />
         </div>
-        <nav className="phone-tabs" aria-label="Volunteer navigation">
-          {(
-            [
-              { to: "/volunteer", label: "Board", icon: LayoutGrid },
-              { to: "/volunteer/commitments", label: "My commitments", icon: CalendarCheck2 },
-              { to: "/volunteer/profile", label: "Profile", icon: UserRound },
-            ] as const
-          ).map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`phone-tab ${activeTab === item.to ? "active" : ""}`}
-              aria-current={activeTab === item.to ? "page" : undefined}
-            >
-              <item.icon />
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </nav>
+        {!isLogin && (
+          <nav className="phone-tabs" aria-label="Volunteer navigation">
+            {(
+              [
+                { to: "/volunteer", label: "Board", icon: LayoutGrid },
+                { to: "/volunteer/commitments", label: "My commitments", icon: CalendarCheck2 },
+                { to: "/volunteer/profile", label: "Profile", icon: UserRound },
+              ] as const
+            ).map((item) => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`phone-tab ${activeTab === item.to ? "active" : ""}`}
+                aria-current={activeTab === item.to ? "page" : undefined}
+              >
+                <item.icon />
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </nav>
+        )}
       </div>
     </main>
   );

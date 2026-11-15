@@ -289,3 +289,168 @@ tr.row-new td {background:var(--success-soft);}
 .preview-facts svg {width:14px;height:14px;flex-shrink:0;color:var(--primary);}
 .preview-blocked {display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--raspberry);background:var(--raspberry-soft);border-radius:6px;padding:9px 11px;}
 .preview-blocked svg {width:15px;height:15px;flex-shrink:0;margin-top:1px;}
+
+/* Verification */
+.cred-hero {display:flex;gap:12px;align-items:flex-start;background:var(--primary);color:var(--primary-foreground);border-radius:10px;padding:16px;margin-bottom:16px;}
+.cred-hero > svg {width:26px;height:26px;flex-shrink:0;}
+.cred-hero strong {font-family:var(--font-display);font-size:18px;font-weight:600;display:block;}
+.cred-hero p {font-size:12px;opacity:.9;margin-top:2px;}
+.cred-group {margin-top:20px;}
+.cred-group h3 {font-size:16px;}
+.cred-group ul {list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.cred-row {display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--card);}
+.cred-main {flex:1;min-width:0;}
+.cred-title {display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.cred-title strong {font-size:13px;}
+.cred-desc {font-size:11px;color:var(--muted-foreground);margin-top:3px;line-height:1.45;}
+.cred-unlocks {font-size:11px;color:var(--primary);font-weight:600;margin-top:3px;}
+.cred-meta {font-size:10px;color:var(--muted-foreground);margin-top:4px;}
+.cred-badge {display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:650;padding:3px 7px;border-radius:4px;white-space:nowrap;}
+.cred-badge svg {width:12px;height:12px;}
+.cred-verified {color:var(--success);background:var(--success-soft);}
+.cred-pending {color:var(--warning);background:var(--warning-soft);}
+.cred-expired,.cred-rejected {color:var(--raspberry);background:var(--raspberry-soft);}
+.cred-missing {color:var(--muted-foreground);background:var(--muted);}
+.cred-form {display:flex;flex-direction:column;gap:14px;}
+.cred-field {display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;}
+.cred-field input:not(.sr-only) {height:44px;border:1px solid var(--border);border-radius:6px;padding:0 12px;font-weight:400;font-size:14px;background:var(--card);}
+.cred-field input[aria-invalid=true] {border-color:var(--raspberry);}
+.file-picker {display:flex;align-items:center;gap:8px;min-height:48px;padding:0 12px;border:1px dashed var(--primary);border-radius:6px;color:var(--primary);font-weight:500;cursor:pointer;}
+.file-picker:focus-within {outline:2px solid var(--primary);outline-offset:2px;}
+.file-picker svg {width:18px;height:18px;}
+.cred-consent {display:flex;gap:10px;align-items:flex-start;font-size:12px;line-height:1.5;}
+.cred-consent input {width:18px;height:18px;margin-top:1px;accent-color:var(--primary);}
+.going-actions {display:flex;gap:6px;}
+
+/* Volunteer sign-in */
+.login-screen {display:flex;flex-direction:column;gap:10px;padding:40px 22px 28px;min-height:100%;}
+.login-screen h1 {font-size:28px;margin-top:22px;}
+.login-form {display:flex;flex-direction:column;gap:16px;margin-top:18px;}
+.password-field {display:flex;align-items:center;border:1px solid var(--border);border-radius:6px;background:var(--card);}
+.password-field:focus-within {outline:2px solid var(--primary);outline-offset:2px;}
+.password-field input {flex:1;border:0 !important;outline:none;height:44px;padding:0 12px;font-size:14px;font-weight:400;background:transparent;}
+.password-field button {width:44px;height:44px;display:grid;place-items:center;border:0;background:none;color:var(--muted-foreground);cursor:pointer;}
+.password-field button svg {width:18px;height:18px;}
+.cred-field:has(input[aria-invalid=true]) .password-field {border-color:var(--raspberry);}
+.demo-hint {display:flex;gap:8px;align-items:flex-start;margin-top:18px;padding:12px;border-radius:7px;background:var(--secondary);color:var(--primary);font-size:12px;line-height:1.5;}
+.demo-hint svg {width:16px;height:16px;flex-shrink:0;margin-top:2px;}
+.demo-hint span {color:var(--foreground);}
+.login-back {margin-top:auto;text-align:center;font-size:12px;color:var(--primary);font-weight:600;padding:12px;}
+
+/* Points progress bar on the points card */
+.points-card-bar {display:block;height:6px;margin-top:7px;border-radius:999px;background:var(--muted);overflow:hidden;}
+.points-card-bar > span {display:block;height:100%;border-radius:999px;background:var(--raspberry);transition:width .3s ease;}
+
+/* Charity: dashboard to-do list */
+.todo-section {margin-bottom:28px;}
+.todo-section h2 {font-size:18px;margin-bottom:12px;}
+.todo-list {list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.todo {display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-left-width:4px;border-radius:8px;padding:14px 16px;}
+.todo > div {flex:1;min-width:0;}
+.todo strong {font-size:14px;}
+.todo p {font-size:12px;color:var(--muted-foreground);margin-top:2px;}
+.todo-icon {width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;border-radius:50%;}
+.todo-icon svg {width:18px;height:18px;}
+.todo-warning {border-left-color:var(--warning);} .todo-warning .todo-icon {background:var(--warning-soft);color:var(--warning);}
+.todo-primary {border-left-color:var(--primary);} .todo-primary .todo-icon {background:var(--secondary);color:var(--primary);}
+.todo-muted {border-left-color:var(--muted-foreground);} .todo-muted .todo-icon {background:var(--muted);color:var(--muted-foreground);}
+.todo-success {border-left-color:var(--success);} .todo-success .todo-icon {background:var(--success-soft);color:var(--success);}
+.todo-done {display:flex;align-items:center;gap:8px;padding:14px 16px;border-radius:8px;background:var(--success-soft);color:var(--success);font-weight:600;font-size:13px;}
+.todo-done svg {width:18px;height:18px;}
+.upcoming-list {list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--border);border-radius:8px;}
+.upcoming-list li {display:grid;grid-template-columns:220px minmax(0,1fr) minmax(0,200px) auto;gap:16px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px;}
+.upcoming-list li:last-child {border-bottom:0;}
+.upcoming-when {display:flex;align-items:center;gap:8px;font-weight:600;}
+.upcoming-when svg {width:15px;height:15px;color:var(--primary);}
+.upcoming-what strong {display:block;}
+.upcoming-what span,.upcoming-who {font-size:12px;color:var(--muted-foreground);}
+.upcoming-count {font-size:12px;font-weight:650;color:var(--raspberry);background:var(--raspberry-soft);padding:4px 8px;border-radius:4px;white-space:nowrap;}
+.upcoming-count.full {color:var(--success);background:var(--success-soft);}
+
+/* Charity: requests page */
+.request-toolbar {display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px;}
+.status-tabs {display:flex;gap:4px;background:var(--muted);padding:4px;border-radius:8px;flex-wrap:wrap;}
+.status-tabs button {border:0;background:none;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;color:var(--muted-foreground);cursor:pointer;}
+.status-tabs button span {font-size:11px;font-weight:600;margin-left:4px;opacity:.75;}
+.status-tabs button.active {background:var(--card);color:var(--primary);box-shadow:0 1px 2px oklch(.267 .021 260 / .08);}
+.toolbar-right {display:flex;gap:8px;align-items:center;}
+.search-box {display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border:1px solid var(--border);border-radius:6px;background:var(--card);}
+.search-box:focus-within {outline:2px solid var(--primary);outline-offset:1px;}
+.search-box svg {width:16px;height:16px;color:var(--muted-foreground);}
+.search-box input {border:0;outline:none;background:none;font-size:13px;width:220px;}
+.toolbar-select {height:40px;border:1px solid var(--border);border-radius:6px;padding:0 10px;background:var(--card);font-size:13px;}
+.sort-button {display:inline-flex;align-items:center;gap:5px;border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-transform:inherit;letter-spacing:inherit;}
+.sort-button svg {width:13px;height:13px;opacity:.45;}
+.sort-button.active {color:var(--primary);}
+.sort-button.active svg {opacity:1;}
+.clickable-row {cursor:pointer;}
+.clickable-row:hover td {background:var(--accent);}
+.clickable-row:focus-visible {outline:2px solid var(--primary);outline-offset:-2px;}
+.row-chevron {width:36px;color:var(--muted-foreground);}
+.row-chevron svg {width:16px;height:16px;}
+.status-cancelled {color:var(--muted-foreground);background:var(--muted);text-decoration:line-through;}
+.locked-note {grid-column:1/-1;display:flex;align-items:center;gap:8px;background:var(--warning-soft);color:var(--warning);font-size:12px;padding:10px 12px;border-radius:5px;}
+.locked-note svg {width:15px;height:15px;flex-shrink:0;}
+.contents-fieldset {display:contents;border:0;margin:0;padding:0;}
+.contents-fieldset:disabled input,.contents-fieldset:disabled select {opacity:.6;cursor:not-allowed;}
+
+/* Charity: request side panel */
+.request-panel {width:min(520px,100vw) !important;max-width:none !important;overflow-y:auto;display:flex;flex-direction:column;gap:16px;}
+.panel-status {display:flex;align-items:center;gap:10px;}
+.panel-title {font-size:22px;font-family:var(--font-display);}
+.panel-facts {list-style:none;margin:0;padding:12px 14px;background:var(--muted);border-radius:8px;display:flex;flex-direction:column;gap:8px;font-size:13px;}
+.panel-facts li {display:flex;align-items:flex-start;gap:8px;}
+.panel-facts svg {width:15px;height:15px;color:var(--primary);flex-shrink:0;margin-top:2px;}
+.panel-heading {font-size:15px;}
+.panel-sessions {list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.panel-sessions > li {border:1px solid var(--border);border-radius:8px;padding:12px;}
+.panel-sessions > li.is-past {background:var(--muted);}
+.panel-session-top {display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;margin-bottom:8px;}
+.panel-session-top > span:first-child {display:flex;align-items:center;gap:6px;}
+.panel-session-top svg {width:14px;height:14px;color:var(--primary);}
+.spots-full {color:var(--success);font-size:12px;font-weight:650;}
+.panel-sessions .spots {font-size:12px;}
+.panel-people {list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.panel-people li {display:flex;align-items:center;gap:8px;font-size:13px;}
+.panel-people .avatar {width:28px;height:28px;font-size:10px;}
+.panel-actions {display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid var(--border);padding-top:16px;margin-top:auto;}
+.panel-actions-hint {width:100%;}
+.panel-cancel-button {color:var(--raspberry);margin-left:auto;}
+.panel-note {display:flex;gap:8px;align-items:flex-start;font-size:13px;border-radius:6px;padding:10px 12px;}
+.panel-note svg {width:16px;height:16px;flex-shrink:0;margin-top:2px;}
+.panel-note-cancelled {background:var(--raspberry-soft);color:var(--raspberry);}
+.panel-cancel {border:1px solid var(--raspberry-soft);background:oklch(.985 .008 5);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.panel-cancel h3 {font-size:16px;}
+.panel-field {display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;}
+.panel-field select,.panel-field textarea {border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:13px;font-weight:400;background:var(--card);}
+.panel-field select[aria-invalid=true] {border-color:var(--raspberry);}
+.panel-cancel-actions {display:flex;justify-content:flex-end;gap:8px;}
+
+/* Charity: profile */
+.verification-callout {display:flex;gap:12px;align-items:flex-start;background:var(--warning-soft);border-radius:8px;padding:14px 16px;margin:4px 0 22px;font-size:13px;line-height:1.55;}
+.verification-callout > svg {width:20px;height:20px;color:var(--warning);flex-shrink:0;margin-top:2px;}
+.verification-callout.is-verified {background:var(--success-soft);}
+.verification-callout.is-verified > svg {color:var(--success);}
+.verification-callout strong:first-child {display:block;font-size:14px;margin-bottom:2px;}
+
+/* Volunteer: request cancelled by the charity */
+.by-charity {font-size:11px;color:var(--raspberry);text-align:right;max-width:55%;}
+.by-charity em {display:block;color:var(--muted-foreground);font-style:normal;}
+
+@media (max-width:1000px) {
+  .upcoming-list li {grid-template-columns:1fr;gap:4px;}
+  .search-box input {width:150px;}
+}
+
+/* Board: "More information" button on cards, accept from the pop-up */
+.opportunity .more-info {margin-top:16px;font-size:15px;height:48px;}
+.opportunity .more-info svg {width:18px;height:18px;}
+.preview-note {display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--warning);background:var(--warning-soft);border-radius:6px;padding:9px 11px;}
+.preview-note svg {width:15px;height:15px;flex-shrink:0;margin-top:1px;}
+.preview .sheet-actions .accept-hint {margin:-2px 0 4px;}
+
+/* Locations open in Google Maps */
+.map-link {color:var(--primary);font-weight:600;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;display:inline-flex;align-items:center;gap:4px;}
+.map-link:hover {text-decoration-thickness:2px;}
+.map-link svg {width:13px;height:13px;flex-shrink:0;}
+.detail-row .map-link {justify-content:flex-end;}

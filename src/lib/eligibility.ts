@@ -1,6 +1,12 @@
 // Can a volunteer accept a session? Pure function, so the rules can move to a backend later.
 import type { Occurrence, Request, Snapshot, Volunteer } from "@/api/types";
 import { volunteerStanding } from "@/lib/attendance";
+import {
+  credentialProblem,
+  credentialState,
+  latestCredential,
+  requiredCredentials,
+} from "@/lib/credentials";
 import { milesBetween } from "@/lib/postcodes";
 
 export interface Reason {
@@ -109,7 +115,14 @@ export function checkEligibility(
   if (request.carNeeded && !(volunteer.hasCar && volunteer.willingToDrive)) {
     block("needs-car", "This needs a car, and your preferences say you can’t drive for tasks.");
   }
-  if (request.requirements.dbs && !volunteer.dbs) block("needs-dbs", "This needs a DBS check.");
+  // Certificates Kindred has checked (DBS, driving licence, food hygiene and so on).
+  for (const type of requiredCredentials(request)) {
+    const problem = credentialProblem(
+      type,
+      credentialState(latestCredential(data, volunteer.id, type), now),
+    );
+    if (problem) block(`credential-${type}`, problem);
+  }
   if (volunteer.age < request.requirements.minimumAge) {
     block("too-young", `Volunteers need to be ${request.requirements.minimumAge} or over.`);
   }

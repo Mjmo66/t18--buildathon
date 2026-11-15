@@ -1,5 +1,5 @@
 import { fixtures } from "./fixtures";
-import type { NewRequest, VolunteerPreferences } from "./types";
+import type { CharityDetails, CredentialType, NewRequest, VolunteerPreferences } from "./types";
 import { milesBetween } from "@/lib/postcodes";
 import { REWARDS, pointsBalance } from "@/lib/rewards";
 import { CANCEL_REASONS, cancelWindow, isPenalised } from "@/lib/cancellation";
@@ -211,4 +211,163 @@ export async function acceptRequest(volunteerId: string, occurrenceId: string) {
   };
   db.commitments.push(commitment);
   return copy(commitment);
+}
+
+/** Demo password for the volunteer sign-in page. Not real authentication. */
+export const DEMO_PASSWORD = "kindred123";
+
+/** Mock sign-in: finds the volunteer by email and checks the demo password. */
+export async function signIn(email: string, password: string) {
+  await pause(400);
+  const volunteer = db.volunteers.find((v) => v.email.toLowerCase() === email.trim().toLowerCase());
+  if (!volunteer || password !== DEMO_PASSWORD)
+    throw new Error("That email and password don’t match an account");
+  return copy(volunteer);
+}
+
+/** A volunteer sends a document for Kindred to check. It starts as "pending". */
+export async function submitCredential(
+  volunteerId: string,
+  input: { type: CredentialType; reference: string; expiresAt?: string; fileName?: string },
+) {
+  await pause();
+  findVolunteer(volunteerId);
+  const reference = input.reference.trim();
+  if (reference.length < 3) throw new Error("Tell us a bit more about the document");
+  const credential = {
+    id: nextId(
+      "cr",
+      db.credentials.map((c) => c.id),
+    ),
+    volunteerId,
+    type: input.type,
+    status: "pending" as const,
+    submittedAt: new Date().toISOString(),
+    reference,
+    ...(input.expiresAt ? { expiresAt: input.expiresAt } : {}),
+    ...(input.fileName ? { fileName: input.fileName } : {}),
+  };
+  db.credentials.push(credential);
+  return copy(credential);
+}
+
+function findRequest(id: string) {
+  const request = db.requests.find((r) => r.id === id);
+  if (!request) throw new Error("Request not found");
+  return request;
+}
+
+function acceptedOn(requestId: string) {
+  const sessionIds = db.occurrences.filter((o) => o.requestId === requestId).map((o) => o.id);
+  return db.commitments.filter(
+    (c) => sessionIds.includes(c.occurrenceId) && c.status === "accepted",
+  );
+}
+
+/**
+ * The charity edits a request. Sessions are only replaced when nobody has signed up,
+ * so volunteers' plans never change under them.
+ */
+export async function updateRequest(
+  id: string,
+  input: NewRequest,
+  options: { replaceSessions: boolean },
+) {
+  await pause();
+  const request = findRequest(id);
+  if (request.status === "cancelled" || request.status === "completed")
+    throw new Error("This request can’t be edited any more");
+  const signedUp = acceptedOn(id);
+  const perSession = new Map<string, number>();
+  for (const c of signedUp)
+    perSession.set(c.occurrenceId, (perSession.get(c.occurrenceId) ?? 0) + 1);
+  const most = Math.max(0, ...perSession.values());
+  if (input.volunteersNeeded < most)
+    throw new Error(
+      `${most} volunteers have already signed up to one session, so you need at least ${most}`,
+    );
+
+  const { occurrences, ...fields } = input;
+  Object.assign(request, copy(fields));
+  if (options.replaceSessions) {
+    if (signedUp.length)
+      throw new Error("Volunteers have signed up, so the dates can’t be changed");
+    db.occurrences = db.occurrences.filter((o) => o.requestId !== id);
+    const first = Number(
+      nextId(
+        "o",
+        db.occurrences.map((o) => o.id),
+      ).slice(1),
+    );
+    const fresh = occurrences.map((o, i) => ({
+      id: `o${first + i}`,
+      requestId: id,
+      start: o.start,
+      end: o.end,
+    }));
+    db.occurrences.push(...fresh);
+    request.occurrenceIds = fresh.map((o) => o.id);
+  }
+  return copy(request);
+}
+
+/** A draft goes live for volunteers. */
+export async function publishRequest(id: string) {
+  await pause(200);
+  const request = findRequest(id);
+  if (request.status !== "draft") throw new Error("Only drafts can be published");
+  request.status = "open";
+  return copy(request);
+}
+
+/** Mark a request complete once every session has finished. */
+export async function completeRequest(id: string) {
+  await pause(200);
+  const request = findRequest(id);
+  const sessions = db.occurrences.filter((o) => o.requestId === id);
+  if (sessions.some((o) => new Date(o.end) > new Date())) {
+    throw new Error(
+      "Some sessions haven’t happened yet. Cancel them, or wait until they’ve finished.",
+    );
+  }
+  request.status = "completed";
+  return copy(request);
+}
+
+/**
+ * The charity cancels a whole request. Everyone signed up to an upcoming session is
+ * released with no penalty, and sees the charity's reason.
+ */
+export async function cancelRequest(id: string, details: { reasonId: string; message?: string }) {
+  await pause();
+  const request = findRequest(id);
+  if (request.status === "cancelled" || request.status === "completed")
+    throw new Error("This request has already finished");
+  const now = new Date();
+  const message = details.message?.trim();
+  request.status = "cancelled";
+  request.cancellation = {
+    cancelledAt: now.toISOString(),
+    reasonId: details.reasonId,
+    ...(message ? { message } : {}),
+  };
+  for (const commitment of acceptedOn(id)) {
+    const session = db.occurrences.find((o) => o.id === commitment.occurrenceId);
+    if (!session || new Date(session.start) <= now) continue;
+    commitment.status = "cancelled";
+    commitment.cancellation = {
+      cancelledAt: now.toISOString(),
+      late: false,
+      penalised: false,
+      byCharity: true,
+    };
+  }
+  return copy(request);
+}
+
+/** The charity updates its contact details. */
+export async function updateCharityDetails(details: CharityDetails) {
+  await pause();
+  Object.assign(db.charity, copy(details));
+  return copy(db.charity);
 }

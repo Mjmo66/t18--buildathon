@@ -331,11 +331,6 @@ export function PreferencesScreen() {
               <ErrorText id="age-error">{errors.age?.message}</ErrorText>
             </div>
             <SwitchRow
-              name="dbs"
-              label="DBS check"
-              description="I have a valid, up-to-date DBS check."
-            />
-            <SwitchRow
               name="physicalWork"
               label="Physical work"
               description="I’m comfortable with lifting and being on my feet."

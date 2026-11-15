@@ -22,11 +22,14 @@ import { Route as CharityProfileRouteImport } from './routes/charity.profile'
 import { Route as CharityRequestsRouteImport } from './routes/charity.requests'
 import { Route as VolunteerIndexRouteImport } from './routes/volunteer.index'
 import { Route as VolunteerCommitmentsRouteImport } from './routes/volunteer.commitments'
+import { Route as VolunteerLoginRouteImport } from './routes/volunteer.login'
 import { Route as VolunteerPreferencesRouteImport } from './routes/volunteer.preferences'
 import { Route as VolunteerProfileRouteImport } from './routes/volunteer.profile'
 import { Route as VolunteerRewardsRouteImport } from './routes/volunteer.rewards'
+import { Route as VolunteerVerificationRouteImport } from './routes/volunteer.verification'
 import { Route as VolunteerCommitmentsCommitmentIdRouteImport } from './routes/volunteer.commitments_.$commitmentId'
 import { Route as VolunteerOpportunitiesRequestIdRouteImport } from './routes/volunteer.opportunities.$requestId'
+import { Route as CharityRequestsRequestIdEditRouteImport } from './routes/charity.requests_.$requestId.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -93,6 +96,11 @@ const VolunteerCommitmentsRoute = VolunteerCommitmentsRouteImport.update({
   path: '/commitments',
   getParentRoute: () => VolunteerRoute,
 } as any)
+const VolunteerLoginRoute = VolunteerLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => VolunteerRoute,
+} as any)
 const VolunteerPreferencesRoute = VolunteerPreferencesRouteImport.update({
   id: '/preferences',
   path: '/preferences',
@@ -108,6 +116,11 @@ const VolunteerRewardsRoute = VolunteerRewardsRouteImport.update({
   path: '/rewards',
   getParentRoute: () => VolunteerRoute,
 } as any)
+const VolunteerVerificationRoute = VolunteerVerificationRouteImport.update({
+  id: '/verification',
+  path: '/verification',
+  getParentRoute: () => VolunteerRoute,
+} as any)
 const VolunteerCommitmentsCommitmentIdRoute =
   VolunteerCommitmentsCommitmentIdRouteImport.update({
     id: '/commitments_/$commitmentId',
@@ -119,6 +132,12 @@ const VolunteerOpportunitiesRequestIdRoute =
     id: '/opportunities/$requestId',
     path: '/opportunities/$requestId',
     getParentRoute: () => VolunteerRoute,
+  } as any)
+const CharityRequestsRequestIdEditRoute =
+  CharityRequestsRequestIdEditRouteImport.update({
+    id: '/requests_/$requestId/edit',
+    path: '/requests/$requestId/edit',
+    getParentRoute: () => CharityRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -132,14 +151,17 @@ export interface FileRoutesByFullPath {
   '/charity/profile': typeof CharityProfileRoute
   '/charity/requests': typeof CharityRequestsRoute
   '/volunteer/commitments': typeof VolunteerCommitmentsRoute
+  '/volunteer/login': typeof VolunteerLoginRoute
   '/volunteer/preferences': typeof VolunteerPreferencesRoute
   '/volunteer/profile': typeof VolunteerProfileRoute
   '/volunteer/rewards': typeof VolunteerRewardsRoute
+  '/volunteer/verification': typeof VolunteerVerificationRoute
   '/admin/': typeof AdminIndexRoute
   '/charity/': typeof CharityIndexRoute
   '/volunteer/': typeof VolunteerIndexRoute
   '/volunteer/commitments/$commitmentId': typeof VolunteerCommitmentsCommitmentIdRoute
   '/volunteer/opportunities/$requestId': typeof VolunteerOpportunitiesRequestIdRoute
+  '/charity/requests/$requestId/edit': typeof CharityRequestsRequestIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -149,14 +171,17 @@ export interface FileRoutesByTo {
   '/charity/profile': typeof CharityProfileRoute
   '/charity/requests': typeof CharityRequestsRoute
   '/volunteer/commitments': typeof VolunteerCommitmentsRoute
+  '/volunteer/login': typeof VolunteerLoginRoute
   '/volunteer/preferences': typeof VolunteerPreferencesRoute
   '/volunteer/profile': typeof VolunteerProfileRoute
   '/volunteer/rewards': typeof VolunteerRewardsRoute
+  '/volunteer/verification': typeof VolunteerVerificationRoute
   '/admin': typeof AdminIndexRoute
   '/charity': typeof CharityIndexRoute
   '/volunteer': typeof VolunteerIndexRoute
   '/volunteer/commitments/$commitmentId': typeof VolunteerCommitmentsCommitmentIdRoute
   '/volunteer/opportunities/$requestId': typeof VolunteerOpportunitiesRequestIdRoute
+  '/charity/requests/$requestId/edit': typeof CharityRequestsRequestIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,14 +195,17 @@ export interface FileRoutesById {
   '/charity/profile': typeof CharityProfileRoute
   '/charity/requests': typeof CharityRequestsRoute
   '/volunteer/commitments': typeof VolunteerCommitmentsRoute
+  '/volunteer/login': typeof VolunteerLoginRoute
   '/volunteer/preferences': typeof VolunteerPreferencesRoute
   '/volunteer/profile': typeof VolunteerProfileRoute
   '/volunteer/rewards': typeof VolunteerRewardsRoute
+  '/volunteer/verification': typeof VolunteerVerificationRoute
   '/admin/': typeof AdminIndexRoute
   '/charity/': typeof CharityIndexRoute
   '/volunteer/': typeof VolunteerIndexRoute
   '/volunteer/commitments_/$commitmentId': typeof VolunteerCommitmentsCommitmentIdRoute
   '/volunteer/opportunities/$requestId': typeof VolunteerOpportunitiesRequestIdRoute
+  '/charity/requests_/$requestId/edit': typeof CharityRequestsRequestIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -192,14 +220,17 @@ export interface FileRouteTypes {
     | '/charity/profile'
     | '/charity/requests'
     | '/volunteer/commitments'
+    | '/volunteer/login'
     | '/volunteer/preferences'
     | '/volunteer/profile'
     | '/volunteer/rewards'
+    | '/volunteer/verification'
     | '/admin/'
     | '/charity/'
     | '/volunteer/'
     | '/volunteer/commitments/$commitmentId'
     | '/volunteer/opportunities/$requestId'
+    | '/charity/requests/$requestId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -209,14 +240,17 @@ export interface FileRouteTypes {
     | '/charity/profile'
     | '/charity/requests'
     | '/volunteer/commitments'
+    | '/volunteer/login'
     | '/volunteer/preferences'
     | '/volunteer/profile'
     | '/volunteer/rewards'
+    | '/volunteer/verification'
     | '/admin'
     | '/charity'
     | '/volunteer'
     | '/volunteer/commitments/$commitmentId'
     | '/volunteer/opportunities/$requestId'
+    | '/charity/requests/$requestId/edit'
   id:
     | '__root__'
     | '/'
@@ -229,14 +263,17 @@ export interface FileRouteTypes {
     | '/charity/profile'
     | '/charity/requests'
     | '/volunteer/commitments'
+    | '/volunteer/login'
     | '/volunteer/preferences'
     | '/volunteer/profile'
     | '/volunteer/rewards'
+    | '/volunteer/verification'
     | '/admin/'
     | '/charity/'
     | '/volunteer/'
     | '/volunteer/commitments_/$commitmentId'
     | '/volunteer/opportunities/$requestId'
+    | '/charity/requests_/$requestId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -339,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VolunteerCommitmentsRouteImport
       parentRoute: typeof VolunteerRoute
     }
+    '/volunteer/login': {
+      id: '/volunteer/login'
+      path: '/login'
+      fullPath: '/volunteer/login'
+      preLoaderRoute: typeof VolunteerLoginRouteImport
+      parentRoute: typeof VolunteerRoute
+    }
     '/volunteer/preferences': {
       id: '/volunteer/preferences'
       path: '/preferences'
@@ -360,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VolunteerRewardsRouteImport
       parentRoute: typeof VolunteerRoute
     }
+    '/volunteer/verification': {
+      id: '/volunteer/verification'
+      path: '/verification'
+      fullPath: '/volunteer/verification'
+      preLoaderRoute: typeof VolunteerVerificationRouteImport
+      parentRoute: typeof VolunteerRoute
+    }
     '/volunteer/commitments_/$commitmentId': {
       id: '/volunteer/commitments_/$commitmentId'
       path: '/commitments/$commitmentId'
@@ -373,6 +424,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/volunteer/opportunities/$requestId'
       preLoaderRoute: typeof VolunteerOpportunitiesRequestIdRouteImport
       parentRoute: typeof VolunteerRoute
+    }
+    '/charity/requests_/$requestId/edit': {
+      id: '/charity/requests_/$requestId/edit'
+      path: '/requests/$requestId/edit'
+      fullPath: '/charity/requests/$requestId/edit'
+      preLoaderRoute: typeof CharityRequestsRequestIdEditRouteImport
+      parentRoute: typeof CharityRoute
     }
   }
 }
@@ -395,6 +453,7 @@ interface CharityRouteChildren {
   CharityProfileRoute: typeof CharityProfileRoute
   CharityRequestsRoute: typeof CharityRequestsRoute
   CharityIndexRoute: typeof CharityIndexRoute
+  CharityRequestsRequestIdEditRoute: typeof CharityRequestsRequestIdEditRoute
 }
 
 const CharityRouteChildren: CharityRouteChildren = {
@@ -403,6 +462,7 @@ const CharityRouteChildren: CharityRouteChildren = {
   CharityProfileRoute: CharityProfileRoute,
   CharityRequestsRoute: CharityRequestsRoute,
   CharityIndexRoute: CharityIndexRoute,
+  CharityRequestsRequestIdEditRoute: CharityRequestsRequestIdEditRoute,
 }
 
 const CharityRouteWithChildren =
@@ -410,9 +470,11 @@ const CharityRouteWithChildren =
 
 interface VolunteerRouteChildren {
   VolunteerCommitmentsRoute: typeof VolunteerCommitmentsRoute
+  VolunteerLoginRoute: typeof VolunteerLoginRoute
   VolunteerPreferencesRoute: typeof VolunteerPreferencesRoute
   VolunteerProfileRoute: typeof VolunteerProfileRoute
   VolunteerRewardsRoute: typeof VolunteerRewardsRoute
+  VolunteerVerificationRoute: typeof VolunteerVerificationRoute
   VolunteerIndexRoute: typeof VolunteerIndexRoute
   VolunteerCommitmentsCommitmentIdRoute: typeof VolunteerCommitmentsCommitmentIdRoute
   VolunteerOpportunitiesRequestIdRoute: typeof VolunteerOpportunitiesRequestIdRoute
@@ -420,9 +482,11 @@ interface VolunteerRouteChildren {
 
 const VolunteerRouteChildren: VolunteerRouteChildren = {
   VolunteerCommitmentsRoute: VolunteerCommitmentsRoute,
+  VolunteerLoginRoute: VolunteerLoginRoute,
   VolunteerPreferencesRoute: VolunteerPreferencesRoute,
   VolunteerProfileRoute: VolunteerProfileRoute,
   VolunteerRewardsRoute: VolunteerRewardsRoute,
+  VolunteerVerificationRoute: VolunteerVerificationRoute,
   VolunteerIndexRoute: VolunteerIndexRoute,
   VolunteerCommitmentsCommitmentIdRoute: VolunteerCommitmentsCommitmentIdRoute,
   VolunteerOpportunitiesRequestIdRoute: VolunteerOpportunitiesRequestIdRoute,
