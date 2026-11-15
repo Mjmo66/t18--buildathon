@@ -129,6 +129,25 @@ body {
   padding: 24px;
 }
 
+.card-link {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.card-link:hover { border-color: var(--accent); }
+.card-link h2 { margin-top: 0; font-size: 1.15rem; }
+.card-link p { margin-bottom: 0; color: var(--muted); }
+
+.space-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--accent);
+  border: 1px solid var(--border);
+}
+
 /* ---------- Footer ---------- */
 .footer {
   padding: 16px;

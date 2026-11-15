@@ -1,12 +1,9 @@
 import { NavLink } from 'react-router-dom';
 
-const links = [
-  { to: '/', label: 'Home' },
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/settings', label: 'Settings' },
-];
+// Links whose path is the root of a space should only be active on an exact match
+const exactPaths = ['/', '/user', '/charity'];
 
-export default function Sidebar({ open, onNavigate }) {
+export default function Sidebar({ links, open, onNavigate }) {
   return (
     <aside className={`sidebar ${open ? 'sidebar-open' : ''}`}>
       <nav>
@@ -14,7 +11,7 @@ export default function Sidebar({ open, onNavigate }) {
           <NavLink
             key={link.to}
             to={link.to}
-            end={link.to === '/'}
+            end={exactPaths.includes(link.to)}
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             onClick={onNavigate}
           >

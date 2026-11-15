@@ -4,14 +4,20 @@ import Header from './Header.jsx';
 import Sidebar from './Sidebar.jsx';
 import Footer from './Footer.jsx';
 
-export default function Layout() {
+const defaultLinks = [
+  { to: '/', label: 'Home' },
+  { to: '/user', label: 'User Space' },
+  { to: '/charity', label: 'Charity Space' },
+];
+
+export default function Layout({ space, links = defaultLinks }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="layout">
-      <Header onMenuClick={() => setSidebarOpen((open) => !open)} />
+      <Header space={space} onMenuClick={() => setSidebarOpen((open) => !open)} />
       <div className="layout-body">
-        <Sidebar open={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
+        <Sidebar links={links} open={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
         <main className="content">
           <Outlet />
         </main>
