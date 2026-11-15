@@ -1,7 +1,7 @@
 // App icons: a name → lucide-react component map, so nav links can name their icon as a string.
 import {
   Sparkles, CalendarCheck, User, MessageCircle, LayoutDashboard, ClipboardList, Building2,
-  SlidersHorizontal, Plus, House, Search, Calendar, HeartHandshake, QrCode, Star, LogOut, List, Award,
+  SlidersHorizontal, Plus, House, Search, Calendar, HeartHandshake, QrCode, Star, LogOut, List, Award, Settings,
 } from 'lucide-react';
 
 const icons = {
@@ -23,6 +23,7 @@ const icons = {
   prefs: SlidersHorizontal,
   plus: Plus,
   logout: LogOut,
+  settings: Settings,
 };
 
 export function Icon({ name, size = 20, strokeWidth = 1.75 }) {
