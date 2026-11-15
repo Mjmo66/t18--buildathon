@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "seed": "node --env-file=.env.seed scripts/seed.mjs"
+    "seed": "node --env-file=.env.seed scripts/seed.mjs",
+    "deploy": "vite build && wrangler deploy"
   },
   "private": true,
   "dependencies": {

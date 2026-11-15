@@ -10,7 +10,7 @@ their phones in the browser (passkeys with Face ID / fingerprint).
   React Native.)
 - Supabase: Postgres + RLS, Auth, Realtime, Edge Functions (Deno). `.env` holds
   `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (see `.env.example`). Never commit keys.
-- Hosting: Cloudflare Pages (`https://<name>.pages.dev`); `npm run build`, deploy `dist/`.
+- Hosting: Cloudflare Pages (https://kindred.niklas-sipf.workers.dev (Workers static assets, `wrangler.jsonc`)); `npm run build`, deploy `dist/`.
 - Ready to use: `src/lib/supabase.ts` (`supabase`), `src/lib/types.ts`,
   `src/lib/auth/AuthContext.jsx` (`useAuth()` → `{session, user, profile, charity, loading,
   refreshProfile, signOut}`), `src/lib/auth/passkey` (`isPasskeySupported`, `signUpWithPasskey`,

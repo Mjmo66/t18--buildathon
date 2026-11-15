@@ -20,7 +20,7 @@ sign up live with a passkey (Face ID / fingerprint).
  └──────────────────────────┘          │ RPC: verify_charity, mark_attendance,  │
             ▲                          │      check_in                          │
             │ static web build         │ Edge Function `passkey` (WebAuthn)     │
- Cloudflare Pages (kindred.pages.dev)  └───────────────────────────────────────┘
+ Cloudflare Pages (kindred.niklas-sipf.workers.dev)  └───────────────────────────────────────┘
  also serves /.well-known for passkeys
 ```
 
@@ -75,5 +75,5 @@ Each agent works on its own branch from `integration` and only writes inside its
 
 - [ ] Supabase project (London), "Confirm email" off, URL + anon key in `.env`
 - [ ] Apply schema, seed demo data, deploy the `passkey` function
-- [ ] Cloudflare account, `npx wrangler pages deploy dist --project-name kindred`
+- [ ] Cloudflare account, `npm run deploy`
 - [ ] Set passkey `RP_ID` / `RP_ORIGINS` to the `pages.dev` domain
