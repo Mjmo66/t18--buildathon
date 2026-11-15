@@ -148,7 +148,7 @@ export default function RequestDetail() {
         <p className="v-detail-org">
           {request.charities?.org_name ?? 'Charity'}
           {request.charities?.verified_at && (
-            <span className="v-verified"><Check size={18} strokeWidth={2.5} aria-hidden="true" />Verified charity</span>
+            <span className="v-verified"><Check size={18} strokeWidth={2.5} aria-hidden="true" />Checked charity</span>
           )}
         </p>
       </header>
@@ -260,7 +260,7 @@ export default function RequestDetail() {
           <Button size="lg" block onClick={signUp} loading={busy === 'signup'}
             disabled={!!blockReason || !selected} hint={blockReason ?? undefined}
             help={blockReason ?? SIGN_UP_HELP}>
-            {busy === 'signup' ? 'Signing you up…' : selected && !blockReason ? `Sign up for ${formatDayTime(selected)}` : 'Sign up to help'}
+            {busy === 'signup' ? 'Signing you up…' : selected && !blockReason ? `Sign up for ${formatDayTime(selected).replace(/^(Today|Tomorrow)/, (w) => w.toLowerCase())}` : 'Sign up to help'}
           </Button>
         </div>
       )}

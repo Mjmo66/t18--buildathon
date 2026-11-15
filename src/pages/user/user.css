@@ -167,3 +167,7 @@
   .v-sheet-backdrop { align-items: center; }
   .v-sheet { border-radius: var(--radius-lg); }
 }
+/* Narrow phones: tick above the word so "Afternoon" never overflows its button */
+@media (max-width: 520px) {
+  .v-slots .chip { flex-direction: column; min-height: 60px; padding: 6px 4px; line-height: 1.15; }
+}

@@ -244,9 +244,10 @@ svg.lucide { flex-shrink: 0; }
   gap: 4px;
   color: var(--muted);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   line-height: 1.15;
+  letter-spacing: -0.01em;
   -webkit-tap-highlight-color: transparent;
 }
 .tab.active { color: var(--accent); font-weight: 800; }
@@ -662,7 +663,7 @@ button.chip-selected:hover { border-color: var(--accent-hover); }
 /* ---------- Auth pages ---------- */
 .auth-page { max-width: 460px; margin: 3vh auto 0; }
 .auth-page > .ui-card { display: flex; flex-direction: column; gap: 16px; padding: 24px; }
-.auth-page h1 { margin: 0; }
+.auth-page h1 { margin: 0 0 16px; }
 .auth-brand { display: flex; justify-content: center; margin-bottom: 20px; }
 .auth-switch { text-align: center; color: var(--muted); font-size: 1rem; margin-top: 20px; }
 .role-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
