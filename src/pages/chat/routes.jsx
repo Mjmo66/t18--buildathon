@@ -1,6 +1,8 @@
 // Chat routes, mounted under /chat by App.jsx. Owned by the chat area.
-// Expected: index → conversation list, ':conversationId' → conversation.
+import ConversationList from './ConversationList.jsx';
+import Conversation from './Conversation.jsx';
+
 export const chatRoutes = [
-  { index: true, element: <p>Chats</p> },
-  { path: ':conversationId', element: <p>Conversation</p> },
+  { index: true, element: <ConversationList /> },
+  { path: ':conversationId', element: <Conversation /> },
 ];
