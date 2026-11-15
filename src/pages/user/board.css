@@ -33,3 +33,68 @@
 }
 .lv .board-more:hover { background: var(--lv-accent); }
 .lv .board-other-heading { margin-top: 22px; }
+
+/* Points progress bar */
+.lv .points-card-bar { display: block; height: 6px; margin-top: 7px; border-radius: 999px; background: var(--lv-muted); overflow: hidden; }
+.lv .points-card-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--lv-raspberry); transition: width .3s ease; }
+
+/* Card with a "More information" button that sits outside the link */
+.lv .board-card { position: relative; }
+.lv .board-card .opportunity { padding-bottom: 54px; }
+.lv .board-info {
+  position: absolute; left: 15px; bottom: 14px; padding: 7px 12px; border: 1px solid var(--lv-border); border-radius: 7px;
+  background: var(--lv-card); color: var(--lv-primary); font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.lv .board-info:hover { background: var(--lv-accent); }
+.lv .board-info:focus-visible { outline: 2px solid var(--lv-primary); outline-offset: 2px; }
+
+/* Bottom sheet, kept inside the phone frame (.shell-main is the fixed containing block) */
+.lv .sheet-overlay {
+  position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; justify-content: flex-end;
+  background: oklch(.267 .021 260 / .45); animation: sheet-fade .15s ease-out;
+}
+.lv .sheet {
+  background: var(--lv-card); border-radius: 18px 18px 0 0; max-height: 88%; display: flex; flex-direction: column;
+  padding-bottom: max(12px, env(safe-area-inset-bottom)); animation: sheet-up .22s ease-out;
+}
+.lv .sheet-handle { width: 40px; height: 5px; border-radius: 999px; background: var(--lv-border); margin: 8px auto 0; }
+.lv .sheet-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px 6px 18px; }
+.lv .sheet-header h2 { font-size: 18px; }
+.lv .sheet-close {
+  flex-shrink: 0; width: 40px; height: 40px; display: grid; place-items: center; border: 0; background: none;
+  border-radius: 50%; cursor: pointer; color: var(--lv-muted-foreground);
+}
+.lv .sheet-close:hover { background: var(--lv-muted); }
+.lv .sheet-close svg { width: 18px; height: 18px; }
+.lv .sheet-body { overflow-y: auto; padding: 0 18px 6px; }
+.lv .preview { display: flex; flex-direction: column; gap: 12px; padding-bottom: 4px; }
+.lv .preview-top { display: flex; justify-content: space-between; align-items: center; }
+.lv .preview .charity-line { margin-bottom: 0; }
+.lv .preview-description { font-size: 12px; color: var(--lv-muted-foreground); line-height: 1.6; }
+.lv .preview-facts {
+  list-style: none; margin: 0; padding: 12px 14px; display: flex; flex-direction: column; gap: 9px;
+  background: var(--lv-muted); border-radius: 8px; font-size: 12px;
+}
+.lv .preview-facts li { display: flex; align-items: center; gap: 8px; }
+.lv .preview-facts svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--lv-primary); }
+.lv .preview-facts a { color: var(--lv-primary); font-weight: 600; text-decoration: underline; }
+.lv .preview-blocked { font-size: 12px; color: var(--lv-raspberry); background: var(--lv-raspberry-soft); border-radius: 6px; padding: 9px 11px; }
+.lv .sheet-success {
+  display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--lv-success);
+  background: var(--lv-success-soft); border-radius: 6px; padding: 10px 12px;
+}
+.lv .sheet-success svg { width: 16px; height: 16px; flex-shrink: 0; }
+.lv .sheet-actions { display: flex; flex-direction: column; gap: 8px; }
+.lv .sheet-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 46px; padding: 0 16px;
+  border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none;
+}
+.lv .sheet-btn svg { width: 17px; height: 17px; }
+.lv .sheet-btn-primary { border: 0; background: var(--lv-primary); color: var(--lv-primary-foreground); }
+.lv .sheet-btn-primary:disabled { opacity: .7; cursor: default; }
+.lv .sheet-btn-secondary { border: 1px solid var(--lv-border); background: var(--lv-card); color: var(--lv-foreground); }
+.lv .sheet-btn-secondary:hover { background: var(--lv-accent); }
+.lv .sheet-spin { animation: sheet-spin 1s linear infinite; }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@keyframes sheet-fade { from { opacity: 0; } }
+@keyframes sheet-spin { to { transform: rotate(360deg); } }
